@@ -63,9 +63,7 @@ parse_ergm_model <- function(object) {
   }, character(1))
   names(term_attrs) <- term_names
 
-  mapped_terms <- vapply(coef_names, function(cn) {
-    .match_coef_to_term(cn, term_names)
-  }, character(1), USE.NAMES = FALSE)
+  mapped_terms <- .map_coefs_to_terms(object, coef_names, term_names)
 
   mapped_attrs <- ifelse(
     is.na(mapped_terms),
@@ -230,6 +228,53 @@ parse_ergm_formula <- function(formula) {
   } else {
     coef_table[, col_idx[1L]]
   }
+}
+
+#' Map coefficient names to formula term names
+#'
+#' Uses [ergm::ergm_model()] to build the term-to-coefficient mapping, which
+#' correctly handles terms where the coefficient prefix differs from the term
+#' name (e.g., `nodemix` produces `mix.*` coefficients, `b1star(k)` produces
+#' `b1stark`). Falls back to longest-prefix matching if the model cannot be
+#' constructed.
+#'
+#' @param object A fitted [ergm][ergm::ergm] object.
+#' @param coef_names Character vector of coefficient names from the summary.
+#' @param formula_term_names Character vector of term names parsed from the
+#'   formula.
+#' @return Character vector of mapped term names (same length as `coef_names`).
+#' @noRd
+.map_coefs_to_terms <- function(object, coef_names, formula_term_names) {
+  model <- tryCatch(
+    ergm::ergm_model(object[["formula"]], nw = object[["network"]]),
+    error = function(e) NULL
+  )
+
+  if (!is.null(model) && length(model[["terms"]]) > 0L) {
+    # Build a lookup: coefficient name -> formula term name
+    coef_to_term <- character(0)
+    model_terms <- model[["terms"]]
+    n <- min(length(model_terms), length(formula_term_names))
+    for (i in seq_len(n)) {
+      cnames <- model_terms[[i]][["coef.names"]]
+      if (!is.null(cnames)) {
+        for (cn in cnames) {
+          coef_to_term[cn] <- formula_term_names[i]
+        }
+      }
+    }
+    if (length(coef_to_term) > 0L) {
+      return(vapply(coef_names, function(cn) {
+        if (cn %in% names(coef_to_term)) coef_to_term[[cn]]
+        else NA_character_
+      }, character(1), USE.NAMES = FALSE))
+    }
+  }
+
+  # Fallback: prefix matching
+  vapply(coef_names, function(cn) {
+    .match_coef_to_term(cn, formula_term_names)
+  }, character(1), USE.NAMES = FALSE)
 }
 
 #' Match a coefficient name to the best-fitting formula term

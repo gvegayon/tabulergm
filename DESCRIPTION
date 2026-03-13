@@ -1,0 +1,17 @@
+Package: tabulergm
+Title: Publication-Ready Tables and Summaries for ERGM Models
+Version: 0.1.0
+Authors@R: 
+    person("George", "Vega Yon", , "g.vegayon@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-3171-0844"))
+Description: Translates models estimated with the 'ergm' framework into
+    publication-ready tables and explanatory summaries.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+URL: https://github.com/gvegayon/tabulergm
+BugReports: https://github.com/gvegayon/tabulergm/issues

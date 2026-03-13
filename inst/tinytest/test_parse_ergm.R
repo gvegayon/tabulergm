@@ -96,6 +96,7 @@ expect_equal(tabulergm:::.match_coef_to_term("nodefactor.race.Black", terms),
 expect_true(is.na(tabulergm:::.match_coef_to_term("unknownterm", terms)))
 
 # .match_coef_to_term handles mixing term coefficient names
+# "mix.race.A.B" should NOT match "nodemix" since "mix" != "nodemix"
 terms <- c("edges", "nodemix")
 expect_equal(tabulergm:::.match_coef_to_term("mix.race.A.B", terms),
              NA_character_)

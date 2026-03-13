@@ -13,7 +13,8 @@ parse_ergm_formula(formula)
 A data frame with columns:
 \describe{
   \item{term}{Character. The canonical ERGM term name.}
-  \item{attribute}{Character or \code{NA}. The attribute used in the term.}
+  \item{attribute}{Character or \code{NA}. The attribute(s) used in the term,
+    comma-separated when multiple.}
   \item{estimate}{Numeric. Always \code{NA} for formula-only parsing.}
   \item{se}{Numeric. Always \code{NA} for formula-only parsing.}
   \item{pvalue}{Numeric. Always \code{NA} for formula-only parsing.}

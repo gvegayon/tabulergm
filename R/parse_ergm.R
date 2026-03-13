@@ -14,7 +14,8 @@
 #' \describe{
 #'   \item{term}{Character. The canonical ERGM term name.}
 #'   \item{coef_name}{Character. The full coefficient name from the model.}
-#'   \item{attribute}{Character or `NA`. The attribute used in the term.}
+#'   \item{attribute}{Character or `NA`. The attribute(s) used in the term,
+#'     comma-separated when multiple.}
 #'   \item{estimate}{Numeric. The coefficient estimate.}
 #'   \item{se}{Numeric. The standard error.}
 #'   \item{pvalue}{Numeric. The p-value.}
@@ -56,7 +57,10 @@ parse_ergm_model <- function(object) {
 
   # Map each coefficient name to its originating formula term
   term_names <- vapply(terms_info, `[[`, character(1), "name")
-  term_attrs <- vapply(terms_info, `[[`, character(1), "attribute")
+  term_attrs <- vapply(terms_info, function(ti) {
+    if (length(ti[["attributes"]]) == 0L) NA_character_
+    else paste(ti[["attributes"]], collapse = ", ")
+  }, character(1))
   names(term_attrs) <- term_names
 
   mapped_terms <- vapply(coef_names, function(cn) {
@@ -94,7 +98,8 @@ parse_ergm_model <- function(object) {
 #' @return A data frame with columns:
 #' \describe{
 #'   \item{term}{Character. The canonical ERGM term name.}
-#'   \item{attribute}{Character or `NA`. The attribute used in the term.}
+#'   \item{attribute}{Character or `NA`. The attribute(s) used in the term,
+#'     comma-separated when multiple.}
 #'   \item{estimate}{Numeric. Always `NA` for formula-only parsing.}
 #'   \item{se}{Numeric. Always `NA` for formula-only parsing.}
 #'   \item{pvalue}{Numeric. Always `NA` for formula-only parsing.}
@@ -123,7 +128,10 @@ parse_ergm_formula <- function(formula) {
 
   result <- data.frame(
     term      = vapply(terms_info, `[[`, character(1), "name"),
-    attribute = vapply(terms_info, `[[`, character(1), "attribute"),
+    attribute = vapply(terms_info, function(ti) {
+      if (length(ti[["attributes"]]) == 0L) NA_character_
+      else paste(ti[["attributes"]], collapse = ", ")
+    }, character(1)),
     estimate  = rep(NA_real_, n),
     se        = rep(NA_real_, n),
     pvalue    = rep(NA_real_, n),
@@ -162,20 +170,21 @@ parse_ergm_formula <- function(formula) {
   lapply(exprs, .parse_single_term)
 }
 
-#' Parse a single term expression into its name and attribute
+#' Parse a single term expression into its name and attributes
 #'
 #' Simple names (e.g., `edges`) return no attribute. Function-call terms
-#' (e.g., `nodematch("gender")`) extract the first character string argument
-#' as the attribute. The wrapper `offset()` is unwrapped so that the inner
-#' term is parsed.
+#' (e.g., `nodematch("gender")`) extract all character string arguments
+#' as attributes (e.g., `mixing("race", "gender")` returns both). The
+#' wrapper `offset()` is unwrapped so that the inner term is parsed.
 #'
 #' @param expr An unevaluated R expression.
-#' @return A list with elements `name` and `attribute`.
+#' @return A list with elements `name` (character) and `attributes`
+#'   (character vector, possibly empty).
 #' @noRd
 .parse_single_term <- function(expr) {
   if (is.name(expr)) {
     # Simple term: edges, triangle, etc.
-    return(list(name = as.character(expr), attribute = NA_character_))
+    return(list(name = as.character(expr), attributes = character(0)))
   }
 
   if (is.call(expr)) {
@@ -188,23 +197,22 @@ parse_ergm_formula <- function(formula) {
       return(inner)
     }
 
-    # Extract the first character-string argument as the attribute
-    attr_val <- NA_character_
+    # Extract all character-string arguments as attributes
+    attrs <- character(0)
     if (length(expr) > 1L) {
       for (i in seq.int(2L, length(expr))) {
         arg <- expr[[i]]
         if (is.character(arg)) {
-          attr_val <- arg
-          break
+          attrs <- c(attrs, arg)
         }
       }
     }
 
-    return(list(name = fn_name, attribute = attr_val))
+    return(list(name = fn_name, attributes = attrs))
   }
 
   # Fallback for other expression types
-  list(name = deparse(expr), attribute = NA_character_)
+  list(name = deparse(expr), attributes = character(0))
 }
 
 
@@ -312,14 +320,6 @@ parse_ergm_formula <- function(formula) {
 #' @return A named list with elements `description`, `math`, and `figure`.
 #' @noRd
 .lookup_single_term <- function(term_name) {
-  if (!requireNamespace("ergm", quietly = TRUE)) {
-    return(list(
-      description = NA_character_,
-      math        = NA_character_,
-      figure      = NA_character_
-    ))
-  }
-
   tryCatch({
     # search.ergmTerms(name=...) prints to stdout and returns term data
     # invisibly. We capture stdout and use the invisible return value.

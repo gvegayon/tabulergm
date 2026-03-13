@@ -14,7 +14,8 @@ A data frame with columns:
 \describe{
   \item{term}{Character. The canonical ERGM term name.}
   \item{coef_name}{Character. The full coefficient name from the model.}
-  \item{attribute}{Character or \code{NA}. The attribute used in the term.}
+  \item{attribute}{Character or \code{NA}. The attribute(s) used in the term,
+    comma-separated when multiple.}
   \item{estimate}{Numeric. The coefficient estimate.}
   \item{se}{Numeric. The standard error.}
   \item{pvalue}{Numeric. The p-value.}

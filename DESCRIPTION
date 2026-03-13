@@ -14,7 +14,6 @@ Imports:
     ergm
 Suggests:
     network,
-    testthat (>= 3.0.0)
-Config/testthat/edition: 3
+    tinytest
 URL: https://github.com/gvegayon/tabulergm
 BugReports: https://github.com/gvegayon/tabulergm/issues

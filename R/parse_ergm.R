@@ -251,22 +251,32 @@ parse_ergm_formula <- function(formula) {
   )
 
   if (!is.null(model) && length(model[["terms"]]) > 0L) {
-    # Build a lookup: coefficient name -> formula term name
-    coef_to_term <- character(0)
+    coef_to_term <- list()
     model_terms <- model[["terms"]]
     n <- min(length(model_terms), length(formula_term_names))
+
+    # Strip offset() wrapper for name comparison
+    bare_names <- sub("^offset\\((.+)\\)$", "\\1", formula_term_names)
+
     for (i in seq_len(n)) {
-      cnames <- model_terms[[i]][["coef.names"]]
-      if (!is.null(cnames)) {
-        for (cn in cnames) {
-          coef_to_term[cn] <- formula_term_names[i]
-        }
+      mt <- model_terms[[i]]
+      mt_name <- mt[["name"]]
+      cnames  <- mt[["coef.names"]]
+      if (is.null(cnames)) next
+
+      # Validate position alignment: model term name should match the
+      # formula term name (after stripping offset wrappers).
+      if (!is.null(mt_name) && mt_name != bare_names[i]) next
+
+      for (cn in cnames) {
+        coef_to_term[[cn]] <- formula_term_names[i]
       }
     }
+
     if (length(coef_to_term) > 0L) {
       return(vapply(coef_names, function(cn) {
-        if (cn %in% names(coef_to_term)) coef_to_term[[cn]]
-        else NA_character_
+        val <- coef_to_term[[cn]]
+        if (!is.null(val)) val else NA_character_
       }, character(1), USE.NAMES = FALSE))
     }
   }

@@ -1,0 +1,32 @@
+# R build artifacts
+*.Rproj.user
+*.Rhistory
+*.RData
+*.Ruserdata
+.Rproj.user/
+
+# R package build
+*.tar.gz
+*.zip
+
+# Generated documentation
+/doc/
+/Meta/
+
+# Check results
+/*.Rcheck/
+
+# Compiled objects
+*.o
+*.so
+*.dll
+
+# pkgdown site
+/docs/
+
+# Temporary files
+*.bak
+*~
+
+# Environment
+.Renviron

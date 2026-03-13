@@ -1,4 +1,4 @@
-#' tabulergm: Publication-Ready Tables for ERGM Models
+#' tabulergm: Publication-Ready Tables and Summaries for ERGM Models
 #'
 #' @description
 #' `tabulergm` translates models estimated with the \pkg{ergm} framework

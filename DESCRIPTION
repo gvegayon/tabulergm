@@ -13,6 +13,7 @@ RoxygenNote: 7.3.2
 Imports:
     ergm
 Suggests:
+    knitr,
     network,
     tinytest
 URL: https://github.com/gvegayon/tabulergm

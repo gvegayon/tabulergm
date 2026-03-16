@@ -39,6 +39,8 @@ generating a summary table:
 
 ```{r}
 #| label: example
+#| message: false
+#| warning: false
 library(ergm)
 library(tabulergm)
 

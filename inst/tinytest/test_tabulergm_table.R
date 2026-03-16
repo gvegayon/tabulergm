@@ -70,9 +70,9 @@ if (requireNamespace("network", quietly = TRUE) &&
   # Markdown format (requires knitr)
   if (requireNamespace("knitr", quietly = TRUE)) {
     md <- tabulergm_table(fit, format = "markdown")
-    expect_inherits(md, "character")
+    expect_inherits(md, "knitr_kable")
 
     html <- tabulergm_table(fit, format = "html")
-    expect_inherits(html, "character")
+    expect_inherits(html, "knitr_kable")
   }
 }

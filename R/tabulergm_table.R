@@ -7,7 +7,7 @@
 #' @param object A fitted [ergm][ergm::ergm] object or an ERGM
 #'   [formula][stats::formula].
 #' @param ... Additional arguments passed to methods.
-#' @return A `data.frame` (default), or a formatted character string when
+#' @return A `data.frame` (default), or a `knitr_kable` object when
 #'   `format` is `"html"` or `"markdown"`.
 #' @export
 #' @seealso [tabulergm_table.ergm()], [tabulergm_table.formula()]
@@ -108,7 +108,8 @@ tabulergm_table.formula <- function(
 #'
 #' @param df A data frame to format.
 #' @param format One of `"data.frame"`, `"html"`, or `"markdown"`.
-#' @return The data frame (if `format = "data.frame"`) or a character string.
+#' @return The data frame (if `format = "data.frame"`) or a `knitr_kable`
+#'   object.
 #' @noRd
 .format_output <- function(df, format) {
   if (format == "data.frame") {

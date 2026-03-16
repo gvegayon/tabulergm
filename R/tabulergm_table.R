@@ -118,10 +118,9 @@ tabulergm_table.formula <- function(
   if (!requireNamespace("knitr", quietly = TRUE)) {
     stop(
       sprintf(
-        "The 'knitr' package is required for format = \"%s\". ",
+        "The 'knitr' package is required for format = \"%s\". Install it with install.packages(\"knitr\").",
         format
       ),
-      "Install it with install.packages(\"knitr\").",
       call. = FALSE
     )
   }

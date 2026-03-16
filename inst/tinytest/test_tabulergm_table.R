@@ -61,7 +61,7 @@ if (requireNamespace("network", quietly = TRUE) &&
     include_attribute = TRUE
   )
   expect_true(all(c("term", "figure", "estimate", "se", "pvalue",
-                     "description", "math", "attribute") %in%
+                    "description", "math", "attribute") %in%
                     names(result_all)))
 
   # coef_name column is NOT included in tabulergm_table output

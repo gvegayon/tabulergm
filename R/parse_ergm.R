@@ -235,8 +235,8 @@ parse_ergm_formula <- function(formula) {
 #' Uses [ergm::ergm_model()] to build the term-to-coefficient mapping, which
 #' correctly handles terms where the coefficient prefix differs from the term
 #' name (e.g., `nodemix` produces `mix.*` coefficients, `b1star(k)` produces
-#' `b1stark`). Falls back to longest-prefix matching if the model cannot be
-#' constructed.
+#' `b1stark`). Falls back to longest-prefix matching for any coefficient names
+#' not covered by the model, or if the model cannot be constructed.
 #'
 #' @param object A fitted [ergm][ergm::ergm] object.
 #' @param coef_names Character vector of coefficient names from the summary.
@@ -255,18 +255,10 @@ parse_ergm_formula <- function(formula) {
     model_terms <- model[["terms"]]
     n <- min(length(model_terms), length(formula_term_names))
 
-    # Strip offset() wrapper for name comparison
-    bare_names <- sub("^offset\\((.+)\\)$", "\\1", formula_term_names)
-
     for (i in seq_len(n)) {
       mt <- model_terms[[i]]
-      mt_name <- mt[["name"]]
-      cnames  <- mt[["coef.names"]]
+      cnames <- mt[["coef.names"]]
       if (is.null(cnames)) next
-
-      # Validate position alignment: model term name should match the
-      # formula term name (after stripping offset wrappers).
-      if (!is.null(mt_name) && mt_name != bare_names[i]) next
 
       for (cn in cnames) {
         coef_to_term[[cn]] <- formula_term_names[i]
@@ -276,7 +268,8 @@ parse_ergm_formula <- function(formula) {
     if (length(coef_to_term) > 0L) {
       return(vapply(coef_names, function(cn) {
         val <- coef_to_term[[cn]]
-        if (!is.null(val)) val else NA_character_
+        if (!is.null(val)) val
+        else .match_coef_to_term(cn, formula_term_names)
       }, character(1), USE.NAMES = FALSE))
     }
   }
@@ -290,8 +283,10 @@ parse_ergm_formula <- function(formula) {
 #' Match a coefficient name to the best-fitting formula term
 #'
 #' Tries exact matching first, then longest prefix matching (term name
-#' followed by a dot). This handles expanded terms such as
-#' `nodefactor.race.Black` mapping back to `nodefactor`.
+#' followed by a dot), then plain longest prefix matching without a dot.
+#' This handles expanded terms such as `nodefactor.race.Black` mapping
+#' back to `nodefactor`, and terms like `b1star(2)` which produce
+#' coefficient names like `b1star2` (no dot separator).
 #'
 #' @param coef_name A single coefficient name.
 #' @param term_names Character vector of formula term names.
@@ -308,6 +303,15 @@ parse_ergm_formula <- function(formula) {
 
   if (length(matches) > 0L) {
     # Longest match wins (e.g., "nodefactor" beats "node")
+    return(matches[which.max(nchar(matches))])
+  }
+
+  # Prefix match without dot: for terms like b1star(2) -> "b1star2"
+  matches <- term_names[vapply(term_names, function(t) {
+    startsWith(coef_name, t) && nchar(coef_name) > nchar(t)
+  }, logical(1))]
+
+  if (length(matches) > 0L) {
     matches[which.max(nchar(matches))]
   } else {
     NA_character_

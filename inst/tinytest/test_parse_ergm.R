@@ -103,6 +103,10 @@ expect_equal(tabulergm:::.match_coef_to_term("mix.race.A.B", terms),
 expect_equal(tabulergm:::.match_coef_to_term("nodemix.race.A.B", terms),
              "nodemix")
 
+# .match_coef_to_term handles non-dot prefix (e.g., b1star2 from b1star(2))
+terms <- c("edges", "b1star")
+expect_equal(tabulergm:::.match_coef_to_term("b1star2", terms), "b1star")
+
 # ---- Model parsing (requires ergm and network) -------------------------------
 
 if (requireNamespace("network", quietly = TRUE) &&

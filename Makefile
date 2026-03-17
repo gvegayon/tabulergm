@@ -35,10 +35,10 @@ check: build
 test:
 	Rscript -e "tinytest::test_package('$(PKG_NAME)', at_home = TRUE)"
 
-## readme      : Build README.md from README.Rmd (if it exists)
+## readme      : Build README.md from README.qmd
 .PHONY: readme
 readme:
-	Rscript -e "devtools::build_readme()"
+	quarto render README.qmd
 
 ## clean       : Remove build artifacts
 .PHONY: clean

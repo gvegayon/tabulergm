@@ -16,5 +16,5 @@ Suggests:
     knitr,
     network,
     tinytest
-URL: https://github.com/gvegayon/tabulergm
+URL: https://gvegayon.github.io/tabulergm/, https://github.com/gvegayon/tabulergm
 BugReports: https://github.com/gvegayon/tabulergm/issues

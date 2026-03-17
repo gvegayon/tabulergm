@@ -379,30 +379,41 @@ parse_ergm_formula <- function(formula) {
 #' @return A named list with elements `description`, `math`, and `figure`.
 #' @noRd
 .lookup_single_term <- function(term_name) {
-  tryCatch({
-    # search.ergmTerms(name=...) prints to stdout and returns term data
-    # invisibly. We capture stdout and use the invisible return value.
+  .do_lookup <- function() {
     utils::capture.output(
       result <- ergm::search.ergmTerms(name = term_name)
     )
-
     desc <- result[["title"]]
     if (is.null(desc) || length(desc) == 0L) desc <- NA_character_
-
     list(
       description = desc,
       math        = NA_character_,
       figure      = NA_character_
     )
-  }, error = function(e) {
-    warning(
-      sprintf("Term '%s' not found in the ERGM term database.", term_name),
-      call. = FALSE
-    )
-    list(
-      description = NA_character_,
-      math        = NA_character_,
-      figure      = NA_character_
-    )
-  })
+  }
+
+  tryCatch(
+    .do_lookup(),
+    error = function(e) {
+      # Retry once: the first call may fail while the ergm term cache is
+      # being initialised (e.g. when the package is loaded via
+      # devtools::load_all() rather than formally installed).
+      tryCatch(
+        .do_lookup(),
+        error = function(e2) {
+          warning(
+            sprintf(
+              "Term '%s' not found in the ERGM term database.", term_name
+            ),
+            call. = FALSE
+          )
+          list(
+            description = NA_character_,
+            math        = NA_character_,
+            figure      = NA_character_
+          )
+        }
+      )
+    }
+  )
 }

@@ -36,12 +36,12 @@ model <- ergm(flomarriage ~ edges + triangle)
 
 # Parse the model
 parse_ergm_model(model)
-#>       term coef_name attribute   estimate        se       pvalue description
-#> 1    edges     edges      <NA> -1.6982485 0.3458766 9.108368e-07        <NA>
-#> 2 triangle  triangle      <NA>  0.1922093 0.5603898 7.316043e-01        <NA>
-#>   math figure
-#> 1 <NA>   <NA>
-#> 2 <NA>   <NA>
+#>       term coef_name attribute  estimate        se       pvalue
+#> 1    edges     edges      <NA> -1.655726 0.3404677 1.155649e-06
+#> 2 triangle  triangle      <NA>  0.147993 0.5568772 7.904278e-01
+#>                      description math figure
+#> 1 Number of edges in the network <NA>   <NA>
+#> 2                      Triangles <NA>   <NA>
 ```
 
 ## License

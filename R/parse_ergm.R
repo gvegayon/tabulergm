@@ -396,7 +396,7 @@ parse_ergm_formula <- function(formula) {
     .do_lookup(),
     error = function(e) {
       # Retry once: the first call may fail while the ergm term cache is
-      # being initialised (e.g. when the package is loaded via
+      # being initialized (e.g. when the package is loaded via
       # devtools::load_all() rather than formally installed).
       tryCatch(
         .do_lookup(),

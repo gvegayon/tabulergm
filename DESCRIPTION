@@ -12,11 +12,11 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports:
     ergm,
+    netplot,
+    network,
     yaml
 Suggests:
     knitr,
-    netplot,
-    network,
     tinytest
 URL: https://gvegayon.github.io/tabulergm/, https://github.com/gvegayon/tabulergm
 BugReports: https://github.com/gvegayon/tabulergm/issues

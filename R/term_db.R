@@ -80,7 +80,7 @@
 #'
 #' @param yml_path Path to the YAML file.
 #' @param plot_data List with plot specifications (`edgelist`, `vcolor`,
-#'   `ecolor`).
+#'   `ecolor`, `layout`).
 #' @param directed Logical. Whether the network is directed.
 #' @param engine Character. Drawing engine name.
 #' @return Path to the cached PNG file, or `NA_character_` on failure.
@@ -94,15 +94,7 @@
     return(cache_path)
   }
 
-  figure_path <- .draw_term_figure(plot_data, directed, engine)
-
-  if (!is.na(figure_path) && file.exists(figure_path)) {
-    file.copy(figure_path, cache_path, overwrite = TRUE)
-    unlink(figure_path)
-    return(cache_path)
-  }
-
-  NA_character_
+  .draw_term_figure(plot_data, directed, cache_path, engine)
 }
 
 
@@ -111,14 +103,17 @@
 #' Creates a network object from the edgelist and draws it using the
 #' specified engine. Currently supports `"netplot"`.
 #'
-#' @param plot_data List with `edgelist`, `vcolor`, and `ecolor`.
+#' @param plot_data List with `edgelist`, `vcolor`, `ecolor`, and
+#'   optionally `layout`.
 #' @param directed Logical. Whether the network is directed.
+#' @param outfile Character. Path for the output PNG file.
 #' @param engine Character. Drawing engine name.
-#' @return Path to the temporary PNG file, or `NA_character_` on failure.
+#' @return Path to the PNG file, or `NA_character_` on failure.
 #' @noRd
-.draw_term_figure <- function(plot_data, directed, engine = "netplot") {
+.draw_term_figure <- function(plot_data, directed, outfile,
+                              engine = "netplot") {
   if (engine == "netplot") {
-    return(.draw_with_netplot(plot_data, directed))
+    return(.draw_with_netplot(plot_data, directed, outfile))
   }
 
   warning(
@@ -132,20 +127,15 @@
 #' Draw a network figure using the netplot package
 #'
 #' Parses the edgelist, builds a [network::network] object, and draws
-#' it with `netplot::nplot()`. Saves the result as a PNG in a temporary
-#' file.
+#' it with [netplot::nplot()]. Saves the result as a PNG file.
 #'
-#' @param plot_data List with `edgelist`, `vcolor`, and `ecolor`.
+#' @param plot_data List with `edgelist`, `vcolor`, `ecolor`, and
+#'   optionally `layout` (a list with numeric `x` and `y` vectors).
 #' @param directed Logical.
-#' @return Path to the temporary PNG file, or `NA_character_`.
+#' @param outfile Character. Path for the output PNG file.
+#' @return Path to the PNG file, or `NA_character_`.
 #' @noRd
-.draw_with_netplot <- function(plot_data, directed) {
-  if (!requireNamespace("netplot", quietly = TRUE)) {
-    return(NA_character_)
-  }
-  if (!requireNamespace("network", quietly = TRUE)) {
-    return(NA_character_)
-  }
+.draw_with_netplot <- function(plot_data, directed, outfile) {
 
   edges   <- .parse_plot_edgelist(plot_data$edgelist)
   nodes   <- unique(c(edges[, "from"], edges[, "to"]))
@@ -169,13 +159,30 @@
   if (is.null(ecolor)) ecolor <- rep("black", n_edges)
   if (length(ecolor) == 1L) ecolor <- rep(ecolor, n_edges)
 
-  tmpfile <- tempfile(fileext = ".png")
-  grDevices::png(tmpfile, width = 400, height = 400, bg = "transparent")
+  # Layout (optional x/y coordinates)
+  layout <- NULL
+  if (!is.null(plot_data$layout)) {
+    x <- as.numeric(plot_data$layout$x)
+    y <- as.numeric(plot_data$layout$y)
+    # netplot requires non-zero range in both dimensions; add a small
+    # perturbation when all values are identical
+    if (length(unique(x)) == 1L) x <- x + seq(-0.01, 0.01, length.out = length(x))
+    if (length(unique(y)) == 1L) y <- y + seq(-0.01, 0.01, length.out = length(y))
+    layout <- cbind(x, y)
+  }
+
+  grDevices::png(outfile, width = 400, height = 400, bg = "transparent")
   on.exit(grDevices::dev.off(), add = TRUE)
 
-  netplot::nplot(nw, vertex.color = vcolor, edge.color = ecolor)
+  p <- netplot::nplot(
+    nw,
+    vertex.color = vcolor,
+    edge.color   = ecolor,
+    layout       = layout
+  )
+  print(p)
 
-  tmpfile
+  outfile
 }
 
 

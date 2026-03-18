@@ -24,34 +24,29 @@ expect_equal(edges[, "to"],   c("1", "2"))
 
 # ---- YAML file lookup --------------------------------------------------------
 
-# .find_term_yml finds edges.undirected.yml
-path <- tabulergm:::.find_term_yml("edges", directed = FALSE)
-expect_true(!is.null(path))
-expect_true(grepl("edges\\.undirected\\.yml$", path))
+# Test known terms via for-loop
+yml_test_cases <- list(
+  list(term = "edges",    directed = FALSE, pattern = "edges\\.undirected\\.yml$"),
+  list(term = "edges",    directed = TRUE,  pattern = "edges\\.directed\\.yml$"),
+  list(term = "edges",    directed = NULL,  pattern = "edges\\.undirected\\.yml$"),
+  list(term = "mutual",   directed = TRUE,  pattern = "mutual\\.directed\\.yml$"),
+  list(term = "mutual",   directed = NULL,  pattern = "mutual\\.directed\\.yml$"),
+  list(term = "triangle", directed = FALSE, pattern = "triangle\\.undirected\\.yml$")
+)
 
-# .find_term_yml finds edges.directed.yml
-path <- tabulergm:::.find_term_yml("edges", directed = TRUE)
-expect_true(!is.null(path))
-expect_true(grepl("edges\\.directed\\.yml$", path))
+for (tc in yml_test_cases) {
+  path <- tabulergm:::.find_term_yml(tc$term, directed = tc$directed)
+  expect_true(!is.null(path),
+    info = sprintf("YAML found for %s (directed=%s)", tc$term,
+                   deparse(tc$directed)))
+  expect_true(grepl(tc$pattern, path),
+    info = sprintf("Pattern matches for %s (directed=%s)", tc$term,
+                   deparse(tc$directed)))
+}
 
 # .find_term_yml returns NULL for missing terms
 path <- tabulergm:::.find_term_yml("nonexistent_term_xyz", directed = FALSE)
 expect_null(path)
-
-# .find_term_yml with directed = NULL finds undirected first
-path <- tabulergm:::.find_term_yml("edges", directed = NULL)
-expect_true(!is.null(path))
-expect_true(grepl("edges\\.undirected\\.yml$", path))
-
-# .find_term_yml finds mutual.directed.yml
-path <- tabulergm:::.find_term_yml("mutual", directed = TRUE)
-expect_true(!is.null(path))
-expect_true(grepl("mutual\\.directed\\.yml$", path))
-
-# .find_term_yml with directed = NULL finds directed if no undirected
-path <- tabulergm:::.find_term_yml("mutual", directed = NULL)
-expect_true(!is.null(path))
-expect_true(grepl("mutual\\.directed\\.yml$", path))
 
 # .find_term_yml strips offset() wrapper
 path <- tabulergm:::.find_term_yml("offset(edges)", directed = FALSE)
@@ -83,16 +78,20 @@ expect_false(is.na(data$math))
 
 # ---- Caching mechanism -------------------------------------------------------
 
-# .get_cached_figure returns NA when netplot is not available (or uses cache)
+# .get_cached_figure draws and caches a figure
 yml_path <- tabulergm:::.find_term_yml("edges", directed = FALSE)
 yml_data <- yaml::read_yaml(yml_path)
 result <- tabulergm:::.get_cached_figure(
   yml_path, yml_data$plot, directed = FALSE, engine = "netplot"
 )
-# If netplot is not installed, result should be NA
-if (!requireNamespace("netplot", quietly = TRUE)) {
-  expect_true(is.na(result))
-}
+expect_true(!is.na(result))
+expect_true(file.exists(result))
+
+# Calling again returns the cached path (same file)
+result2 <- tabulergm:::.get_cached_figure(
+  yml_path, yml_data$plot, directed = FALSE, engine = "netplot"
+)
+expect_equal(result, result2)
 
 
 # ---- Integration with parse_ergm_formula -------------------------------------
@@ -118,10 +117,9 @@ expect_false(is.na(result3$math[result3$term == "edges"]))
 expect_true(is.na(result3$math[result3$term == "gwesp"]))
 
 
-# ---- Integration with parse_ergm_model (requires ergm and network) -----------
+# ---- Integration with parse_ergm_model (requires ergm) -----------------------
 
-if (requireNamespace("network", quietly = TRUE) &&
-    requireNamespace("ergm", quietly = TRUE)) {
+if (requireNamespace("ergm", quietly = TRUE)) {
 
   library(network)
   library(ergm)

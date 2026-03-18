@@ -9,11 +9,13 @@ Description: Translates models estimated with the 'ergm' framework into
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports:
-    ergm
+    ergm,
+    yaml
 Suggests:
     knitr,
+    netplot,
     network,
     tinytest
 URL: https://gvegayon.github.io/tabulergm/, https://github.com/gvegayon/tabulergm

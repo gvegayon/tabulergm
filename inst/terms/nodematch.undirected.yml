@@ -1,0 +1,8 @@
+plot:
+  edgelist: "0->1"
+  vcolor:
+    - black
+    - blue
+  ecolor: black
+math: |
+  \sum_{i<j} y_{ij} \mathbf{1}(x_i = x_j)

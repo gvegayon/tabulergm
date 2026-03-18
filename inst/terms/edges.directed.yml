@@ -1,0 +1,6 @@
+plot:
+  edgelist: "0->1"
+  vcolor: black
+  ecolor: black
+math: |
+  \sum_{i \neq j} y_{ij}

@@ -81,7 +81,8 @@ parse_ergm_model <- function(object) {
     stringsAsFactors = FALSE
   )
 
-  result <- .add_term_metadata(result)
+  directed <- network::is.directed(object[["network"]])
+  result <- .add_term_metadata(result, directed = directed)
   rownames(result) <- NULL
   result
 }
@@ -324,13 +325,17 @@ parse_ergm_formula <- function(formula) {
 #' Add term metadata from the ERGM term database
 #'
 #' Looks up unique term names in the ERGM term database and joins the
-#' metadata (description, math, figure) back to the data frame.
+#' metadata (description, math, figure) back to the data frame. After the
+#' ERGM database lookup, overlays any additional math or figure data found
+#' in the YAML term database under `inst/terms/`.
 #'
 #' @param df A data frame with at least a `term` column.
+#' @param directed Logical or `NULL`. Network directedness used for the
+#'   YAML term database lookup. `NULL` tries both undirected and directed.
 #' @return The data frame with `description`, `math`, and `figure` columns
 #'   appended.
 #' @noRd
-.add_term_metadata <- function(df) {
+.add_term_metadata <- function(df, directed = NULL) {
   unique_terms <- unique(df[["term"]])
   unique_terms <- unique_terms[!is.na(unique_terms)]
 
@@ -346,6 +351,15 @@ parse_ergm_formula <- function(formula) {
   df[["description"]] <- meta[["description"]][match(df[["term"]], meta[["term"]])]
   df[["math"]]        <- meta[["math"]][match(df[["term"]], meta[["term"]])]
   df[["figure"]]      <- meta[["figure"]][match(df[["term"]], meta[["term"]])]
+
+  # Overlay YAML term database data (math and figure)
+  for (tn in unique_terms) {
+    yml <- .get_term_yml_data(tn, directed = directed)
+    idx <- which(df[["term"]] == tn)
+    if (!is.na(yml[["math"]]))   df[["math"]][idx]   <- yml[["math"]]
+    if (!is.na(yml[["figure"]])) df[["figure"]][idx] <- yml[["figure"]]
+  }
+
   df
 }
 

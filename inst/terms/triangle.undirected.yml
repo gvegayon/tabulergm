@@ -1,0 +1,6 @@
+plot:
+  edgelist: "0->1->2->0"
+  vcolor: black
+  ecolor: black
+math: |
+  \sum_{i<j<k} y_{ij} y_{jk} y_{ik}

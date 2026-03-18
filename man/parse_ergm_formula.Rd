@@ -32,10 +32,8 @@ required. Returns a standardized data frame with metadata from the ERGM term
 database where available.
 }
 \examples{
-\dontrun{
 library(ergm)
 parse_ergm_formula(network ~ edges + nodematch("gender"))
-}
 }
 \seealso{
 \code{\link[=parse_ergm_model]{parse_ergm_model()}} for parsing fitted models,

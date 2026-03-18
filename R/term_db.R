@@ -159,6 +159,8 @@ tabulergm_get_plotfun <- function() {
     return(list(math = NA_character_, figure = NA_character_))
   }
 
+  # YAML 1.1 treats bare 'y', 'n', 'yes', 'no' as booleans.  Identity
+  # handlers keep them as literal strings so 'y' layout keys parse correctly.
   yml_data <- yaml::read_yaml(yml_path, handlers = list(
     "bool#yes" = function(x) x,
     "bool#no"  = function(x) x

@@ -92,6 +92,7 @@ expect_false(is.na(data$math))
 
 # .get_cached_figure draws and caches a figure
 yml_path <- tabulergm:::.find_term_yml("edges", directed = FALSE)
+# Use bool handlers to prevent YAML 1.1 coercion of 'y' key to TRUE
 yml_data <- yaml::read_yaml(yml_path, handlers = list(
   "bool#yes" = function(x) x,
   "bool#no"  = function(x) x

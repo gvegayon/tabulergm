@@ -64,18 +64,13 @@ are excluded because no fitted model is available.
 
 }}
 \examples{
-\dontrun{
 library(ergm)
-data(florentine)
-fit <- ergm(flomarriage ~ edges + nodematch("wealth"))
+fit <- readRDS(system.file("fits", "fit_edges.rds", package = "tabulergm"))
 tabulergm_table(fit)
 tabulergm_table(fit, include_description = TRUE)
 tabulergm_table(fit, format = "markdown")
-}
-\dontrun{
 library(ergm)
 tabulergm_table(network ~ edges + nodematch("gender"))
-}
 }
 \seealso{
 \code{\link[=tabulergm_table.ergm]{tabulergm_table.ergm()}}, \code{\link[=tabulergm_table.formula]{tabulergm_table.formula()}}

@@ -34,14 +34,11 @@ tabulergm_table <- function(object, ...) {
 #'
 #' @export
 #' @examples
-#' \dontrun{
 #' library(ergm)
-#' data(florentine)
-#' fit <- ergm(flomarriage ~ edges + nodematch("wealth"))
+#' fit <- readRDS(system.file("fits", "fit_edges.rds", package = "tabulergm"))
 #' tabulergm_table(fit)
 #' tabulergm_table(fit, include_description = TRUE)
 #' tabulergm_table(fit, format = "markdown")
-#' }
 tabulergm_table.ergm <- function(
     object,
     include_description = FALSE,
@@ -76,10 +73,8 @@ tabulergm_table.ergm <- function(
 #'
 #' @export
 #' @examples
-#' \dontrun{
 #' library(ergm)
 #' tabulergm_table(network ~ edges + nodematch("gender"))
-#' }
 tabulergm_table.formula <- function(
     object,
     format = c("data.frame", "html", "markdown"),

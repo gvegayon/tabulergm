@@ -7,3 +7,4 @@
 ^docs$
 ^pkgdown$
 ^README\.qmd$
+^data-raw$

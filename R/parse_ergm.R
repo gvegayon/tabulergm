@@ -30,12 +30,9 @@
 #' @seealso [parse_ergm_formula()] for formula-only parsing,
 #'   [ergm::search.ergmTerms()] for the underlying term database.
 #' @examples
-#' \dontrun{
 #' library(ergm)
-#' data(florentine)
-#' fit <- ergm(flomarriage ~ edges + nodematch("wealth"))
+#' fit <- readRDS(system.file("fits", "fit_nodematch.rds", package = "tabulergm"))
 #' parse_ergm_model(fit)
-#' }
 parse_ergm_model <- function(object) {
   if (!inherits(object, "ergm")) {
     stop("'object' must be of class 'ergm'.", call. = FALSE)
@@ -113,10 +110,8 @@ parse_ergm_model <- function(object) {
 #' @seealso [parse_ergm_model()] for parsing fitted models,
 #'   [ergm::search.ergmTerms()] for the underlying term database.
 #' @examples
-#' \dontrun{
 #' library(ergm)
 #' parse_ergm_formula(network ~ edges + nodematch("gender"))
-#' }
 parse_ergm_formula <- function(formula) {
   if (!inherits(formula, "formula")) {
     stop("'formula' must be a formula object.", call. = FALSE)

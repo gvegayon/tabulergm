@@ -39,12 +39,9 @@ canonical term names from the formula. Term metadata is looked up from
 the ERGM term database using \code{\link[ergm:search.ergmTerms]{ergm::search.ergmTerms()}}.
 }
 \examples{
-\dontrun{
 library(ergm)
-data(florentine)
-fit <- ergm(flomarriage ~ edges + nodematch("wealth"))
+fit <- readRDS(system.file("fits", "fit_nodematch.rds", package = "tabulergm"))
 parse_ergm_model(fit)
-}
 }
 \seealso{
 \code{\link[=parse_ergm_formula]{parse_ergm_formula()}} for formula-only parsing,

@@ -21,6 +21,18 @@ expect_equal(nrow(edges), 2L)
 expect_equal(edges[, "from"], c("0", "1"))
 expect_equal(edges[, "to"],   c("1", "2"))
 
+# .parse_plot_edgelist supports comma-separated segments
+edges <- tabulergm:::.parse_plot_edgelist("0->1, 2->1")
+expect_equal(nrow(edges), 2L)
+expect_equal(edges[, "from"], c("0", "2"))
+expect_equal(edges[, "to"],   c("1", "1"))
+
+# .parse_plot_edgelist handles mixed chains and commas
+edges <- tabulergm:::.parse_plot_edgelist("0->1->2, 3->4")
+expect_equal(nrow(edges), 3L)
+expect_equal(edges[, "from"], c("0", "1", "3"))
+expect_equal(edges[, "to"],   c("1", "2", "4"))
+
 
 # ---- YAML file lookup --------------------------------------------------------
 
@@ -80,18 +92,44 @@ expect_false(is.na(data$math))
 
 # .get_cached_figure draws and caches a figure
 yml_path <- tabulergm:::.find_term_yml("edges", directed = FALSE)
-yml_data <- yaml::read_yaml(yml_path)
+yml_data <- yaml::read_yaml(yml_path, handlers = list(
+  "bool#yes" = function(x) x,
+  "bool#no"  = function(x) x
+))
 result <- tabulergm:::.get_cached_figure(
-  yml_path, yml_data$plot, directed = FALSE, engine = "netplot"
+  yml_path, yml_data$plot, directed = FALSE
 )
 expect_true(!is.na(result))
 expect_true(file.exists(result))
 
 # Calling again returns the cached path (same file)
 result2 <- tabulergm:::.get_cached_figure(
-  yml_path, yml_data$plot, directed = FALSE, engine = "netplot"
+  yml_path, yml_data$plot, directed = FALSE
 )
 expect_equal(result, result2)
+
+
+# ---- Plotfun API -------------------------------------------------------------
+
+# tabulergm_get_plotfun returns the default by default
+pfun <- tabulergm_get_plotfun()
+expect_true(is.function(pfun))
+expect_identical(pfun, tabulergm_default_plotfun)
+
+# tabulergm_set_plotfun sets a custom function
+custom <- function(netobj, layout, vcolor, ecolor, directed, ...) NULL
+old <- tabulergm_set_plotfun(custom)
+expect_identical(tabulergm_get_plotfun(), custom)
+
+# tabulergm_set_plotfun returns the previous function
+expect_identical(old, tabulergm_default_plotfun)
+
+# Restore default
+tabulergm_set_plotfun(tabulergm_default_plotfun)
+expect_identical(tabulergm_get_plotfun(), tabulergm_default_plotfun)
+
+# tabulergm_set_plotfun errors on non-function
+expect_error(tabulergm_set_plotfun("not a function"))
 
 
 # ---- Integration with parse_ergm_formula -------------------------------------

@@ -5,11 +5,7 @@ plot:
     - blue
   ecolor: black
   layout:
-    "x":
-      - 0
-      - 1
-    "y":
-      - 0
-      - 0
+    x: [0, 1]
+    y: [0, 0]
 math: |
   \sum_{i<j} y_{ij} \mathbf{1}(x_i = x_j)

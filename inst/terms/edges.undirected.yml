@@ -3,11 +3,7 @@ plot:
   vcolor: black
   ecolor: black
   layout:
-    "x":
-      - 0
-      - 1
-    "y":
-      - 0
-      - 0
+    x: [0, 1]
+    y: [0, 0]
 math: |
   \sum_{i<j} y_{ij}

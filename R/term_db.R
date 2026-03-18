@@ -5,6 +5,106 @@
 # figures, and caching the results.
 
 
+# ---- Package-level plotting function storage ----
+
+#' @noRd
+.tabulergm_env <- new.env(parent = emptyenv())
+.tabulergm_env$plotfun <- NULL
+
+
+#' Default Plot Function for Term Figures
+#'
+#' Draws a network figure using [netplot::nplot()]. This is the default
+#' plot function used by `tabulergm` when generating term figures.
+#'
+#' A plot function must accept the arguments `netobj`, `layout`, `vcolor`,
+#' `ecolor`, `directed`, and `...`, and draw on the current graphics device.
+#'
+#' @param netobj A [network::network] object.
+#' @param layout A two-column numeric matrix of node coordinates (x, y).
+#' @param vcolor Character vector of vertex colors.
+#' @param ecolor Character vector of edge colors.
+#' @param directed Logical. Whether the network is directed.
+#' @param ... Additional arguments (currently unused).
+#' @return Called for its side-effect of drawing a plot on the current
+#'   graphics device. Returns invisibly.
+#' @export
+#' @seealso [tabulergm_set_plotfun()], [tabulergm_get_plotfun()]
+#' @examples
+#' \dontrun{
+#' # See the default implementation
+#' tabulergm_default_plotfun
+#'
+#' # Use a custom plot function
+#' my_plotfun <- function(netobj, layout, vcolor, ecolor, directed, ...) {
+#'   netplot::nplot(netobj, vertex.color = vcolor, edge.color = ecolor,
+#'                  layout = layout)
+#' }
+#' tabulergm_set_plotfun(my_plotfun)
+#' }
+tabulergm_default_plotfun <- function(netobj, layout, vcolor, ecolor,
+                                      directed, ...) {
+  p <- netplot::nplot(
+    netobj,
+    vertex.color = vcolor,
+    edge.color   = ecolor,
+    layout       = layout
+  )
+  print(p)
+  invisible(NULL)
+}
+
+
+#' Set the Plot Function for Term Figures
+#'
+#' Replaces the current plot function used when drawing term figures.
+#' The function must accept `netobj`, `layout`, `vcolor`, `ecolor`,
+#' `directed`, and `...`.
+#'
+#' @param plotfun A function with signature
+#'   `function(netobj, layout, vcolor, ecolor, directed, ...)`.
+#' @return Invisibly returns the previous plot function.
+#' @export
+#' @seealso [tabulergm_default_plotfun()], [tabulergm_get_plotfun()]
+#' @examples
+#' \dontrun{
+#' my_plotfun <- function(netobj, layout, vcolor, ecolor, directed, ...) {
+#'   netplot::nplot(netobj, vertex.color = vcolor, edge.color = ecolor,
+#'                  layout = layout)
+#' }
+#' old <- tabulergm_set_plotfun(my_plotfun)
+#' # Restore the default
+#' tabulergm_set_plotfun(tabulergm_default_plotfun)
+#' }
+tabulergm_set_plotfun <- function(plotfun) {
+  if (!is.function(plotfun)) {
+    stop("'plotfun' must be a function.", call. = FALSE)
+  }
+  old <- .tabulergm_env$plotfun
+  .tabulergm_env$plotfun <- plotfun
+  invisible(old)
+}
+
+
+#' Get the Current Plot Function
+#'
+#' Returns the function currently used to draw term figures.
+#' If no custom function has been set, returns
+#' [tabulergm_default_plotfun()].
+#'
+#' @return A function (the active plot function).
+#' @export
+#' @seealso [tabulergm_default_plotfun()], [tabulergm_set_plotfun()]
+tabulergm_get_plotfun <- function() {
+  if (is.null(.tabulergm_env$plotfun)) {
+    .tabulergm_env$plotfun <- tabulergm_default_plotfun
+  }
+  .tabulergm_env$plotfun
+}
+
+
+# ---- YAML file lookup ----
+
 #' Find the YAML file for a given term
 #'
 #' Searches in the package's `inst/terms/` directory for a YAML file
@@ -39,38 +139,44 @@
 }
 
 
+# ---- YAML data reading ----
+
 #' Read term data from a YAML file
 #'
 #' Reads a term's YAML file and returns math and figure data.
-#' The figure is drawn using the specified engine and cached
-#' based on an MD5 hash of the YAML file.
+#' The figure is drawn using the active plot function (see
+#' [tabulergm_get_plotfun()]) and cached based on an MD5 hash of the
+#' YAML file.
 #'
 #' @param term_name A single term name (character).
 #' @param directed Logical or `NULL`.
-#' @param engine Character. Drawing engine name, default `"netplot"`.
 #' @return A named list with elements `math` and `figure`.
 #' @noRd
-.get_term_yml_data <- function(term_name, directed = NULL,
-                               engine = "netplot") {
+.get_term_yml_data <- function(term_name, directed = NULL) {
   yml_path <- .find_term_yml(term_name, directed)
 
   if (is.null(yml_path)) {
     return(list(math = NA_character_, figure = NA_character_))
   }
 
-  yml_data <- yaml::read_yaml(yml_path)
+  yml_data <- yaml::read_yaml(yml_path, handlers = list(
+    "bool#yes" = function(x) x,
+    "bool#no"  = function(x) x
+  ))
 
   math <- if (!is.null(yml_data$math)) trimws(yml_data$math) else NA_character_
 
   figure <- NA_character_
   if (!is.null(yml_data$plot)) {
     is_directed <- grepl("\\.directed\\.yml$", yml_path)
-    figure <- .get_cached_figure(yml_path, yml_data$plot, is_directed, engine)
+    figure <- .get_cached_figure(yml_path, yml_data$plot, is_directed)
   }
 
   list(math = math, figure = figure)
 }
 
+
+# ---- Figure caching ----
 
 #' Get a cached figure or draw a new one
 #'
@@ -82,11 +188,9 @@
 #' @param plot_data List with plot specifications (`edgelist`, `vcolor`,
 #'   `ecolor`, `layout`).
 #' @param directed Logical. Whether the network is directed.
-#' @param engine Character. Drawing engine name.
 #' @return Path to the cached PNG file, or `NA_character_` on failure.
 #' @noRd
-.get_cached_figure <- function(yml_path, plot_data, directed,
-                               engine = "netplot") {
+.get_cached_figure <- function(yml_path, plot_data, directed) {
   hash <- unname(tools::md5sum(yml_path))
   cache_path <- file.path(tempdir(), paste0(hash, ".png"))
 
@@ -94,48 +198,26 @@
     return(cache_path)
   }
 
-  .draw_term_figure(plot_data, directed, cache_path, engine)
+  .draw_term_figure(plot_data, directed, cache_path)
 }
 
 
+# ---- Figure drawing ----
+
 #' Draw a network figure from plot specifications
 #'
-#' Creates a network object from the edgelist and draws it using the
-#' specified engine. Currently supports `"netplot"`.
+#' Creates a [network::network] object from the edgelist, prepares
+#' colours and layout, and delegates drawing to the active plot function
+#' (see [tabulergm_get_plotfun()]).
 #'
 #' @param plot_data List with `edgelist`, `vcolor`, `ecolor`, and
 #'   optionally `layout`.
 #' @param directed Logical. Whether the network is directed.
 #' @param outfile Character. Path for the output PNG file.
-#' @param engine Character. Drawing engine name.
 #' @return Path to the PNG file, or `NA_character_` on failure.
 #' @noRd
-.draw_term_figure <- function(plot_data, directed, outfile,
-                              engine = "netplot") {
-  if (engine == "netplot") {
-    return(.draw_with_netplot(plot_data, directed, outfile))
-  }
-
-  warning(
-    sprintf("Unknown drawing engine: '%s'. No figure drawn.", engine),
-    call. = FALSE
-  )
-  NA_character_
-}
-
-
-#' Draw a network figure using the netplot package
-#'
-#' Parses the edgelist, builds a [network::network] object, and draws
-#' it with [netplot::nplot()]. Saves the result as a PNG file.
-#'
-#' @param plot_data List with `edgelist`, `vcolor`, `ecolor`, and
-#'   optionally `layout` (a list with numeric `x` and `y` vectors).
-#' @param directed Logical.
-#' @param outfile Character. Path for the output PNG file.
-#' @return Path to the PNG file, or `NA_character_`.
-#' @noRd
-.draw_with_netplot <- function(plot_data, directed, outfile) {
+.draw_term_figure <- function(plot_data, directed, outfile) {
+  plotfun <- tabulergm_get_plotfun()
 
   edges   <- .parse_plot_edgelist(plot_data$edgelist)
   nodes   <- unique(c(edges[, "from"], edges[, "to"]))
@@ -166,49 +248,67 @@
     y <- as.numeric(plot_data$layout$y)
     # netplot requires non-zero range in both dimensions; add a small
     # perturbation when all values are identical
-    if (length(unique(x)) == 1L) x <- x + seq(-0.01, 0.01, length.out = length(x))
-    if (length(unique(y)) == 1L) y <- y + seq(-0.01, 0.01, length.out = length(y))
+    if (length(unique(x)) == 1L) {
+      x <- x + seq(-0.01, 0.01, length.out = length(x))
+    }
+    if (length(unique(y)) == 1L) {
+      y <- y + seq(-0.01, 0.01, length.out = length(y))
+    }
     layout <- cbind(x, y)
   }
 
   grDevices::png(outfile, width = 400, height = 400, bg = "transparent")
   on.exit(grDevices::dev.off(), add = TRUE)
 
-  p <- netplot::nplot(
-    nw,
-    vertex.color = vcolor,
-    edge.color   = ecolor,
-    layout       = layout
+  plotfun(
+    netobj   = nw,
+    layout   = layout,
+    vcolor   = vcolor,
+    ecolor   = ecolor,
+    directed = directed
   )
-  print(p)
 
   outfile
 }
 
 
+# ---- Edgelist parsing ----
+
 #' Parse a plot edgelist string into an edge matrix
 #'
 #' Converts a string like `"0->1->2->0"` into a two-column character
 #' matrix of edges: each consecutive pair of nodes connected by `"->"`
-#' becomes one row.
+#' becomes one row. Comma-separated segments are also supported, e.g.
+#' `"0->1, 2->1"`.
 #'
 #' @param edgelist_str A character string with nodes separated by `"->"`.
+#'   Multiple edge chains can be separated by commas.
 #' @return A two-column character matrix with columns `from` and `to`.
 #' @noRd
 .parse_plot_edgelist <- function(edgelist_str) {
-  nodes <- strsplit(edgelist_str, "->", fixed = TRUE)[[1L]]
-  nodes <- trimws(nodes)
-  n <- length(nodes)
+  # Split on comma to support "0->1, 2->1" format
+  segments <- strsplit(edgelist_str, ",", fixed = TRUE)[[1L]]
+  segments <- trimws(segments)
 
-  if (n < 2L) {
-    stop(
-      "Edgelist must contain at least two nodes separated by '->'.",
-      call. = FALSE
-    )
+  all_edges <- list()
+  for (seg in segments) {
+    nodes <- strsplit(seg, "->", fixed = TRUE)[[1L]]
+    nodes <- trimws(nodes)
+    n <- length(nodes)
+
+    if (n < 2L) {
+      stop(
+        "Each edgelist segment must contain at least two nodes ",
+        "separated by '->'.",
+        call. = FALSE
+      )
+    }
+
+    from <- nodes[seq_len(n - 1L)]
+    to   <- nodes[seq.int(2L, n)]
+
+    all_edges[[length(all_edges) + 1L]] <- cbind(from = from, to = to)
   }
 
-  from <- nodes[seq_len(n - 1L)]
-  to   <- nodes[seq.int(2L, n)]
-
-  matrix(c(from, to), ncol = 2L, dimnames = list(NULL, c("from", "to")))
+  do.call(rbind, all_edges)
 }

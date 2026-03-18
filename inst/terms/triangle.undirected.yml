@@ -3,7 +3,7 @@ plot:
   vcolor: black
   ecolor: black
   layout:
-    x:
+    "x":
       - 0
       - 1
       - 0.5

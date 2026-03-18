@@ -148,14 +148,14 @@
   }
 
   edges   <- .parse_plot_edgelist(plot_data$edgelist)
-  nodes   <- unique(c(edges[, 1L], edges[, 2L]))
+  nodes   <- unique(c(edges[, "from"], edges[, "to"]))
   n_nodes <- length(nodes)
   n_edges <- nrow(edges)
 
   nw <- network::network.initialize(n_nodes, directed = directed)
   for (i in seq_len(n_edges)) {
-    from_idx <- match(edges[i, 1L], nodes)
-    to_idx   <- match(edges[i, 2L], nodes)
+    from_idx <- match(edges[i, "from"], nodes)
+    to_idx   <- match(edges[i, "to"], nodes)
     network::add.edge(nw, from_idx, to_idx)
   }
 

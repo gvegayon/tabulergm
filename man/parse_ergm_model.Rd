@@ -7,36 +7,36 @@
 parse_ergm_model(object)
 }
 \arguments{
-\item{object}{A fitted \code{\link[ergm]{ergm}} object.}
+\item{object}{A fitted \link[ergm:ergm]{ergm} object.}
 }
 \value{
 A data frame with columns:
 \describe{
-  \item{term}{Character. The canonical ERGM term name.}
-  \item{coef_name}{Character. The full coefficient name from the model.}
-  \item{attribute}{Character or \code{NA}. The attribute(s) used in the term,
-    comma-separated when multiple.}
-  \item{estimate}{Numeric. The coefficient estimate.}
-  \item{se}{Numeric. The standard error.}
-  \item{pvalue}{Numeric. The p-value.}
-  \item{description}{Character or \code{NA}. Term description from the ERGM
-    term database.}
-  \item{math}{Character or \code{NA}. The mathematical definition
-    (reserved for future use).}
-  \item{figure}{Character or \code{NA}. Path to an associated figure
-    (reserved for future use).}
+\item{term}{Character. The canonical ERGM term name.}
+\item{coef_name}{Character. The full coefficient name from the model.}
+\item{attribute}{Character or \code{NA}. The attribute(s) used in the term,
+comma-separated when multiple.}
+\item{estimate}{Numeric. The coefficient estimate.}
+\item{se}{Numeric. The standard error.}
+\item{pvalue}{Numeric. The p-value.}
+\item{description}{Character or \code{NA}. Term description from the ERGM
+term database.}
+\item{math}{Character or \code{NA}. The mathematical definition
+(reserved for future use).}
+\item{figure}{Character or \code{NA}. Path to an associated figure
+(reserved for future use).}
 }
 }
 \description{
 Extracts terms, coefficients, standard errors, p-values, and term metadata
-from a fitted \code{\link[ergm]{ergm}} object. Returns a standardized data frame
+from a fitted \link[ergm:ergm]{ergm} object. Returns a standardized data frame
 for use in publication-ready tables.
 }
 \details{
 The coefficient names produced by \code{ergm} (which may expand terms into
 multiple rows, e.g., \code{nodefactor.race.Black}) are mapped back to the
 canonical term names from the formula. Term metadata is looked up from
-the ERGM term database using \code{\link[ergm]{search.ergmTerms}}.
+the ERGM term database using \code{\link[ergm:search.ergmTerms]{ergm::search.ergmTerms()}}.
 }
 \examples{
 \dontrun{
@@ -47,6 +47,6 @@ parse_ergm_model(fit)
 }
 }
 \seealso{
-\code{\link{parse_ergm_formula}} for formula-only parsing,
-  \code{\link[ergm]{search.ergmTerms}} for the underlying term database.
+\code{\link[=parse_ergm_formula]{parse_ergm_formula()}} for formula-only parsing,
+\code{\link[ergm:search.ergmTerms]{ergm::search.ergmTerms()}} for the underlying term database.
 }

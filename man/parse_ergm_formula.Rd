@@ -7,23 +7,23 @@
 parse_ergm_formula(formula)
 }
 \arguments{
-\item{formula}{An ERGM \code{\link[stats]{formula}}.}
+\item{formula}{An ERGM \link[stats:formula]{formula}.}
 }
 \value{
 A data frame with columns:
 \describe{
-  \item{term}{Character. The canonical ERGM term name.}
-  \item{attribute}{Character or \code{NA}. The attribute(s) used in the term,
-    comma-separated when multiple.}
-  \item{estimate}{Numeric. Always \code{NA} for formula-only parsing.}
-  \item{se}{Numeric. Always \code{NA} for formula-only parsing.}
-  \item{pvalue}{Numeric. Always \code{NA} for formula-only parsing.}
-  \item{description}{Character or \code{NA}. Term description from the ERGM
-    term database.}
-  \item{math}{Character or \code{NA}. The mathematical definition
-    (reserved for future use).}
-  \item{figure}{Character or \code{NA}. Path to an associated figure
-    (reserved for future use).}
+\item{term}{Character. The canonical ERGM term name.}
+\item{attribute}{Character or \code{NA}. The attribute(s) used in the term,
+comma-separated when multiple.}
+\item{estimate}{Numeric. Always \code{NA} for formula-only parsing.}
+\item{se}{Numeric. Always \code{NA} for formula-only parsing.}
+\item{pvalue}{Numeric. Always \code{NA} for formula-only parsing.}
+\item{description}{Character or \code{NA}. Term description from the ERGM
+term database.}
+\item{math}{Character or \code{NA}. The mathematical definition
+(reserved for future use).}
+\item{figure}{Character or \code{NA}. Path to an associated figure
+(reserved for future use).}
 }
 }
 \description{
@@ -38,6 +38,6 @@ parse_ergm_formula(network ~ edges + nodematch("gender"))
 }
 }
 \seealso{
-\code{\link{parse_ergm_model}} for parsing fitted models,
-  \code{\link[ergm]{search.ergmTerms}} for the underlying term database.
+\code{\link[=parse_ergm_model]{parse_ergm_model()}} for parsing fitted models,
+\code{\link[ergm:search.ergmTerms]{ergm::search.ergmTerms()}} for the underlying term database.
 }

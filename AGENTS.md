@@ -17,5 +17,12 @@ the package builds and passes checks:
    devtools::check()
    ```
 
+3. **Render the README** (regenerates `README.md` from `README.qmd`):
+
+   ```bash
+   quarto render README.qmd
+   ```
+
 These steps ensure that exported functions are registered in `NAMESPACE`,
-man pages are up to date, and all tests pass.
+man pages are up to date, all tests pass, and `README.md` reflects the
+current state of the package.

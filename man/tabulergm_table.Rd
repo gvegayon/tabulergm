@@ -20,8 +20,8 @@ tabulergm_table(object, ...)
 \method{tabulergm_table}{formula}(object, format = c("data.frame", "html", "markdown"), ...)
 }
 \arguments{
-\item{object}{A fitted \code{\link[ergm]{ergm}} object or an ERGM
-\code{\link[stats]{formula}}.}
+\item{object}{A fitted \link[ergm:ergm]{ergm} object or an ERGM
+\link[stats:formula]{formula}.}
 
 \item{...}{Additional arguments passed to methods.}
 
@@ -43,22 +43,22 @@ A \code{data.frame} (default), or a \code{knitr_kable} object when
 \code{format} is \code{"html"} or \code{"markdown"}.
 }
 \description{
-S3 generic that dispatches to methods for fitted \code{\link[ergm]{ergm}} objects
-or plain \code{\link[stats]{formula}} objects, calling the internal parsing
+S3 generic that dispatches to methods for fitted \link[ergm:ergm]{ergm} objects
+or plain \link[stats:formula]{formula} objects, calling the internal parsing
 engine and returning a formatted table.
 }
 \section{Methods (by class)}{
 \itemize{
 \item \code{tabulergm_table(ergm)}: Method for fitted ergm objects.
 
-Calls \code{\link{parse_ergm_model}} and returns a table with default columns
+Calls \code{\link[=parse_ergm_model]{parse_ergm_model()}} and returns a table with default columns
 \code{term}, \code{figure}, \code{estimate}, \code{se}, and \code{pvalue}.
 Optional columns (\code{description}, \code{math}, \code{attribute}) can be included
 via logical arguments.
 
 \item \code{tabulergm_table(formula)}: Method for formula objects.
 
-Calls \code{\link{parse_ergm_formula}} and returns a table with columns
+Calls \code{\link[=parse_ergm_formula]{parse_ergm_formula()}} and returns a table with columns
 \code{term}, \code{figure}, \code{math}, and \code{description}. Coefficient statistics
 are excluded because no fitted model is available.
 
@@ -78,5 +78,5 @@ tabulergm_table(network ~ edges + nodematch("gender"))
 }
 }
 \seealso{
-\code{\link{tabulergm_table.ergm}}, \code{\link{tabulergm_table.formula}}
+\code{\link[=tabulergm_table.ergm]{tabulergm_table.ergm()}}, \code{\link[=tabulergm_table.formula]{tabulergm_table.formula()}}
 }

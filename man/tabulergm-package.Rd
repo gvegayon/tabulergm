@@ -2,20 +2,24 @@
 % Please edit documentation in R/tabulergm-package.R
 \docType{package}
 \name{tabulergm-package}
+\alias{tabulergm}
 \alias{tabulergm-package}
 \title{tabulergm: Publication-Ready Tables and Summaries for ERGM Models}
 \description{
-Translates models estimated with the \pkg{ergm} framework into
-publication-ready tables and explanatory summaries.
+\code{tabulergm} translates models estimated with the \pkg{ergm} framework
+into publication-ready tables and explanatory summaries.
 }
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://gvegayon.github.io/tabulergm/}
   \item \url{https://github.com/gvegayon/tabulergm}
   \item Report bugs at \url{https://github.com/gvegayon/tabulergm/issues}
 }
+
 }
 \author{
 \strong{Maintainer}: George Vega Yon \email{g.vegayon@gmail.com} (\href{https://orcid.org/0000-0002-3171-0844}{ORCID})
+
 }
 \keyword{internal}

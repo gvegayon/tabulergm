@@ -75,5 +75,58 @@ if (requireNamespace("network", quietly = TRUE) &&
 
     html <- tabulergm_table(fit, format = "html")
     expect_inherits(html, "knitr_kable")
+
+    # ---- math column is wrapped in $$ for markdown -------------------------
+
+    md_math <- tabulergm_table(fit, include_math = TRUE, format = "markdown")
+    md_str <- paste(as.character(md_math), collapse = "\n")
+    # The math expression should be wrapped in $$...$$ delimiters
+    expect_true(grepl("\\$\\$", md_str),
+      info = "markdown math column contains $$ delimiters")
+
+    # ---- math column is wrapped in $$ for html ----------------------------
+
+    html_math <- tabulergm_table(fit, include_math = TRUE, format = "html")
+    html_str <- paste(as.character(html_math), collapse = "\n")
+    expect_true(grepl("\\$\\$", html_str),
+      info = "html math column contains $$ delimiters")
+
+    # ---- figure column uses <img> tags for markdown ------------------------
+
+    md_fig <- tabulergm_table(fit, format = "markdown")
+    md_fig_str <- paste(as.character(md_fig), collapse = "\n")
+    # The figure cell should contain an <img> tag (or be empty when no figure)
+    has_figure <- !is.na(tabulergm_table(fit)[["figure"]])
+    if (any(has_figure)) {
+      expect_true(grepl("<img", md_fig_str),
+        info = "markdown figure column uses <img> tags")
+    }
+
+    # ---- figure column uses <img> tags for html ---------------------------
+
+    html_fig_str <- paste(as.character(html), collapse = "\n")
+    if (any(has_figure)) {
+      expect_true(grepl("<img", html_fig_str),
+        info = "html figure column uses <img> tags")
+    }
+
+    # ---- tabulergm_view dispatches without error --------------------------
+
+    # Only test that the function returns a path; skip browser opening
+    tmp <- tabulergm_view(fit)
+    expect_true(file.exists(tmp),
+      info = "tabulergm_view creates a temporary HTML file")
+    expect_true(grepl("\\.html$", tmp),
+      info = "tabulergm_view returns a .html file path")
+
+    # The HTML file contains MathJax script tag
+    html_content <- paste(readLines(tmp), collapse = "\n")
+    expect_true(grepl("mathjax", tolower(html_content)),
+      info = "tabulergm_view HTML includes MathJax")
+
+    # tabulergm_view also works on a formula
+    tmp_f <- tabulergm_view(network ~ edges)
+    expect_true(file.exists(tmp_f),
+      info = "tabulergm_view.formula creates a temporary HTML file")
   }
 }

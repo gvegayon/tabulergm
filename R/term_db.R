@@ -44,11 +44,24 @@
 #' }
 tabulergm_default_plotfun <- function(netobj, layout, vcolor, ecolor,
                                       directed, ...) {
+  # Figuring out the edge width
+  ewidth <- if (inherits(netobj, "network")) 
+    network::get.edge.attribute(netobj, "weight") 
+  else if (inherits(netobj, "igraph")) 
+    igraph::E(netobj)$weight 
+  else NULL
+  
   p <- netplot::nplot(
     netobj,
     vertex.color = vcolor,
     edge.color   = ecolor,
-    layout       = layout
+    edge.width   = ewidth,
+    layout       = layout,
+    vertex.size.range = c(.2, .2),
+    edge.line.breaks = 1,
+    vertex.nsides = 20,
+    vertex.label = NA,
+    edge.width.range = c(1, 2)
   )
   print(p)
   invisible(NULL)
@@ -231,6 +244,7 @@ tabulergm_get_plotfun <- function() {
     from_idx <- match(edges[i, "from"], nodes)
     to_idx   <- match(edges[i, "to"], nodes)
     network::add.edge(nw, from_idx, to_idx)
+    network::set.edge.attribute(nw, "weight", 1)
   }
 
   # Vertex colours
@@ -248,16 +262,45 @@ tabulergm_get_plotfun <- function() {
   if (!is.null(plot_data$layout)) {
     x <- as.numeric(plot_data$layout$x)
     y <- as.numeric(plot_data$layout$y)
-    # netplot requires non-zero range in both dimensions; add a small
-    # perturbation when all values are identical
-    if (length(unique(x)) == 1L) {
-      x <- x + seq(-0.01, 0.01, length.out = length(x))
-    }
-    if (length(unique(y)) == 1L) {
-      y <- y + seq(-0.01, 0.01, length.out = length(y))
-    }
     layout <- cbind(x, y)
   }
+
+  # Adding transparent nodes to ensure we cover enough space for the layout
+  if (!is.null(layout)) {
+
+    r <- cbind(
+      x = range(layout[, "x"]),
+      y = range(layout[, "y"])
+    )
+
+    # Expanding by 5% each side to avoid clipping
+    x_expansion <- 0.1 * diff(r[, "x"])
+    y_expansion <- 0.1 * diff(r[, "y"])
+
+    # Checking minimum
+    if (x_expansion == 0) x_expansion <- y_expansion
+    if (y_expansion == 0) y_expansion <- x_expansion
+
+    r[, "x"] <- r[, "x"] + c(-x_expansion, x_expansion)
+    r[, "y"] <- r[, "y"] + c(-y_expansion, y_expansion)
+
+    layout <- rbind(layout, r)
+
+    # Adding the transparent nodes to the network object
+    nw <- network::add.vertices(nw, 2)
+    vcolor <- c(vcolor, "transparent", "transparent")
+
+    # Adding a single transparent edge between the
+    # two transparent nodes so that the edge-size
+    # scales properly
+    nw <- network::add.edge(nw, n_nodes + 1, n_nodes + 2)
+
+    ecolor <- c(ecolor, "transparent")
+    network::set.edge.attribute(nw, "weight", .5, e = n_edges + 1)
+    
+  }
+
+  
 
   grDevices::png(outfile, width = 400, height = 400, bg = "transparent")
   on.exit(grDevices::dev.off(), add = TRUE)

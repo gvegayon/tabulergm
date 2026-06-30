@@ -46,10 +46,31 @@ library(tabulergm)
 
 # Fit a simple ERGM
 data(florentine)
-model <- ergm(flomarriage ~ edges + triangle)
+model <- ergm(
+  flomarriage ~ edges + triangle,
+  control = control.ergm(seed = 42)
+)
 
 # Parse the model
-parse_ergm_model(model)
+model_terms <- parse_ergm_model(model)
+model_terms[, c("term", "estimate", "se", "pvalue", "description")]
+```
+
+The term dictionary also includes mode-specific terms for bipartite ERGMs.  A
+formula is enough to inspect the available metadata before fitting a model:
+
+```{r}
+#| label: bipartite-terms
+#| message: false
+#| warning: false
+bipartite_terms <- parse_ergm_formula(
+  network ~
+    gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+    b1factor("type") + b2factor("group") +
+    b1nodematch("type") + b2nodematch("group")
+)
+
+bipartite_terms[, c("term", "attribute", "description")]
 ```
 
 ## License

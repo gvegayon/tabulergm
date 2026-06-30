@@ -58,10 +58,10 @@ tabulergm_default_plotfun <- function(netobj, layout, vcolor, ecolor,
     edge.width   = ewidth,
     layout       = layout,
     vertex.size.range = c(.2, .2),
-    edge.line.breaks = 1,
-    vertex.nsides = 20,
-    vertex.label = NA,
-    edge.width.range = c(1, 2)
+    edge.line.breaks  = 1,
+    vertex.nsides     = 20,
+    vertex.label      = NA,
+    edge.width.range  = c(1, 2)
   )
   print(p)
   invisible(NULL)

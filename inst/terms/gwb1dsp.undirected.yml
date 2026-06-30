@@ -1,0 +1,13 @@
+plot:
+  edgelist: "0->2, 0->3, 1->2"
+  vcolor:
+    - black
+    - black
+    - gray
+    - gray
+  ecolor: black
+  layout:
+    x: [0, 0, 1, 1]
+    y: [1, 0, 1, 0]
+math: |
+  e^{\tau} \sum_{m=1}^{\infty} \left[1 - \left(1 - e^{-\tau}\right)^m\right] D^{(1)}_m

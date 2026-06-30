@@ -22,3 +22,4 @@ Suggests:
 URL: https://gvegayon.github.io/tabulergm/, https://github.com/gvegayon/tabulergm
 BugReports: https://github.com/gvegayon/tabulergm/issues
 Config/roxygen2/version: 8.0.0
+RoxygenNote: 7.3.3

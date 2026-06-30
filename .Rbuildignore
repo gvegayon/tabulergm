@@ -8,3 +8,4 @@
 ^pkgdown$
 ^README\.qmd$
 ^data-raw$
+AGENTS\.md

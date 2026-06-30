@@ -43,7 +43,13 @@ yml_test_cases <- list(
   list(term = "edges",    directed = NULL,  pattern = "edges\\.undirected\\.yml$"),
   list(term = "mutual",   directed = TRUE,  pattern = "mutual\\.directed\\.yml$"),
   list(term = "mutual",   directed = NULL,  pattern = "mutual\\.directed\\.yml$"),
-  list(term = "triangle", directed = FALSE, pattern = "triangle\\.undirected\\.yml$")
+  list(term = "triangle", directed = FALSE, pattern = "triangle\\.undirected\\.yml$"),
+  list(term = "gwb1dsp", directed = FALSE, pattern = "gwb1dsp\\.undirected\\.yml$"),
+  list(term = "gwb2dsp", directed = FALSE, pattern = "gwb2dsp\\.undirected\\.yml$"),
+  list(term = "b1factor", directed = FALSE, pattern = "b1factor\\.undirected\\.yml$"),
+  list(term = "b2factor", directed = FALSE, pattern = "b2factor\\.undirected\\.yml$"),
+  list(term = "b1nodematch", directed = FALSE, pattern = "b1nodematch\\.undirected\\.yml$"),
+  list(term = "b2nodematch", directed = FALSE, pattern = "b2nodematch\\.undirected\\.yml$")
 )
 
 for (tc in yml_test_cases) {
@@ -86,6 +92,16 @@ expect_true(grepl("x_i = x_j", data$math))
 # .get_term_yml_data reads triangle math
 data <- tabulergm:::.get_term_yml_data("triangle", directed = FALSE)
 expect_false(is.na(data$math))
+
+# .get_term_yml_data reads bipartite term math
+for (term in c("gwb1dsp", "gwb2dsp", "b1factor", "b2factor",
+               "b1nodematch", "b2nodematch")) {
+  data <- tabulergm:::.get_term_yml_data(term, directed = FALSE)
+  expect_false(is.na(data$math),
+    info = sprintf("math found for %s", term))
+  expect_false(is.na(data$figure),
+    info = sprintf("figure found for %s", term))
+}
 
 
 # ---- Caching mechanism -------------------------------------------------------
@@ -154,6 +170,13 @@ result3 <- parse_ergm_formula(f3)
 expect_false(is.na(result3$math[result3$term == "edges"]))
 # gwesp has no YAML file, so math stays NA
 expect_true(is.na(result3$math[result3$term == "gwesp"]))
+
+# Bipartite terms have YAML data
+f4 <- y ~ gwb1dsp(0.5, fixed = TRUE) + b1factor("type") + b2nodematch("group")
+result4 <- parse_ergm_formula(f4)
+expect_false(is.na(result4$math[result4$term == "gwb1dsp"]))
+expect_false(is.na(result4$math[result4$term == "b1factor"]))
+expect_false(is.na(result4$math[result4$term == "b2nodematch"]))
 
 
 # ---- Integration with parse_ergm_model (requires ergm) -----------------------

@@ -353,7 +353,7 @@ tabulergm_get_plotfun <- function() {
 
   grDevices::png(outfile, width = 400, height = 400, bg = "transparent")
   on.exit(grDevices::dev.off(), add = TRUE)
-  graphics::plot.new()
+  grid::grid.newpage()
 
   plotfun(
     netobj    = nw,

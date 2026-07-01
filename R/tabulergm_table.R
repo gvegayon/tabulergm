@@ -336,7 +336,16 @@ tabulergm_table.formula <- function(
 
 #' Build a target from the active knitr figure path
 #'
-#' @return A knitr prefix target list, or `NULL` outside a document render.
+#' When `fig.path` ends with `/` it denotes a directory (figures are placed
+#' inside it) and a `"directory"` target is returned.  Otherwise the path is
+#' treated as a filename prefix and a `"prefix"` target is returned.
+#'
+#' Using `file.path()` for directory-type targets avoids a Windows-specific
+#' issue where `file.path()` strips the trailing `/` from path components,
+#' which would cause `paste0()` to concatenate the directory name and filename
+#' without a separator.
+#'
+#' @return A knitr target list, or `NULL` outside a document render.
 #' @noRd
 .knitr_markdown_figure_target <- function() {
   if (!.is_noninteractive_document_render()) {
@@ -351,6 +360,20 @@ tabulergm_table.formula <- function(
 
   fig_path <- .forward_slash_path(fig_path)
   output_dir <- .knitr_output_dir(default = getwd())
+
+  if (endsWith(fig_path, "/")) {
+    dir_path <- sub("/+$", "", fig_path)
+    absolute_dir <- if (.is_absolute_path(dir_path)) {
+      dir_path
+    } else {
+      file.path(output_dir, dir_path)
+    }
+    return(list(
+      type = "directory",
+      relative = dir_path,
+      absolute = absolute_dir
+    ))
+  }
 
   absolute_prefix <- if (.is_absolute_path(fig_path)) {
     fig_path

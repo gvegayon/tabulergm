@@ -21,5 +21,10 @@ Useful links:
 \author{
 \strong{Maintainer}: George Vega Yon \email{g.vegayon@gmail.com} (\href{https://orcid.org/0000-0002-3171-0844}{ORCID})
 
+Authors:
+\itemize{
+  \item George Vega Yon \email{g.vegayon@gmail.com} (\href{https://orcid.org/0000-0002-3171-0844}{ORCID})
+}
+
 }
 \keyword{internal}

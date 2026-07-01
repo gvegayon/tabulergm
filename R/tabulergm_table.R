@@ -113,22 +113,83 @@ tabulergm_table.formula <- function(
   # Math column: wrap non-NA values in display-math delimiters
   if ("math" %in% names(df)) {
     has_math <- !is.na(df[["math"]]) & nzchar(trimws(df[["math"]]))
+    math_values <- vapply(
+      trimws(df[["math"]][has_math]),
+      .escape_math_html,
+      FUN.VALUE = character(1)
+    )
     df[["math"]][has_math] <- paste0(
-      "$$", trimws(df[["math"]][has_math]), "$$"
+      "$$", math_values, "$$"
     )
   }
 
   # Figure column: convert file paths to <img> tags
   if ("figure" %in% names(df)) {
     has_fig <- !is.na(df[["figure"]]) & nzchar(df[["figure"]])
+    fig_src <- vapply(
+      df[["figure"]][has_fig],
+      .figure_src_for_format,
+      FUN.VALUE = character(1),
+      format = format
+    )
     df[["figure"]][has_fig] <- sprintf(
       '<img src="%s" style="width:80px;height:80px;" alt="term figure">',
-      df[["figure"]][has_fig]
+      fig_src
     )
     df[["figure"]][!has_fig] <- ""
   }
 
   df
+}
+
+
+#' Escape HTML-sensitive characters inside TeX math strings
+#'
+#' When table output is rendered with `escape = FALSE`, symbols like `<` and
+#' `>` in TeX expressions can be interpreted as HTML and break MathJax parsing.
+#' This helper preserves TeX while making the string safe for HTML contexts.
+#'
+#' @param x A TeX math string.
+#' @return A string with HTML-sensitive characters escaped.
+#' @noRd
+.escape_math_html <- function(x) {
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;", x, fixed = TRUE)
+  gsub(">", "&gt;", x, fixed = TRUE)
+}
+
+
+#' Build an image source URL appropriate for output format
+#'
+#' For HTML output, local files are embedded as base64 data URIs so that
+#' viewer pages remain self-contained and do not depend on external files.
+#'
+#' @param path Character path to an image file.
+#' @param format One of `"data.frame"`, `"html"`, or `"markdown"`.
+#' @return A character string suitable for an `<img src="...">` attribute.
+#' @noRd
+.figure_src_for_format <- function(path, format) {
+  if (!nzchar(path) || !file.exists(path)) {
+    return(path)
+  }
+
+  if (format != "html") {
+    return(path)
+  }
+
+  ext <- tolower(tools::file_ext(path))
+  mime <- switch(ext,
+    png  = "image/png",
+    jpg  = "image/jpeg",
+    jpeg = "image/jpeg",
+    gif  = "image/gif",
+    svg  = "image/svg+xml",
+    webp = "image/webp",
+    "application/octet-stream"
+  )
+
+  encoded <- base64enc::base64encode(path)
+  sprintf("data:%s;base64,%s", mime, encoded)
 }
 
 

@@ -24,7 +24,8 @@ tabulergm_default_plotfun(
 
 \item{vcolor}{Character vector of vertex colors.}
 
-\item{vshape}{Numeric vector of vertex shapes (number of sides).}
+\item{vshape}{Character or numeric vector of vertex shapes, such as
+\code{"circle"}/\code{"square"} or polygon side counts.}
 
 \item{vrotation}{Numeric vector of vertex rotations (in degrees).}
 
@@ -34,7 +35,7 @@ tabulergm_default_plotfun(
 
 \item{vsize}{Numeric vector of vertex sizes.}
 
-\item{elinetype}{Character vector of edge line types.}
+\item{elinetype}{Numeric or character vector of edge line types.}
 
 \item{...}{Additional arguments (currently unused).}
 }

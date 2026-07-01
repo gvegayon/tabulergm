@@ -25,10 +25,11 @@
 #' @param vcolor Character vector of vertex colors.
 #' @param ecolor Character vector of edge colors.
 #' @param directed Logical. Whether the network is directed.
-#' @param vshape Numeric vector of vertex shapes (number of sides).
+#' @param vshape Character or numeric vector of vertex shapes, such as
+#'   `"circle"`/`"square"` or polygon side counts.
 #' @param vrotation Numeric vector of vertex rotations (in degrees).
 #' @param vsize Numeric vector of vertex sizes.
-#' @param elinetype Character vector of edge line types.
+#' @param elinetype Numeric or character vector of edge line types.
 #' @param ... Additional arguments (currently unused).
 #' @return Called for its side-effect of drawing a plot on the current
 #'   graphics device. Returns invisibly.
@@ -64,7 +65,7 @@ tabulergm_default_plotfun <- function(
 
   # Verifying nsides
   if (!length(vshape))
-    vshape <- 20
+    vshape <- "circle"
 
   if (!length(vrotation))
     vrotation <- 0

@@ -394,7 +394,7 @@ tabulergm_table.formula <- function(
 #' @return `TRUE` when the current session appears to be rendering a document.
 #' @noRd
 .is_noninteractive_document_render <- function() {
-  if (interactive() || !requireNamespace("knitr", quietly = TRUE)) {
+  if (!requireNamespace("knitr", quietly = TRUE)) {
     return(FALSE)
   }
 
@@ -645,6 +645,10 @@ tabulergm_view.formula <- function(object, ...) {
 
   tmp_file <- tempfile(fileext = ".html")
   writeLines(html_content, tmp_file)
+
+  if (!interactive()) {
+    return(invisible(tmp_file))
+  }
 
   if (requireNamespace("rstudioapi", quietly = TRUE) &&
         rstudioapi::isAvailable()) {

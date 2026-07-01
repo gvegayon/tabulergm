@@ -148,6 +148,38 @@ expect_identical(tabulergm_get_plotfun(), tabulergm_default_plotfun)
 # tabulergm_set_plotfun errors on non-function
 expect_error(tabulergm_set_plotfun("not a function"))
 
+# .draw_term_figure preserves edge-specific line types when adding layout bounds
+local({
+  captured <- new.env(parent = emptyenv())
+  custom <- function(netobj, layout, vcolor, ecolor, directed,
+                     vshape, vrotation, vsize, elinetype, ...) {
+    captured$edge_count <- nrow(network::as.edgelist(netobj))
+    captured$elinetype <- elinetype
+    invisible(NULL)
+  }
+  old <- tabulergm_set_plotfun(custom)
+  on.exit(tabulergm_set_plotfun(old), add = TRUE)
+
+  outfile <- tempfile(fileext = ".png")
+  result <- tabulergm:::.draw_term_figure(
+    list(
+      edgelist = "0->2, 0->1, 0->3",
+      vcolor = c("orange", "orange", "orange", "gray"),
+      ecolor = "black",
+      vshape = c("square", "circle", "circle", "circle"),
+      vsize = c(1.0, 0.5, 0.5, 0.5),
+      elinetype = c(1, 1, 2),
+      layout = list(x = c(0, 1, 1, 1), y = c(0, 0.5, 0, -0.5))
+    ),
+    directed = FALSE,
+    outfile = outfile
+  )
+
+  expect_true(file.exists(result))
+  expect_equal(captured$edge_count, 4L)
+  expect_equal(captured$elinetype, c(1, 1, 2, 1))
+})
+
 
 # ---- Integration with parse_ergm_formula -------------------------------------
 

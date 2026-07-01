@@ -1,13 +1,12 @@
 plot:
-  edgelist: "0->2, 0->3, 1->2, 1->3"
-  vcolor:
-    - black
-    - black
-    - gray
-    - gray
+  edgelist: "0->2, 0->1, 0->3"
+  vcolor: [gray, orange, orange, gray]
   ecolor: black
+  vshape: [square, circle, circle, circle]
+  vsize: [.5, 1.0, 1.0, .5]
+  elinetype: [1, 1, 2]
   layout:
-    x: [0, 0, 1, 1]
-    y: [1, 0, 1, 0]
+    x: [0, 1, 1, 1]
+    y: [0, 0.5, 0, -0.5]
 math: |
-  \sum_{i<j \in B_1} \mathbf{1}(x_i = x_j) \sum_{k \in B_2} y_{ik} y_{jk}
+  \sum_{k\in B_1} \sum_{i<j \in B_2} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}

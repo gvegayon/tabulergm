@@ -4,7 +4,18 @@
 \alias{tabulergm_default_plotfun}
 \title{Default Plot Function for Term Figures}
 \usage{
-tabulergm_default_plotfun(netobj, layout, vcolor, ecolor, directed, ...)
+tabulergm_default_plotfun(
+  netobj,
+  layout,
+  vcolor,
+  vshape,
+  vrotation,
+  ecolor,
+  directed,
+  vsize,
+  elinetype,
+  ...
+)
 }
 \arguments{
 \item{netobj}{A \link[network:network]{network::network} object.}
@@ -13,9 +24,17 @@ tabulergm_default_plotfun(netobj, layout, vcolor, ecolor, directed, ...)
 
 \item{vcolor}{Character vector of vertex colors.}
 
+\item{vshape}{Numeric vector of vertex shapes (number of sides).}
+
+\item{vrotation}{Numeric vector of vertex rotations (in degrees).}
+
 \item{ecolor}{Character vector of edge colors.}
 
 \item{directed}{Logical. Whether the network is directed.}
+
+\item{vsize}{Numeric vector of vertex sizes.}
+
+\item{elinetype}{Character vector of edge line types.}
 
 \item{...}{Additional arguments (currently unused).}
 }
@@ -37,7 +56,7 @@ A plot function must accept the arguments \code{netobj}, \code{layout}, \code{vc
 tabulergm_default_plotfun
 
 # Use a custom plot function
-my_plotfun <- function(netobj, layout, vcolor, ecolor, directed, ...) {
+my_plotfun <- function(netobj, layout, vcolor, ecolor, directed, vshape, vrotation, vsize, ...) {
   netplot::nplot(netobj, vertex.color = vcolor, edge.color = ecolor,
                  layout = layout)
 }

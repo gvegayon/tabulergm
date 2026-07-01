@@ -89,6 +89,7 @@ terms from a formula in the same way it handles one-mode ERGM terms.
 ```{r bipartite-formula-table, results = "asis"}
 tabulergm_table(
   network ~
+    edges + 
     gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
     b1factor("type") + b2factor("group") +
     b1nodematch("type") + b2nodematch("group"),

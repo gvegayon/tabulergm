@@ -1,5 +1,6 @@
 ---
 format: gfm
+embed-resources: true
 ---
 
 <!-- README.md is generated from README.qmd. Please edit that file -->
@@ -56,6 +57,21 @@ model_terms <- parse_ergm_model(model)
 model_terms[, c("term", "estimate", "se", "pvalue", "description")]
 ```
 
+You can also export the table code and generated term figures into a folder
+that can be copied into another paper or report project:
+
+```{r}
+#| eval: false
+tabulergm_save(
+  model,
+  "exports/florentine-ergm",
+  include_math = TRUE
+)
+```
+
+This writes Markdown and LaTeX table snippets plus a `figures/` folder with the
+copied image assets.
+
 The term dictionary also includes mode-specific terms for bipartite ERGMs.  A
 formula is enough to inspect the available metadata before fitting a model:
 
@@ -73,6 +89,21 @@ bipartite_terms <- parse_ergm_formula(
 bipartite_terms[, c("term", "attribute", "description")]
 ```
 
-## License
+We can also embed the table in quarto/Rmarkdown:
 
-MIT © George Vega Yon
+```{r}
+#| label: table-embed
+#| results: asis
+tabulergm_table(
+  network ~
+    edges +
+    gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+    b1factor("type") + b2factor("group") +
+    b1nodematch("type") + b2nodematch("group"),
+  format = "markdown"
+)
+```
+
+## Code of Conduct
+  
+Please note that the tabulergm project is released with a [Contributor Code of Conduct](https://gvegayon.github.io/tabulergm/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.

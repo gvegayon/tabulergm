@@ -24,6 +24,17 @@ f3 <- ~ edges + triangle
 result3 <- tabulergm_table(f3)
 expect_equal(result3$term, c("edges", "triangle"))
 
+# Markdown keeps TeX inequality symbols raw so downstream renderers can parse
+# the math expression.
+if (requireNamespace("knitr", quietly = TRUE)) {
+  md_formula <- tabulergm_table(y ~ edges, format = "markdown")
+  md_formula_str <- paste(as.character(md_formula), collapse = "\n")
+  expect_true(grepl("\\sum_{i<j} y_{ij}", md_formula_str, fixed = TRUE),
+    info = "markdown math keeps raw '<' in TeX")
+  expect_false(grepl("\\sum_{i&lt;j} y_{ij}", md_formula_str, fixed = TRUE),
+    info = "markdown math does not HTML-escape '<' in TeX")
+}
+
 # ---- tabulergm_table.ergm (uses pre-fitted ergm object) ----------------------
 
 if (requireNamespace("network", quietly = TRUE) &&
@@ -91,6 +102,15 @@ if (requireNamespace("network", quietly = TRUE) &&
     expect_true(grepl("\\$\\$", html_str),
       info = "html math column contains $$ delimiters")
 
+    # Inequality symbols should be HTML-escaped so MathJax can parse reliably
+    html_formula <- tabulergm_table(
+      network ~ b2nodematch("group"),
+      format = "html"
+    )
+    html_formula_str <- paste(as.character(html_formula), collapse = "\n")
+    expect_true(grepl("&lt;", html_formula_str),
+      info = "html math escapes '<' as &lt; in TeX")
+
     # ---- figure column uses <img> tags for markdown ------------------------
 
     md_fig <- tabulergm_table(fit, format = "markdown")
@@ -100,6 +120,12 @@ if (requireNamespace("network", quietly = TRUE) &&
     if (any(has_figure)) {
       expect_true(grepl("<img", md_fig_str),
         info = "markdown figure column uses <img> tags")
+      expect_true(grepl("style=\"width:80px;max-width:100%;\"",
+        md_fig_str,
+        fixed = TRUE
+      ), info = "markdown figure style sets width and max-width")
+      expect_false(grepl("height:80px", md_fig_str, fixed = TRUE),
+        info = "markdown figure style does not set a fixed height")
     }
 
     # ---- figure column uses <img> tags for html ---------------------------
@@ -108,7 +134,100 @@ if (requireNamespace("network", quietly = TRUE) &&
     if (any(has_figure)) {
       expect_true(grepl("<img", html_fig_str),
         info = "html figure column uses <img> tags")
+      expect_true(grepl("style=\"width:80px;max-width:100%;\"",
+        html_fig_str,
+        fixed = TRUE
+      ), info = "html figure style sets width and max-width")
+      expect_false(grepl("height:80px", html_fig_str, fixed = TRUE),
+        info = "html figure style does not set a fixed height")
+      expect_true(grepl("data:image/[^;]+;base64,", html_fig_str),
+        info = "html figure column inlines image data as data URI")
     }
+
+    # ---- markdown figures can be copied to a user folder ------------------
+
+    local({
+      src <- tempfile(fileext = ".png")
+      writeLines("fake image content", src)
+      out_dir <- tempfile("tabulergm-figures-")
+      dir.create(out_dir)
+
+      old_wd <- setwd(out_dir)
+      on.exit(setwd(old_wd), add = TRUE)
+
+      df <- data.frame(
+        term = "Custom Term",
+        figure = src,
+        stringsAsFactors = FALSE
+      )
+      processed <- tabulergm:::.preprocess_columns(
+        df,
+        "markdown",
+        figures_dir = "assets"
+      )
+
+      expect_true(file.exists(file.path(out_dir, "assets", "custom-term.png")),
+        info = "manual figures_dir copies markdown figures")
+      expect_true(grepl('<img src="assets/custom-term.png"',
+        processed$figure,
+        fixed = TRUE
+      ), info = "manual figures_dir rewrites markdown figure src")
+    })
+
+    # ---- markdown figures use the active knitr figure path ----------------
+
+    local({
+      old_knit <- knitr::opts_knit$get()
+      old_current <- knitr::opts_current$get()
+      on.exit(knitr::opts_knit$set(old_knit), add = TRUE)
+      on.exit(knitr::opts_current$set(old_current), add = TRUE)
+
+      src <- tempfile(fileext = ".png")
+      writeLines("fake image content", src)
+      out_dir <- tempfile("tabulergm-knitr-figures-")
+      dir.create(out_dir)
+
+      knitr::opts_knit$set(
+        output.dir = out_dir,
+        rmarkdown.pandoc.to = "gfm"
+      )
+      knitr::opts_current$set(fig.path = "man/figures/README-")
+
+      df <- data.frame(
+        term = "Edges",
+        figure = src,
+        stringsAsFactors = FALSE
+      )
+      processed <- tabulergm:::.preprocess_columns(df, "markdown")
+
+      expect_true(file.exists(file.path(out_dir, "man", "figures",
+        "README-edges.png"
+      )), info = "knitr fig.path prefix receives markdown figures")
+      expect_true(grepl('<img src="man/figures/README-edges.png"',
+        processed$figure,
+        fixed = TRUE
+      ), info = "knitr fig.path prefix rewrites markdown figure src")
+
+      knitr::opts_current$set(fig.path = "README_files/figure-gfm/")
+      src_dir <- tempfile(fileext = ".png")
+      writeLines("fake image content", src_dir)
+      df_dir <- data.frame(
+        term = "Triangle",
+        figure = src_dir,
+        stringsAsFactors = FALSE
+      )
+      processed_dir <- tabulergm:::.preprocess_columns(df_dir, "markdown")
+
+      expect_true(file.exists(file.path(out_dir, "README_files",
+        "figure-gfm", "triangle.png"
+      )), info = "knitr fig.path directory receives markdown figures")
+      expect_true(grepl('<img src="README_files/figure-gfm/triangle.png"',
+        processed_dir$figure,
+        fixed = TRUE
+      ), info = "knitr fig.path directory rewrites markdown figure src")
+      expect_false(grepl("//", processed_dir$figure, fixed = TRUE),
+        info = "knitr fig.path directory does not emit a double slash")
+    })
 
     # ---- tabulergm_view dispatches without error --------------------------
 
@@ -123,6 +242,8 @@ if (requireNamespace("network", quietly = TRUE) &&
     html_content <- paste(readLines(tmp), collapse = "\n")
     expect_true(grepl("mathjax", tolower(html_content)),
       info = "tabulergm_view HTML includes MathJax")
+    expect_true(grepl("data:image/[^;]+;base64,", html_content),
+      info = "tabulergm_view HTML inlines figures as data URIs")
 
     # tabulergm_view also works on a formula
     tmp_f <- tabulergm_view(network ~ edges)

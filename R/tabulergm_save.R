@@ -408,7 +408,7 @@ tabulergm_save.default <- function(object, path, ...) {
 }
 
 .render_save_markdown <- function(df) {
-  df <- .preprocess_columns(df, "markdown")
+  df <- .preprocess_columns(df, "markdown", copy_figures = FALSE)
   as.character(knitr::kable(df, format = "pipe", row.names = FALSE,
     escape = FALSE
   ))

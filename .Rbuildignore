@@ -9,3 +9,6 @@
 ^README\.qmd$
 ^data-raw$
 AGENTS\.md
+^\.devcontainer$
+^\.vscode$
+^CODE_OF_CONDUCT\.md$

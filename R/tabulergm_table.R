@@ -31,6 +31,10 @@ tabulergm_table <- function(object, ...) {
 #' @param format Character. Output format: `"data.frame"` (default),
 #'   `"html"`, or `"markdown"`. HTML and Markdown output require the
 #'   \pkg{knitr} package.
+#' @param figures_dir Optional directory for figure assets when
+#'   `format = "markdown"`. When `NULL`, figures are copied automatically to
+#'   the active knitr/Quarto/R Markdown figure path during non-interactive
+#'   document rendering.
 #'
 #' @export
 #' @examples
@@ -45,6 +49,7 @@ tabulergm_table.ergm <- function(
     include_math = FALSE,
     include_attribute = FALSE,
     format = c("data.frame", "html", "markdown"),
+    figures_dir = NULL,
     ...) {
 
   format <- match.arg(format)
@@ -62,7 +67,7 @@ tabulergm_table.ergm <- function(
   result <- parsed[, cols, drop = FALSE]
   rownames(result) <- NULL
 
-  .format_output(result, format)
+  .format_output(result, format, figures_dir = figures_dir)
 }
 
 #' @describeIn tabulergm_table Method for formula objects.
@@ -78,6 +83,7 @@ tabulergm_table.ergm <- function(
 tabulergm_table.formula <- function(
     object,
     format = c("data.frame", "html", "markdown"),
+    figures_dir = NULL,
     ...) {
 
   format <- match.arg(format)
@@ -90,7 +96,7 @@ tabulergm_table.formula <- function(
   result <- parsed[, cols, drop = FALSE]
   rownames(result) <- NULL
 
-  .format_output(result, format)
+  .format_output(result, format, figures_dir = figures_dir)
 }
 
 
@@ -105,19 +111,31 @@ tabulergm_table.formula <- function(
 #'
 #' @param df A data frame containing the table.
 #' @param format One of `"data.frame"`, `"html"`, or `"markdown"`.
+#' @param figures_dir Optional figure asset directory for Markdown output.
+#' @param copy_figures Logical. Copy Markdown figures to `figures_dir` or the
+#'   active knitr figure path?
 #' @return A modified copy of `df`.
 #' @noRd
-.preprocess_columns <- function(df, format) {
+.preprocess_columns <- function(
+    df,
+    format,
+    figures_dir = NULL,
+    copy_figures = TRUE) {
   if (format == "data.frame") return(df)
+
+  figures_dir <- .validate_figures_dir(figures_dir)
 
   # Math column: wrap non-NA values in display-math delimiters
   if ("math" %in% names(df)) {
     has_math <- !is.na(df[["math"]]) & nzchar(trimws(df[["math"]]))
-    math_values <- vapply(
-      trimws(df[["math"]][has_math]),
-      .escape_math_html,
-      FUN.VALUE = character(1)
-    )
+    math_values <- trimws(df[["math"]][has_math])
+    if (format == "html") {
+      math_values <- vapply(
+        math_values,
+        .escape_math_html,
+        FUN.VALUE = character(1)
+      )
+    }
     df[["math"]][has_math] <- paste0(
       "$$", math_values, "$$"
     )
@@ -125,6 +143,10 @@ tabulergm_table.formula <- function(
 
   # Figure column: convert file paths to <img> tags
   if ("figure" %in% names(df)) {
+    if (format == "markdown" && isTRUE(copy_figures)) {
+      df <- .copy_markdown_figures(df, figures_dir = figures_dir)
+    }
+
     has_fig <- !is.na(df[["figure"]]) & nzchar(df[["figure"]])
     fig_src <- vapply(
       df[["figure"]][has_fig],
@@ -133,7 +155,7 @@ tabulergm_table.formula <- function(
       format = format
     )
     df[["figure"]][has_fig] <- sprintf(
-      '<img src="%s" style="width:80px;height:80px;" alt="term figure">',
+      '<img src="%s" style="width:80px;max-width:100%%;" alt="term figure">',
       fig_src
     )
     df[["figure"]][!has_fig] <- ""
@@ -193,6 +215,299 @@ tabulergm_table.formula <- function(
 }
 
 
+#' Validate an optional Markdown figure directory
+#'
+#' @param figures_dir `NULL` or a scalar character directory.
+#' @return A normalized directory string or `NULL`.
+#' @noRd
+.validate_figures_dir <- function(figures_dir) {
+  if (is.null(figures_dir)) {
+    return(NULL)
+  }
+
+  if (!is.character(figures_dir) || length(figures_dir) != 1L ||
+      is.na(figures_dir) || !nzchar(figures_dir)) {
+    stop("'figures_dir' must be NULL or a non-empty character string.",
+      call. = FALSE
+    )
+  }
+
+  sub("/+$", "", .forward_slash_path(figures_dir))
+}
+
+
+#' Copy Markdown figures to a durable document-local path
+#'
+#' @param df A data frame containing a `figure` column.
+#' @param figures_dir Optional user-specified output directory. When `NULL`,
+#'   the active knitr figure path is used during non-interactive rendering.
+#' @return A copy of `df` with `figure` paths rewritten when files are copied.
+#' @noRd
+.copy_markdown_figures <- function(df, figures_dir = NULL) {
+  figures <- as.character(df[["figure"]])
+  has_figure <- !is.na(figures) & nzchar(figures) & file.exists(figures)
+
+  if (!any(has_figure)) {
+    return(df)
+  }
+
+  target <- .markdown_figure_target(figures_dir)
+  if (is.null(target)) {
+    return(df)
+  }
+
+  unique_sources <- unique(figures[has_figure])
+  destinations <- .build_markdown_figure_destinations(
+    sources = unique_sources,
+    df = df,
+    figures = figures,
+    target = target
+  )
+
+  dirs <- unique(dirname(destinations$absolute))
+  missing_dirs <- dirs[!dir.exists(dirs)]
+  if (length(missing_dirs) > 0L) {
+    ok <- vapply(
+      missing_dirs,
+      dir.create,
+      logical(1),
+      recursive = TRUE,
+      showWarnings = FALSE
+    )
+    if (!all(ok)) {
+      stop(
+        "Could not create figure directory: ",
+        paste(missing_dirs[!ok], collapse = ", "),
+        call. = FALSE
+      )
+    }
+  }
+
+  copied <- .copy_markdown_figure_files(destinations)
+  if (!all(copied)) {
+    failed <- destinations$source[!copied]
+    stop("Could not copy figure file(s): ", paste(failed, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  rewritten <- stats::setNames(destinations$relative, destinations$source)
+  df[["figure"]][has_figure] <- unname(rewritten[figures[has_figure]])
+  df
+}
+
+
+#' Determine where Markdown figures should be copied
+#'
+#' @param figures_dir Optional user-specified output directory.
+#' @return A list describing a directory target or knitr figure-prefix target,
+#'   or `NULL` when automatic copying should not happen.
+#' @noRd
+.markdown_figure_target <- function(figures_dir = NULL) {
+  if (!is.null(figures_dir)) {
+    return(.manual_markdown_figure_target(figures_dir))
+  }
+
+  .knitr_markdown_figure_target()
+}
+
+
+#' Build a target from a user-specified figure directory
+#'
+#' @param figures_dir Figure output directory.
+#' @return A directory target list.
+#' @noRd
+.manual_markdown_figure_target <- function(figures_dir) {
+  output_dir <- .knitr_output_dir(default = getwd())
+
+  absolute_dir <- if (.is_absolute_path(figures_dir)) {
+    figures_dir
+  } else {
+    file.path(output_dir, figures_dir)
+  }
+
+  list(
+    type = "directory",
+    relative = figures_dir,
+    absolute = absolute_dir
+  )
+}
+
+
+#' Build a target from the active knitr figure path
+#'
+#' @return A knitr prefix target list, or `NULL` outside a document render.
+#' @noRd
+.knitr_markdown_figure_target <- function() {
+  if (!.is_noninteractive_document_render()) {
+    return(NULL)
+  }
+
+  fig_path <- knitr::opts_current$get("fig.path")
+  if (!is.character(fig_path) || length(fig_path) != 1L ||
+      is.na(fig_path) || !nzchar(fig_path)) {
+    return(NULL)
+  }
+
+  fig_path <- .forward_slash_path(fig_path)
+  output_dir <- .knitr_output_dir(default = getwd())
+
+  absolute_prefix <- if (.is_absolute_path(fig_path)) {
+    fig_path
+  } else {
+    file.path(output_dir, fig_path)
+  }
+
+  list(
+    type = "prefix",
+    relative = fig_path,
+    absolute = absolute_prefix
+  )
+}
+
+
+#' Detect a non-interactive knitr render used by Quarto or R Markdown
+#'
+#' @return `TRUE` when the current session appears to be rendering a document.
+#' @noRd
+.is_noninteractive_document_render <- function() {
+  if (interactive() || !requireNamespace("knitr", quietly = TRUE)) {
+    return(FALSE)
+  }
+
+  pandoc_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  output_dir <- knitr::opts_knit$get("output.dir")
+
+  .has_scalar_value(pandoc_to) || .has_scalar_value(output_dir)
+}
+
+
+#' Get knitr's output directory
+#'
+#' @param default Directory to use when knitr has no output directory.
+#' @return A scalar character directory.
+#' @noRd
+.knitr_output_dir <- function(default = getwd()) {
+  output_dir <- knitr::opts_knit$get("output.dir")
+  if (.has_scalar_value(output_dir)) {
+    return(output_dir)
+  }
+
+  default
+}
+
+
+#' Build Markdown figure destination paths
+#'
+#' @param sources Unique source image paths.
+#' @param df Source table.
+#' @param figures Original `figure` column.
+#' @param target Figure target list.
+#' @return A data frame of source, absolute destination, and relative paths.
+#' @noRd
+.build_markdown_figure_destinations <- function(sources, df, figures, target) {
+  used_stems <- character(0)
+  absolute <- character(length(sources))
+  relative <- character(length(sources))
+
+  for (i in seq_along(sources)) {
+    source <- sources[[i]]
+    row_index <- match(source, figures)
+    label <- if ("term" %in% names(df)) df[["term"]][[row_index]] else source
+    stem <- .unique_file_stem(
+      .sanitize_file_stem(label, fallback = paste0("figure-", i)),
+      used_stems
+    )
+    used_stems <- c(used_stems, stem)
+
+    ext <- tolower(tools::file_ext(source))
+    if (!nzchar(ext)) {
+      ext <- "png"
+    }
+
+    file_name <- paste0(stem, ".", ext)
+    relative[[i]] <- .target_figure_path(target$relative, file_name,
+      target$type
+    )
+    absolute[[i]] <- .target_figure_path(target$absolute, file_name,
+      target$type
+    )
+  }
+
+  data.frame(
+    source = sources,
+    absolute = absolute,
+    relative = .forward_slash_path(relative),
+    stringsAsFactors = FALSE
+  )
+}
+
+
+#' Build a figure path for a target
+#'
+#' @param target Directory or prefix.
+#' @param file_name Figure file name.
+#' @param type Either `"directory"` or `"prefix"`.
+#' @return A character path.
+#' @noRd
+.target_figure_path <- function(target, file_name, type) {
+  if (identical(type, "directory")) {
+    return(file.path(target, file_name))
+  }
+
+  paste0(target, file_name)
+}
+
+
+#' Copy Markdown figure files
+#'
+#' @param destinations Destination data frame.
+#' @return Logical vector indicating copy success.
+#' @noRd
+.copy_markdown_figure_files <- function(destinations) {
+  copied <- logical(nrow(destinations))
+
+  for (i in seq_len(nrow(destinations))) {
+    source <- destinations$source[[i]]
+    absolute <- destinations$absolute[[i]]
+
+    same_file <- file.exists(absolute) &&
+      identical(
+        normalizePath(source, winslash = "/", mustWork = TRUE),
+        normalizePath(absolute, winslash = "/", mustWork = TRUE)
+      )
+
+    copied[[i]] <- same_file || file.copy(
+      from = source,
+      to = absolute,
+      overwrite = TRUE
+    )
+  }
+
+  copied
+}
+
+
+#' Test whether a value is a non-empty scalar character
+#'
+#' @param x Object to check.
+#' @return Logical scalar.
+#' @noRd
+.has_scalar_value <- function(x) {
+  is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
+}
+
+
+#' Test whether a path is absolute
+#'
+#' @param path Character path.
+#' @return Logical scalar.
+#' @noRd
+.is_absolute_path <- function(path) {
+  grepl("^(/|[A-Za-z]:/)", path)
+}
+
+
 #' Format a data frame as HTML, Markdown, or return as-is
 #'
 #' For `"html"` and `"markdown"`, the \pkg{knitr} package must be installed.
@@ -206,7 +521,7 @@ tabulergm_table.formula <- function(
 #' @return The data frame (if `format = "data.frame"`) or a `knitr_kable`
 #'   object.
 #' @noRd
-.format_output <- function(df, format) {
+.format_output <- function(df, format, figures_dir = NULL) {
   if (format == "data.frame") {
     return(df)
   }
@@ -221,7 +536,7 @@ tabulergm_table.formula <- function(
     )
   }
 
-  df <- .preprocess_columns(df, format)
+  df <- .preprocess_columns(df, format, figures_dir = figures_dir)
 
   knitr_format <- switch(format,
     html     = "html",

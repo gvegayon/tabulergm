@@ -14,7 +14,6 @@ Depends:
 Imports:
     base64enc,
     ergm,
-    igraph,
     netplot,
     network,
     yaml

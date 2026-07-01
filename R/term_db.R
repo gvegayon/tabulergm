@@ -60,11 +60,7 @@ tabulergm_default_plotfun <- function(
   ) {
 
   # Figuring out the edge width
-  ewidth <- if (inherits(netobj, "network")) 
-    network::get.edge.attribute(netobj, "weight") 
-  else if (inherits(netobj, "igraph")) 
-    igraph::E(netobj)$weight 
-  else NULL
+  ewidth <- network::get.edge.attribute(netobj, "weight")
 
   # Verifying nsides
   if (!length(vshape))

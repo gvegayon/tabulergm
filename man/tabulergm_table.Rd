@@ -14,10 +14,16 @@ tabulergm_table(object, ...)
   include_math = FALSE,
   include_attribute = FALSE,
   format = c("data.frame", "html", "markdown"),
+  figures_dir = NULL,
   ...
 )
 
-\method{tabulergm_table}{formula}(object, format = c("data.frame", "html", "markdown"), ...)
+\method{tabulergm_table}{formula}(
+  object,
+  format = c("data.frame", "html", "markdown"),
+  figures_dir = NULL,
+  ...
+)
 }
 \arguments{
 \item{object}{A fitted \link[ergm:ergm]{ergm} object or an ERGM
@@ -37,6 +43,11 @@ Default \code{FALSE}.}
 \item{format}{Character. Output format: \code{"data.frame"} (default),
 \code{"html"}, or \code{"markdown"}. HTML and Markdown output require the
 \pkg{knitr} package.}
+
+\item{figures_dir}{Optional directory for figure assets when
+\code{format = "markdown"}. When \code{NULL}, figures are copied automatically to
+the active knitr/Quarto/R Markdown figure path during non-interactive
+document rendering.}
 }
 \value{
 A \code{data.frame} (default), or a \code{knitr_kable} object when

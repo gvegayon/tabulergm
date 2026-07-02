@@ -2,7 +2,7 @@ plot:
   edgelist: "0->1"
   vcolor:
     - black
-    - blue
+    - gray
   ecolor: black
   layout:
     x: [0, 1]

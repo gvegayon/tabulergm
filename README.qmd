@@ -1,5 +1,6 @@
 ---
 format: gfm
+embed-resources: true
 ---
 
 <!-- README.md is generated from README.qmd. Please edit that file -->
@@ -46,12 +47,63 @@ library(tabulergm)
 
 # Fit a simple ERGM
 data(florentine)
-model <- ergm(flomarriage ~ edges + triangle)
+model <- ergm(
+  flomarriage ~ edges + triangle,
+  control = control.ergm(seed = 42)
+)
 
 # Parse the model
-parse_ergm_model(model)
+model_terms <- parse_ergm_model(model)
+model_terms[, c("term", "estimate", "se", "pvalue", "description")]
 ```
 
-## License
+You can also export the table code and generated term figures into a folder
+that can be copied into another paper or report project:
 
-MIT © George Vega Yon
+```{r}
+#| eval: false
+tabulergm_save(
+  model,
+  "exports/florentine-ergm",
+  include_math = TRUE
+)
+```
+
+This writes Markdown and LaTeX table snippets plus a `figures/` folder with the
+copied image assets.
+
+The term dictionary also includes mode-specific terms for bipartite ERGMs.  A
+formula is enough to inspect the available metadata before fitting a model:
+
+```{r}
+#| label: bipartite-terms
+#| message: false
+#| warning: false
+bipartite_terms <- parse_ergm_formula(
+  network ~
+    gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+    b1factor("type") + b2factor("group") +
+    b1nodematch("type") + b2nodematch("group")
+)
+
+bipartite_terms[, c("term", "attribute", "description")]
+```
+
+We can also embed the table in quarto/Rmarkdown:
+
+```{r}
+#| label: table-embed
+#| results: asis
+tabulergm_table(
+  network ~
+    edges +
+    gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+    b1factor("type") + b2factor("group") +
+    b1nodematch("type") + b2nodematch("group"),
+  format = "markdown"
+)
+```
+
+## Code of Conduct
+  
+Please note that the tabulergm project is released with a [Contributor Code of Conduct](https://gvegayon.github.io/tabulergm/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.

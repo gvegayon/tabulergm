@@ -25,6 +25,11 @@
 #' @param vcolor Character vector of vertex colors.
 #' @param ecolor Character vector of edge colors.
 #' @param directed Logical. Whether the network is directed.
+#' @param vshape Character or numeric vector of vertex shapes, such as
+#'   `"circle"`/`"square"` or polygon side counts.
+#' @param vrotation Numeric vector of vertex rotations (in degrees).
+#' @param vsize Numeric vector of vertex sizes.
+#' @param elinetype Numeric or character vector of edge line types.
 #' @param ... Additional arguments (currently unused).
 #' @return Called for its side-effect of drawing a plot on the current
 #'   graphics device. Returns invisibly.
@@ -36,19 +41,55 @@
 #' tabulergm_default_plotfun
 #'
 #' # Use a custom plot function
-#' my_plotfun <- function(netobj, layout, vcolor, ecolor, directed, ...) {
+#' my_plotfun <- function(netobj, layout, vcolor, ecolor, directed, vshape, vrotation, vsize, ...) {
 #'   netplot::nplot(netobj, vertex.color = vcolor, edge.color = ecolor,
 #'                  layout = layout)
 #' }
 #' tabulergm_set_plotfun(my_plotfun)
 #' }
-tabulergm_default_plotfun <- function(netobj, layout, vcolor, ecolor,
-                                      directed, ...) {
+tabulergm_default_plotfun <- function(
+  netobj,
+  layout,
+  vcolor,
+  vshape,
+  vrotation,
+  ecolor,
+  directed,
+  vsize,
+  elinetype,
+  ...
+  ) {
+
+  # Figuring out the edge width
+  ewidth <- network::get.edge.attribute(netobj, "weight")
+
+  # Verifying nsides
+  if (!length(vshape))
+    vshape <- "circle"
+
+  if (!length(vrotation))
+    vrotation <- 0
+
+  if (!length(vsize))
+    vsize <- 1
+
+  if (!length(elinetype))
+    elinetype <- 'solid'
+  
   p <- netplot::nplot(
     netobj,
-    vertex.color = vcolor,
-    edge.color   = ecolor,
-    layout       = layout
+    vertex.color      = vcolor,
+    edge.color        = ecolor,
+    edge.width        = ewidth,
+    layout            = layout,
+    vertex.size.range = c(.15, .25, 1),
+    edge.line.breaks  = 1,
+    vertex.nsides     = vshape,
+    vertex.rot        = vrotation,
+    vertex.label      = NA,
+    edge.width.range  = c(10, 10),
+    vertex.size       = vsize,
+    edge.line.lty     = elinetype
   )
   print(p)
   invisible(NULL)
@@ -231,6 +272,7 @@ tabulergm_get_plotfun <- function() {
     from_idx <- match(edges[i, "from"], nodes)
     to_idx   <- match(edges[i, "to"], nodes)
     network::add.edge(nw, from_idx, to_idx)
+    network::set.edge.attribute(nw, "weight", 1)
   }
 
   # Vertex colours
@@ -248,26 +290,82 @@ tabulergm_get_plotfun <- function() {
   if (!is.null(plot_data$layout)) {
     x <- as.numeric(plot_data$layout$x)
     y <- as.numeric(plot_data$layout$y)
-    # netplot requires non-zero range in both dimensions; add a small
-    # perturbation when all values are identical
-    if (length(unique(x)) == 1L) {
-      x <- x + seq(-0.01, 0.01, length.out = length(x))
-    }
-    if (length(unique(y)) == 1L) {
-      y <- y + seq(-0.01, 0.01, length.out = length(y))
-    }
     layout <- cbind(x, y)
   }
 
+  # Other params
+  vshape    <- plot_data$vshape
+  vrotation <- plot_data$vrotation
+  vsize     <- plot_data$vsize
+  elinetype <- plot_data$elinetype
+  if (!length(elinetype)) elinetype <- rep("solid", n_edges)
+  if (length(elinetype) != n_edges) {
+    elinetype <- rep(elinetype, length.out = n_edges)
+  }
+
+  # Adding transparent nodes to ensure we cover enough space for the layout
+  if (!is.null(layout)) {
+
+    r <- cbind(
+      x = range(layout[, "x"]),
+      y = range(layout[, "y"])
+    )
+
+    # Expanding by 5% each side to avoid clipping
+    x_expansion <- 0.1 * diff(r[, "x"])
+    y_expansion <- 0.1 * diff(r[, "y"])
+
+    # Checking minimum
+    if (x_expansion == 0) x_expansion <- y_expansion
+    if (y_expansion == 0) y_expansion <- x_expansion
+
+    r[, "x"] <- r[, "x"] + c(-x_expansion, x_expansion)
+    r[, "y"] <- r[, "y"] + c(-y_expansion, y_expansion)
+
+    layout <- rbind(layout, r)
+
+    # Adding the transparent nodes to the network object
+    nw <- network::add.vertices(nw, 2)
+    vcolor <- c(vcolor, "transparent", "transparent")
+
+    # Adding a single transparent edge between the
+    # two transparent nodes so that the edge-size
+    # scales properly
+    nw <- network::add.edge(nw, n_nodes + 1, n_nodes + 2)
+
+    ecolor <- c(ecolor, "transparent")
+    elinetype <- c(elinetype, elinetype[1L])
+    network::set.edge.attribute(nw, "weight", .5, e = n_edges + 1)
+
+    # Adding the rotation parameter and shape
+    # parameter for the transparent nodes
+    if (length(vshape) > 1)
+      vshape <- c(vshape, vshape[1], vshape[1])
+    
+    if (length(vrotation) > 1)
+      vrotation <- c(vrotation, vrotation[1], vrotation[1])
+
+    if (length(vsize) > 1)
+      vsize <- c(vsize, vsize[1], vsize[1])
+    
+  }
+
+  
+
   grDevices::png(outfile, width = 400, height = 400, bg = "transparent")
   on.exit(grDevices::dev.off(), add = TRUE)
+  grid::grid.newpage()
 
   plotfun(
-    netobj   = nw,
-    layout   = layout,
-    vcolor   = vcolor,
-    ecolor   = ecolor,
-    directed = directed
+    netobj    = nw,
+    layout    = layout,
+    vcolor    = vcolor,
+    ecolor    = ecolor,
+    directed  = directed,
+    vshape    = vshape,
+    vrotation = vrotation,
+    vsize     = vsize,
+    elinetype = elinetype
   )
 
   outfile

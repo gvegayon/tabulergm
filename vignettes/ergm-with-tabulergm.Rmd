@@ -1,0 +1,111 @@
+---
+title: "Fitting an ERGM and Viewing the Output with tabulergm"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Fitting an ERGM and Viewing the Output with tabulergm}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse  = TRUE,
+  comment   = "#>"
+)
+```
+
+## Overview
+
+This vignette demonstrates how to:
+
+1. Fit an ERGM using the **ergm** package.
+2. Produce a publication-ready Markdown table with `tabulergm_table(format = "markdown")`.
+3. Render the table inline in a Quarto or R Markdown document using `results: asis`.
+4. Interactively preview the table in the RStudio viewer (or a browser) with
+   `tabulergm_view()`.
+
+## Setup
+
+```{r load-packages, message = FALSE, warning = FALSE}
+library(ergm)
+library(tabulergm)
+```
+
+## Fitting the model
+
+We use the Florentine marriage network, which ships with **ergm**, and fit a
+simple model with an `edges` term and a `nodematch` term for wealth quartile.
+
+```{r fit-model, message = FALSE, warning = FALSE}
+data(florentine)
+
+model <- ergm(
+  flomarriage ~ edges + nodematch("wealth"),
+  control = control.ergm(seed = 42)
+)
+summary(model)
+```
+
+## Creating a Markdown table
+
+Calling `tabulergm_table()` with `format = "markdown"` returns a
+`knitr_kable` object.  Adding the chunk option `results: asis` (or
+`results = "asis"` in R Markdown) causes knitr to emit the table verbatim,
+so the Markdown renderer (Quarto, Pandoc, GitHub, etc.) formats it properly.
+
+Math notation in the **math** column is automatically wrapped in `$$...$$` so
+that MathJax or Pandoc can render it as display LaTeX.  Network figures in the
+**figure** column are converted to `<img>` HTML tags.
+
+> **Quarto tip:** use `#| results: asis` (or `results = "asis"` in R Markdown)
+> on the chunk so that knitr emits the table verbatim instead of quoting it.
+
+```{r markdown-table, results = "asis"}
+tabulergm_table(
+  model,
+  include_math        = TRUE,
+  include_description = TRUE,
+  format              = "markdown"
+)
+```
+
+## Inspecting a formula without a fitted model
+
+You can also pass a bare formula to inspect term metadata before fitting:
+
+```{r formula-table, results = "asis"}
+tabulergm_table(
+  flomarriage ~ edges + nodematch("wealth") + triangle,
+  format = "markdown"
+)
+```
+
+## Bipartite ERGM terms
+
+Bipartite ERGMs often use mode-specific terms: `b1*` terms summarize the first
+mode, and `b2*` terms summarize the second mode.  `tabulergm` can inspect these
+terms from a formula in the same way it handles one-mode ERGM terms.
+
+```{r bipartite-formula-table, results = "asis"}
+tabulergm_table(
+  network ~
+    edges + 
+    gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+    b1factor("type") + b2factor("group") +
+    b1nodematch("type") + b2nodematch("group"),
+  format = "markdown"
+)
+```
+
+## Interactive preview with `tabulergm_view()`
+
+During an interactive session you can call `tabulergm_view()` to open the
+table in the RStudio viewer pane or the system browser:
+
+```{r view-demo, eval = FALSE}
+tabulergm_view(model, include_math = TRUE, include_description = TRUE)
+```
+
+`tabulergm_view()` builds a self-contained HTML page that loads MathJax from
+a CDN, so LaTeX math and embedded network figures render immediately without
+any additional setup.

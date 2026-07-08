@@ -17,10 +17,10 @@ if (requireNamespace("knitr", quietly = TRUE)) {
   expect_equal(saved$table$figure, c("figures/edges.png", "figures/triangle.png"))
 
   md <- paste(readLines(saved$files[["markdown"]]), collapse = "\n")
-  expect_true(grepl("<img src=\"figures/edges.png\"", md, fixed = TRUE),
+  expect_true(grepl("![](figures/edges.png){width=80px}", md, fixed = TRUE),
     info = "markdown export references copied figures")
-  expect_true(grepl("$$", md, fixed = TRUE),
-    info = "markdown export includes display math")
+  expect_true(grepl("$\\sum_{i<j} y_{ij}$", md, fixed = TRUE),
+    info = "markdown export includes inline math")
 
   tex <- paste(readLines(saved$files[["latex"]]), collapse = "\n")
   expect_true(grepl("\\includegraphics[width=0.7in]{figures/edges.png}",

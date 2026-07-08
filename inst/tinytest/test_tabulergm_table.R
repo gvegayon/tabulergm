@@ -87,13 +87,15 @@ if (requireNamespace("network", quietly = TRUE) &&
     html <- tabulergm_table(fit, format = "html")
     expect_inherits(html, "knitr_kable")
 
-    # ---- math column is wrapped in $$ for markdown -------------------------
+    # ---- math column uses inline $...$ for markdown ------------------------
 
     md_math <- tabulergm_table(fit, include_math = TRUE, format = "markdown")
     md_str <- paste(as.character(md_math), collapse = "\n")
-    # The math expression should be wrapped in $$...$$ delimiters
-    expect_true(grepl("\\$\\$", md_str),
-      info = "markdown math column contains $$ delimiters")
+    # The math expression should be wrapped in inline $...$ delimiters
+    expect_true(grepl("\\$\\\\sum_\\{i<j\\} y_\\{ij\\}\\$", md_str),
+      info = "markdown math column contains inline $ delimiters")
+    expect_false(grepl("\\$\\$", md_str),
+      info = "markdown math column does not use display $$ delimiters")
 
     # ---- math column is wrapped in $$ for html ----------------------------
 
@@ -111,21 +113,19 @@ if (requireNamespace("network", quietly = TRUE) &&
     expect_true(grepl("&lt;", html_formula_str),
       info = "html math escapes '<' as &lt; in TeX")
 
-    # ---- figure column uses <img> tags for markdown ------------------------
+    # ---- figure column uses markdown image syntax --------------------------
 
     md_fig <- tabulergm_table(fit, format = "markdown")
     md_fig_str <- paste(as.character(md_fig), collapse = "\n")
-    # The figure cell should contain an <img> tag (or be empty when no figure)
+    # The figure cell should contain markdown image syntax (or be empty)
     has_figure <- !is.na(tabulergm_table(fit)[["figure"]])
     if (any(has_figure)) {
-      expect_true(grepl("<img", md_fig_str),
-        info = "markdown figure column uses <img> tags")
-      expect_true(grepl("style=\"width:80px;max-width:100%;\"",
+      expect_true(grepl("!\\[]\\(", md_fig_str),
+        info = "markdown figure column uses markdown image syntax")
+      expect_true(grepl("{width=80px}",
         md_fig_str,
         fixed = TRUE
-      ), info = "markdown figure style sets width and max-width")
-      expect_false(grepl("height:80px", md_fig_str, fixed = TRUE),
-        info = "markdown figure style does not set a fixed height")
+      ), info = "markdown figure syntax sets width")
     }
 
     # ---- figure column uses <img> tags for html ---------------------------
@@ -168,10 +168,10 @@ if (requireNamespace("network", quietly = TRUE) &&
 
       expect_true(file.exists(file.path(out_dir, "assets", "custom-term.png")),
         info = "manual figures_dir copies markdown figures")
-      expect_true(grepl('<img src="assets/custom-term.png"',
+      expect_true(grepl('![](assets/custom-term.png){width=80px}',
         processed$figure,
         fixed = TRUE
-      ), info = "manual figures_dir rewrites markdown figure src")
+      ), info = "manual figures_dir rewrites markdown figure path")
     })
 
     # ---- markdown figures use the active knitr figure path ----------------
@@ -203,10 +203,10 @@ if (requireNamespace("network", quietly = TRUE) &&
       expect_true(file.exists(file.path(out_dir, "man", "figures",
         "README-edges.png"
       )), info = "knitr fig.path prefix receives markdown figures")
-      expect_true(grepl('<img src="man/figures/README-edges.png"',
+      expect_true(grepl('![](man/figures/README-edges.png){width=80px}',
         processed$figure,
         fixed = TRUE
-      ), info = "knitr fig.path prefix rewrites markdown figure src")
+      ), info = "knitr fig.path prefix rewrites markdown figure path")
 
       knitr::opts_current$set(fig.path = "README_files/figure-gfm/")
       src_dir <- tempfile(fileext = ".png")
@@ -221,10 +221,10 @@ if (requireNamespace("network", quietly = TRUE) &&
       expect_true(file.exists(file.path(out_dir, "README_files",
         "figure-gfm", "triangle.png"
       )), info = "knitr fig.path directory receives markdown figures")
-      expect_true(grepl('<img src="README_files/figure-gfm/triangle.png"',
+      expect_true(grepl('![](README_files/figure-gfm/triangle.png){width=80px}',
         processed_dir$figure,
         fixed = TRUE
-      ), info = "knitr fig.path directory rewrites markdown figure src")
+      ), info = "knitr fig.path directory rewrites markdown figure path")
       expect_false(grepl("//", processed_dir$figure, fixed = TRUE),
         info = "knitr fig.path directory does not emit a double slash")
     })

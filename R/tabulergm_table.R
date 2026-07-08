@@ -105,9 +105,10 @@ tabulergm_table.formula <- function(
 #' Pre-process math and figure columns for formatted output
 #'
 #' For `"markdown"` and `"html"` formats:
-#' * `math` values are wrapped in `$$...$$` (display LaTeX math).
-#' * `figure` file-paths are converted to `<img>` HTML tags so that the
-#'   images render when the table is viewed in a browser or knitted document.
+#' * `math` values are wrapped in output-specific delimiters: `$$...$$` for
+#'   HTML output and `$...$` for Markdown output.
+#' * `figure` file-paths are converted to output-specific image markup:
+#'   Markdown image syntax for Markdown output and `<img>` tags for HTML.
 #'
 #' @param df A data frame containing the table.
 #' @param format One of `"data.frame"`, `"html"`, or `"markdown"`.
@@ -135,10 +136,10 @@ tabulergm_table.formula <- function(
         .escape_math_html,
         FUN.VALUE = character(1)
       )
+      df[["math"]][has_math] <- paste0("$$", math_values, "$$")
+    } else {
+      df[["math"]][has_math] <- paste0("$", math_values, "$")
     }
-    df[["math"]][has_math] <- paste0(
-      "$$", math_values, "$$"
-    )
   }
 
   # Figure column: convert file paths to <img> tags
@@ -154,10 +155,17 @@ tabulergm_table.formula <- function(
       FUN.VALUE = character(1),
       format = format
     )
-    df[["figure"]][has_fig] <- sprintf(
-      '<img src="%s" style="width:80px;max-width:100%%;" alt="term figure">',
-      fig_src
-    )
+    if (format == "markdown") {
+      df[["figure"]][has_fig] <- sprintf(
+        '![](%s){width=80px}',
+        fig_src
+      )
+    } else {
+      df[["figure"]][has_fig] <- sprintf(
+        '<img src="%s" style="width:80px;max-width:100%%;" alt="term figure">',
+        fig_src
+      )
+    }
     df[["figure"]][!has_fig] <- ""
   }
 
@@ -536,8 +544,9 @@ tabulergm_table.formula <- function(
 #' For `"html"` and `"markdown"`, the \pkg{knitr} package must be installed.
 #' If it is not available, an error is raised.
 #'
-#' Math column values are wrapped in `$$...$$` and figure file paths are
-#' converted to `<img>` HTML tags so that images render properly.
+#' Math and figure columns are transformed to output-specific markup: HTML
+#' output uses `$$...$$` math and `<img>` tags, while Markdown output uses
+#' `$...$` math and Markdown image syntax.
 #'
 #' @param df A data frame to format.
 #' @param format One of `"data.frame"`, `"html"`, or `"markdown"`.

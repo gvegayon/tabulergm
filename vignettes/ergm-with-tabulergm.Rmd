@@ -53,9 +53,10 @@ Calling `tabulergm_table()` with `format = "markdown"` returns a
 `results = "asis"` in R Markdown) causes knitr to emit the table verbatim,
 so the Markdown renderer (Quarto, Pandoc, GitHub, etc.) formats it properly.
 
-Math notation in the **math** column is automatically wrapped in `$$...$$` so
-that MathJax or Pandoc can render it as display LaTeX.  Network figures in the
-**figure** column are converted to `<img>` HTML tags.
+Math notation in the **math** column is automatically wrapped in `$...$` so
+that Pandoc can render it reliably in table cells across output formats,
+including Word. Network figures in the **figure** column are emitted with
+Markdown image syntax.
 
 > **Quarto tip:** use `#| results: asis` (or `results = "asis"` in R Markdown)
 > on the chunk so that knitr emits the table verbatim instead of quoting it.

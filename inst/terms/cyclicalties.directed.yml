@@ -1,0 +1,9 @@
+plot:
+  edgelist: "0->1->2->0"
+  vcolor: [black, black, black]
+  ecolor: black
+  layout:
+    x: [0, 1, .5]
+    y: [0, 0, 1]
+math: |
+  \sum_{i \neq j} y_{ij} \mathbf{1}\left(\exists k : y_{jk} y_{ki} = 1\right)

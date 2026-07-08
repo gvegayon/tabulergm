@@ -1,0 +1,11 @@
+plot:
+  edgelist: "0->1, 0->2, 0->3"
+  vcolor: [black, black, black, black]
+  vshape: [square, circle, circle, circle]
+  vsize: [1.0, .5, .5, .5]
+  ecolor: black
+  layout:
+    x: [0, 1, 1, 1]
+    y: [0, .5, 0, -.5]
+math: |
+  \exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D_i(y)

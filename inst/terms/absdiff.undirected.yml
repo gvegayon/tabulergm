@@ -1,0 +1,10 @@
+plot:
+  edgelist: "0->1"
+  vcolor: [black, black]
+  vsize: [1.0, .5]
+  ecolor: black
+  layout:
+    x: [0, 1]
+    y: [0, 0]
+math: |
+  \sum_{i<j} y_{ij} \left|x_i - x_j\right|

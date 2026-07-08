@@ -49,7 +49,21 @@ yml_test_cases <- list(
   list(term = "b1factor", directed = FALSE, pattern = "b1factor\\.undirected\\.yml$"),
   list(term = "b2factor", directed = FALSE, pattern = "b2factor\\.undirected\\.yml$"),
   list(term = "b1nodematch", directed = FALSE, pattern = "b1nodematch\\.undirected\\.yml$"),
-  list(term = "b2nodematch", directed = FALSE, pattern = "b2nodematch\\.undirected\\.yml$")
+  list(term = "b2nodematch", directed = FALSE, pattern = "b2nodematch\\.undirected\\.yml$"),
+  list(term = "gwesp", directed = FALSE, pattern = "gwesp\\.undirected\\.yml$"),
+  list(term = "gwesp", directed = TRUE,  pattern = "gwesp\\.directed\\.yml$"),
+  list(term = "gwdsp", directed = FALSE, pattern = "gwdsp\\.undirected\\.yml$"),
+  list(term = "gwdsp", directed = TRUE,  pattern = "gwdsp\\.directed\\.yml$"),
+  list(term = "gwdegree", directed = FALSE, pattern = "gwdegree\\.undirected\\.yml$"),
+  list(term = "nodefactor", directed = FALSE, pattern = "nodefactor\\.undirected\\.yml$"),
+  list(term = "nodecov", directed = FALSE, pattern = "nodecov\\.undirected\\.yml$"),
+  list(term = "absdiff", directed = FALSE, pattern = "absdiff\\.undirected\\.yml$"),
+  list(term = "nodemix", directed = FALSE, pattern = "nodemix\\.undirected\\.yml$"),
+  list(term = "edgecov", directed = FALSE, pattern = "edgecov\\.undirected\\.yml$"),
+  list(term = "transitiveties", directed = TRUE, pattern = "transitiveties\\.directed\\.yml$"),
+  list(term = "cyclicalties", directed = TRUE, pattern = "cyclicalties\\.directed\\.yml$"),
+  list(term = "nodeicov", directed = TRUE, pattern = "nodeicov\\.directed\\.yml$"),
+  list(term = "nodeocov", directed = TRUE, pattern = "nodeocov\\.directed\\.yml$")
 )
 
 for (tc in yml_test_cases) {
@@ -101,6 +115,26 @@ for (term in c("gwb1dsp", "gwb2dsp", "b1factor", "b2factor",
     info = sprintf("math found for %s", term))
   expect_false(is.na(data$figure),
     info = sprintf("figure found for %s", term))
+}
+
+# .get_term_yml_data reads undirected key term math and figures
+for (term in c("gwesp", "gwdsp", "gwdegree", "nodefactor", "nodecov",
+               "absdiff", "nodemix", "edgecov")) {
+  data <- tabulergm:::.get_term_yml_data(term, directed = FALSE)
+  expect_false(is.na(data$math),
+    info = sprintf("math found for %s (undirected)", term))
+  expect_false(is.na(data$figure),
+    info = sprintf("figure found for %s (undirected)", term))
+}
+
+# .get_term_yml_data reads directed key term math and figures
+for (term in c("gwesp", "gwdsp", "transitiveties", "cyclicalties",
+               "nodeicov", "nodeocov")) {
+  data <- tabulergm:::.get_term_yml_data(term, directed = TRUE)
+  expect_false(is.na(data$math),
+    info = sprintf("math found for %s (directed)", term))
+  expect_false(is.na(data$figure),
+    info = sprintf("figure found for %s (directed)", term))
 }
 
 
@@ -196,12 +230,18 @@ f2 <- y ~ edges + nodematch("gender")
 result2 <- parse_ergm_formula(f2)
 expect_false(is.na(result2$math[result2$term == "nodematch"]))
 
-# Unknown terms still have NA math
+# gwesp now has a YAML definition
 f3 <- y ~ edges + gwesp(0.5, fixed = TRUE)
 result3 <- parse_ergm_formula(f3)
 expect_false(is.na(result3$math[result3$term == "edges"]))
-# gwesp has no YAML file, so math stays NA
-expect_true(is.na(result3$math[result3$term == "gwesp"]))
+expect_false(is.na(result3$math[result3$term == "gwesp"]))
+
+# Unknown terms still have NA math
+f3b <- y ~ edges + kstar(2)
+result3b <- parse_ergm_formula(f3b)
+expect_false(is.na(result3b$math[result3b$term == "edges"]))
+# kstar has no YAML file, so math stays NA
+expect_true(is.na(result3b$math[result3b$term == "kstar"]))
 
 # Bipartite terms have YAML data
 f4 <- y ~ gwb1dsp(0.5, fixed = TRUE) + b1factor("type") + b2nodematch("group")
@@ -209,6 +249,25 @@ result4 <- parse_ergm_formula(f4)
 expect_false(is.na(result4$math[result4$term == "gwb1dsp"]))
 expect_false(is.na(result4$math[result4$term == "b1factor"]))
 expect_false(is.na(result4$math[result4$term == "b2nodematch"]))
+
+# Key covariate and structural terms have YAML data
+f5 <- y ~ gwdsp(0.5, fixed = TRUE) + gwdegree(0.5, fixed = TRUE) +
+  nodefactor("race") + nodecov("age") + absdiff("age") +
+  nodemix("race") + edgecov("dist")
+result5 <- parse_ergm_formula(f5)
+for (term in c("gwdsp", "gwdegree", "nodefactor", "nodecov", "absdiff",
+               "nodemix", "edgecov")) {
+  expect_false(is.na(result5$math[result5$term == term]),
+    info = sprintf("formula math found for %s", term))
+}
+
+# Directed-only terms have YAML data
+f6 <- y ~ transitiveties + cyclicalties + nodeicov("age") + nodeocov("age")
+result6 <- parse_ergm_formula(f6)
+for (term in c("transitiveties", "cyclicalties", "nodeicov", "nodeocov")) {
+  expect_false(is.na(result6$math[result6$term == term]),
+    info = sprintf("formula math found for %s", term))
+}
 
 
 # ---- Integration with parse_ergm_model (requires ergm) -----------------------

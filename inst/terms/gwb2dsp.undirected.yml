@@ -8,4 +8,4 @@ plot:
     x: [0, 0, 0, 1, 1]
     y: [.5, 0, -.5, .25, -.25]
 math: |
-  \exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^m\right] DP_i(y)
+  \exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)

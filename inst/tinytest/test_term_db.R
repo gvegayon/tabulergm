@@ -50,6 +50,8 @@ yml_test_cases <- list(
   list(term = "b2factor", directed = FALSE, pattern = "b2factor\\.undirected\\.yml$"),
   list(term = "b1nodematch", directed = FALSE, pattern = "b1nodematch\\.undirected\\.yml$"),
   list(term = "b2nodematch", directed = FALSE, pattern = "b2nodematch\\.undirected\\.yml$"),
+  list(term = "b1starmix", directed = FALSE, pattern = "b1starmix\\.undirected\\.yml$"),
+  list(term = "b2starmix", directed = FALSE, pattern = "b2starmix\\.undirected\\.yml$"),
   list(term = "gwesp", directed = FALSE, pattern = "gwesp\\.undirected\\.yml$"),
   list(term = "gwesp", directed = TRUE,  pattern = "gwesp\\.directed\\.yml$"),
   list(term = "gwdsp", directed = FALSE, pattern = "gwdsp\\.undirected\\.yml$"),
@@ -109,7 +111,7 @@ expect_false(is.na(data$math))
 
 # .get_term_yml_data reads bipartite term math
 for (term in c("gwb1dsp", "gwb2dsp", "b1factor", "b2factor",
-               "b1nodematch", "b2nodematch")) {
+               "b1nodematch", "b2nodematch", "b1starmix", "b2starmix")) {
   data <- tabulergm:::.get_term_yml_data(term, directed = FALSE)
   expect_false(is.na(data$math),
     info = sprintf("math found for %s", term))
@@ -244,11 +246,14 @@ expect_false(is.na(result3b$math[result3b$term == "edges"]))
 expect_true(is.na(result3b$math[result3b$term == "kstar"]))
 
 # Bipartite terms have YAML data
-f4 <- y ~ gwb1dsp(0.5, fixed = TRUE) + b1factor("type") + b2nodematch("group")
+f4 <- y ~ gwb1dsp(0.5, fixed = TRUE) + b1factor("type") + b2nodematch("group") +
+  b1starmix(2, "type") + b2starmix(2, "type")
 result4 <- parse_ergm_formula(f4)
 expect_false(is.na(result4$math[result4$term == "gwb1dsp"]))
 expect_false(is.na(result4$math[result4$term == "b1factor"]))
 expect_false(is.na(result4$math[result4$term == "b2nodematch"]))
+expect_false(is.na(result4$math[result4$term == "b1starmix"]))
+expect_false(is.na(result4$math[result4$term == "b2starmix"]))
 
 # Key covariate and structural terms have YAML data
 f5 <- y ~ gwdsp(0.5, fixed = TRUE) + gwdegree(0.5, fixed = TRUE) +

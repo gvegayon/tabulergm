@@ -1,0 +1,11 @@
+plot:
+  edgelist: "0->1, 0->2"
+  vcolor: [orange, gray, gray]
+  vshape: [circle, square, square]
+  vsize: [1.0, 1.0, 1.0]
+  ecolor: black
+  layout:
+    x: [0, 1, 1]
+    y: [0, .5, -.5]
+math: |
+  \sum_{j \in B_2} \mathbf{1}(x_j = p) \sum_{i_1 < \cdots < i_k \in B_1} \prod_{l=1}^{k} y_{i_l j} \mathbf{1}(x_{i_l} = q)

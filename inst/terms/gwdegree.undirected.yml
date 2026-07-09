@@ -1,7 +1,6 @@
 plot:
   edgelist: "0->1, 0->2, 0->3"
   vcolor: [black, black, black, black]
-  vshape: [square, circle, circle, circle]
   vsize: [1.0, .5, .5, .5]
   ecolor: black
   layout:

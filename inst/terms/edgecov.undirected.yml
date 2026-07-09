@@ -1,7 +1,7 @@
 plot:
   edgelist: "0->1"
-  vcolor: [black, black]
-  ecolor: black
+  vcolor: [gray, gray]
+  ecolor: orange
   elinetype: [2]
   layout:
     x: [0, 1]

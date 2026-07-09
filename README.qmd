@@ -89,19 +89,41 @@ bipartite_terms <- parse_ergm_formula(
 bipartite_terms[, c("term", "attribute", "description")]
 ```
 
-We can also embed the table in quarto/Rmarkdown:
+We can also embed the table in quarto/Rmarkdown. The table below covers every
+term currently included in `tabulergm`'s term dictionary; terms with both
+directed and undirected definitions (`edges`, `gwesp`, `gwdsp`) display the
+undirected version:
 
 ```{r}
-#| label: table-embed
+#| label: term-dictionary
 #| results: asis
-tabulergm_table(
-  network ~
-    edges +
-    gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
-    b1factor("type") + b2factor("group") +
-    b1nodematch("type") + b2nodematch("group"),
-  format = "markdown"
+dictionary_terms <- network ~
+  edges + mutual + triangle +
+  gwesp(0.5, fixed = TRUE) + gwdsp(0.5, fixed = TRUE) +
+  gwdegree(0.5, fixed = TRUE) +
+  nodematch("attr") + nodefactor("attr") + nodemix("attr") +
+  nodecov("attr") + absdiff("attr") + edgecov("cov") +
+  transitiveties + cyclicalties +
+  nodeicov("attr") + nodeocov("attr") +
+  gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+  b1factor("type") + b2factor("group") +
+  b1nodematch("type") + b2nodematch("group") +
+  b1starmix(2, "type") + b2starmix(2, "group")
+
+tabulergm_table(dictionary_terms, format = "markdown")
+```
+
+```{r}
+#| label: term-coverage
+#| include: false
+# Fails the render if a term in inst/terms/ is missing from the table above
+yml_terms <- unique(
+  sub(
+    "\\.(un)?directed\\.yml$", "",
+    list.files(system.file("terms", package = "tabulergm"))
+  )
 )
+stopifnot(all(yml_terms %in% parse_ergm_formula(dictionary_terms)$term))
 ```
 
 ## Code of Conduct

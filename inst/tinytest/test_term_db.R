@@ -247,6 +247,36 @@ local({
   expect_equal(captured$elinetype, c(1, 1, 2, 1))
 })
 
+# .draw_term_figure permutes per-edge attributes into netplot drawing order
+# (as.edgelist sorts by tail/head index, not YAML insertion order)
+local({
+  captured <- new.env(parent = emptyenv())
+  custom <- function(netobj, layout, vcolor, ecolor, directed,
+                     vshape, vrotation, vsize, elinetype, ...) {
+    captured$ecolor <- ecolor
+    invisible(NULL)
+  }
+  old <- tabulergm_set_plotfun(custom)
+  on.exit(tabulergm_set_plotfun(old), add = TRUE)
+
+  # Node order is (0, 2, 1): insertion edges are 0->1 = (1,3),
+  # 0->2 = (1,2), 2->1 = (2,3); drawing order sorts to (1,2), (1,3),
+  # (2,3), so black must move from position 1 to position 2.
+  outfile <- tempfile(fileext = ".png")
+  tabulergm:::.draw_term_figure(
+    list(
+      edgelist = "0->1, 0->2, 2->1",
+      vcolor = c("black", "gray", "black"),
+      ecolor = c("black", "gray", "gray"),
+      layout = list(x = c(0, .5, 1), y = c(0, 1, 0))
+    ),
+    directed = TRUE,
+    outfile = outfile
+  )
+
+  expect_equal(captured$ecolor, c("gray", "black", "gray", "transparent"))
+})
+
 
 # ---- Integration with parse_ergm_formula -------------------------------------
 

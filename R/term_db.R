@@ -377,6 +377,15 @@ tabulergm_get_plotfun <- function() {
     elinetype <- rep(elinetype, length.out = n_edges)
   }
 
+  # netplot draws edges in as.edgelist() order (sorted tail/head, with
+  # undirected pairs normalized), not insertion order. Permute the
+  # per-edge attributes so YAML vectors follow the edgelist as written.
+  if (n_edges > 1L) {
+    perm <- .edge_draw_order(nw, edges, nodes, directed)
+    ecolor    <- ecolor[perm]
+    elinetype <- elinetype[perm]
+  }
+
   # Adding transparent nodes to ensure we cover enough space for the layout
   if (!is.null(layout)) {
 
@@ -443,6 +452,43 @@ tabulergm_get_plotfun <- function() {
   )
 
   outfile
+}
+
+
+# ---- Edge drawing order ----
+
+#' Map edgelist insertion order to netplot's drawing order
+#'
+#' [netplot::nplot()] receives edges via [network::as.edgelist()], which
+#' sorts them by tail then head index (normalizing undirected pairs to
+#' (min, max)). Per-edge attributes supplied in YAML insertion order must
+#' therefore be permuted before drawing.
+#'
+#' @param nw The [network::network] object with the edges added.
+#' @param edges Two-column character matrix of edges in insertion order.
+#' @param nodes Character vector of node labels in index order.
+#' @param directed Logical. Whether the network is directed.
+#' @return An integer vector `perm` such that `attr[perm]` is in drawing
+#'   order.
+#' @noRd
+.edge_draw_order <- function(nw, edges, nodes, directed) {
+  drawn <- network::as.edgelist(nw)
+
+  ins_tail <- match(edges[, "from"], nodes)
+  ins_head <- match(edges[, "to"], nodes)
+
+  if (directed) {
+    key_ins   <- paste(ins_tail, ins_head)
+    key_drawn <- paste(drawn[, 1], drawn[, 2])
+  } else {
+    key_ins <- paste(pmin(ins_tail, ins_head), pmax(ins_tail, ins_head))
+    key_drawn <- paste(
+      pmin(drawn[, 1], drawn[, 2]),
+      pmax(drawn[, 1], drawn[, 2])
+    )
+  }
+
+  match(key_drawn, key_ins)
 }
 
 

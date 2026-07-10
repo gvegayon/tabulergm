@@ -56,13 +56,15 @@ one edge. Per-vertex vectors follow the node order obtained from the
 parsed edgelist (unique node ids, all tail nodes first, then head
 nodes); render the figure to double-check the mapping.
 \itemize{
-\item \strong{Vertex color}: \code{black} for purely structural terms;
-\code{orange} for nodes whose attribute enters the statistic (matched
-pairs share orange); mixing terms use \code{orange} vs. teal
-(\code{"#008080"}, quoted in the YAML) for the two attribute
-categories, a colorblind-friendly pairing; \code{gray} for nodes whose
-attribute is irrelevant. These colors drive the explanatory notes
-appended below rendered tables, so use them consistently.
+\item \strong{Vertex color}: \code{black} marks the focal structure of a
+term; \code{gray} marks non-focal context, both attribute-irrelevant
+nodes and structurally non-focal nodes (e.g., the shared partners
+in \code{gwesp}/\code{gwdsp}); \code{orange} marks nodes whose attribute enters
+the statistic (matched pairs share orange); mixing terms use
+\code{orange} vs. teal (\code{"#008080"}, quoted in the YAML) for the two
+attribute categories, a colorblind-friendly pairing. These colors
+drive the explanatory notes appended below rendered tables, so
+use them consistently.
 \item \strong{Vertex shape}: \code{square} marks first-mode (\eqn{B_1})
 nodes and \code{circle} marks second-mode (\eqn{B_2}) nodes in bipartite
 drawings. One-mode drawings use circles only.
@@ -70,9 +72,11 @@ drawings. One-mode drawings use circles only.
 left and the second mode on the right.
 \item \strong{Vertex size}: \code{1.0} for focal or attribute-relevant
 nodes, \code{.5} for context nodes.
-\item \strong{Edges}: solid black for ties; dashed (\code{elinetype: 2})
-for match/covariate annotations; \code{orange} when the edge itself
-carries the covariate (e.g., \code{edgecov}).
+\item \strong{Edges}: solid black for focal ties; \code{gray} for
+context ties (e.g., the two-paths in shared-partner terms);
+dashed (\code{elinetype: 2}) for match/covariate annotations;
+\code{orange} when the edge itself carries the covariate
+(e.g., \code{edgecov}).
 \item Directedness comes from the file name; arrows are drawn
 automatically for \code{.directed.yml} terms.
 }

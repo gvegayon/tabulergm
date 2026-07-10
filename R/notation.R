@@ -54,13 +54,15 @@
 #' parsed edgelist (unique node ids, all tail nodes first, then head
 #' nodes); render the figure to double-check the mapping.
 #' \itemize{
-#'   \item \strong{Vertex color}: `black` for purely structural terms;
-#'     `orange` for nodes whose attribute enters the statistic (matched
-#'     pairs share orange); mixing terms use `orange` vs. teal
-#'     (`"#008080"`, quoted in the YAML) for the two attribute
-#'     categories, a colorblind-friendly pairing; `gray` for nodes whose
-#'     attribute is irrelevant. These colors drive the explanatory notes
-#'     appended below rendered tables, so use them consistently.
+#'   \item \strong{Vertex color}: `black` marks the focal structure of a
+#'     term; `gray` marks non-focal context, both attribute-irrelevant
+#'     nodes and structurally non-focal nodes (e.g., the shared partners
+#'     in `gwesp`/`gwdsp`); `orange` marks nodes whose attribute enters
+#'     the statistic (matched pairs share orange); mixing terms use
+#'     `orange` vs. teal (`"#008080"`, quoted in the YAML) for the two
+#'     attribute categories, a colorblind-friendly pairing. These colors
+#'     drive the explanatory notes appended below rendered tables, so
+#'     use them consistently.
 #'   \item \strong{Vertex shape}: `square` marks first-mode (\eqn{B_1})
 #'     nodes and `circle` marks second-mode (\eqn{B_2}) nodes in bipartite
 #'     drawings. One-mode drawings use circles only.
@@ -68,9 +70,11 @@
 #'     left and the second mode on the right.
 #'   \item \strong{Vertex size}: `1.0` for focal or attribute-relevant
 #'     nodes, `.5` for context nodes.
-#'   \item \strong{Edges}: solid black for ties; dashed (`elinetype: 2`)
-#'     for match/covariate annotations; `orange` when the edge itself
-#'     carries the covariate (e.g., `edgecov`).
+#'   \item \strong{Edges}: solid black for focal ties; `gray` for
+#'     context ties (e.g., the two-paths in shared-partner terms);
+#'     dashed (`elinetype: 2`) for match/covariate annotations;
+#'     `orange` when the edge itself carries the covariate
+#'     (e.g., `edgecov`).
 #'   \item Directedness comes from the file name; arrows are drawn
 #'     automatically for `.directed.yml` terms.
 #' }

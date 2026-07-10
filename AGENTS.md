@@ -11,9 +11,11 @@ documented in `R/notation.R` (help topic `?"tabulergm-notation"`). In short:
   geometrically weighted terms. Verify formulas against the `ergm` manual
   and source literature; when ambiguous, compare numerically against
   `summary(nw ~ term)` on a small test network.
-- **Drawings**: orange = attribute-bearing nodes (matched pairs share
-  orange), orange vs. teal (`"#008080"`) = mixing between two attribute
-  values, gray = attribute-irrelevant, black = structural; squares mark
+- **Drawings**: black = focal structure, gray = non-focal context (both
+  attribute-irrelevant nodes and structurally non-focal nodes/edges,
+  e.g., shared partners in gwesp/gwdsp), orange = attribute-bearing
+  nodes (matched pairs share orange), orange vs. teal (`"#008080"`) =
+  mixing between two attribute values; squares mark
   first-mode (B1) nodes and circles second-mode (B2) nodes, with the first
   mode drawn on the left; one-mode drawings use circles only; vertex size
   1.0 for focal nodes, .5 for context; dashed lines for match/covariate

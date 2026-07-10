@@ -219,6 +219,80 @@ tabulergm_get_plotfun <- function() {
 }
 
 
+# ---- Drawing-convention notes ----
+
+# Hex value used to draw "teal" mixing nodes (not a named R color).
+.tabulergm_teal <- "#008080"
+
+#' Collect drawing-convention flags for a set of terms
+#'
+#' Reads the plot specification of every term's YAML file and reports
+#' which drawing conventions the figures use: `orange` (a focal node
+#' attribute, without teal in the same drawing), `teal` (mixing between
+#' two attribute values), and `bipartite` (square first-mode nodes).
+#'
+#' @param term_names Character vector of term names (possibly with `NA`s).
+#' @return A named logical vector with elements `orange`, `teal`, and
+#'   `bipartite`.
+#' @noRd
+.term_drawing_flags <- function(term_names) {
+  flags <- c(orange = FALSE, teal = FALSE, bipartite = FALSE)
+
+  for (tn in unique(term_names[!is.na(term_names)])) {
+    yml_path <- .find_term_yml(tn, directed = NULL)
+    if (is.null(yml_path)) next
+
+    yml_data <- yaml::read_yaml(yml_path, handlers = list(
+      "bool#yes" = function(x) x,
+      "bool#no"  = function(x) x
+    ))
+    plot_data <- yml_data$plot
+    if (is.null(plot_data)) next
+
+    vcolor <- tolower(as.character(plot_data$vcolor))
+    vshape <- tolower(as.character(plot_data$vshape))
+
+    has_teal <- any(vcolor %in% c("teal", tolower(.tabulergm_teal)))
+    if (has_teal) flags[["teal"]] <- TRUE
+    if (any(vcolor == "orange") && !has_teal) flags[["orange"]] <- TRUE
+    if (any(vshape == "square")) flags[["bipartite"]] <- TRUE
+  }
+
+  flags
+}
+
+#' Build explanatory notes for the drawing conventions used in a table
+#'
+#' @param term_names Character vector of term names shown in the table.
+#' @return A character vector of notes (possibly empty).
+#' @noRd
+.term_drawing_notes <- function(term_names) {
+  flags <- .term_drawing_flags(term_names)
+  notes <- character(0)
+
+  if (flags[["orange"]]) {
+    notes <- c(notes,
+      "Orange nodes indicate nodes with a focal attribute.")
+  }
+  if (flags[["teal"]]) {
+    notes <- c(notes,
+      paste(
+        "Orange and teal nodes represent nodes with different values",
+        "of the focal attribute."
+      ))
+  }
+  if (flags[["bipartite"]]) {
+    notes <- c(notes,
+      paste(
+        "Square nodes represent nodes in the first mode and circle",
+        "nodes in the second mode."
+      ))
+  }
+
+  notes
+}
+
+
 # ---- Figure caching ----
 
 #' Get a cached figure or draw a new one

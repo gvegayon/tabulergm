@@ -56,8 +56,11 @@
 #' \itemize{
 #'   \item \strong{Vertex color}: `black` for purely structural terms;
 #'     `orange` for nodes whose attribute enters the statistic (matched
-#'     pairs share orange; mixing terms use orange vs. gray for the two
-#'     categories); `gray` for nodes whose attribute is irrelevant.
+#'     pairs share orange); mixing terms use `orange` vs. teal
+#'     (`"#008080"`, quoted in the YAML) for the two attribute
+#'     categories, a colorblind-friendly pairing; `gray` for nodes whose
+#'     attribute is irrelevant. These colors drive the explanatory notes
+#'     appended below rendered tables, so use them consistently.
 #'   \item \strong{Vertex shape}: `square` marks first-mode (\eqn{B_1})
 #'     nodes and `circle` marks second-mode (\eqn{B_2}) nodes in bipartite
 #'     drawings. One-mode drawings use circles only.

@@ -1,6 +1,6 @@
 plot:
   edgelist: "0->1, 0->2"
-  vcolor: [orange, gray, gray]
+  vcolor: [orange, "#008080", "#008080"]
   vshape: [square, circle, circle]
   vsize: [1.0, 1.0, 1.0]
   ecolor: black

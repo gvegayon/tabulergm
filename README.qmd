@@ -100,7 +100,7 @@ undirected version:
 dictionary_terms <- network ~
   edges + mutual + triangle +
   gwesp(0.5, fixed = TRUE) + gwdsp(0.5, fixed = TRUE) +
-  gwdegree(0.5, fixed = TRUE) +
+  gwdegree(0.5, fixed = TRUE) + altkstar(2, fixed = TRUE) +
   nodematch("attr") + nodefactor("attr") + nodemix("attr") +
   nodecov("attr") + absdiff("attr") + edgecov("cov") +
   transitiveties + cyclicalties +

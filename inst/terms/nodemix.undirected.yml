@@ -1,6 +1,6 @@
 plot:
   edgelist: "0->1"
-  vcolor: [orange, gray]
+  vcolor: [orange, "#008080"]
   ecolor: black
   layout:
     x: [0, 1]

@@ -51,7 +51,10 @@ document rendering.}
 }
 \value{
 A \code{data.frame} (default), or a \code{knitr_kable} object when
-\code{format} is \code{"html"} or \code{"markdown"}.
+\code{format} is \code{"html"} or \code{"markdown"}. When the term figures use
+drawing conventions (orange for focal attributes, orange/teal for
+mixing, squares/circles for bipartite modes), an explanatory note is
+appended below \code{"html"} and \code{"markdown"} tables.
 }
 \description{
 S3 generic that dispatches to methods for fitted \link[ergm:ergm]{ergm} objects

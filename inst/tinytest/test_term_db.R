@@ -57,6 +57,7 @@ yml_test_cases <- list(
   list(term = "gwdsp", directed = FALSE, pattern = "gwdsp\\.undirected\\.yml$"),
   list(term = "gwdsp", directed = TRUE,  pattern = "gwdsp\\.directed\\.yml$"),
   list(term = "gwdegree", directed = FALSE, pattern = "gwdegree\\.undirected\\.yml$"),
+  list(term = "altkstar", directed = FALSE, pattern = "altkstar\\.undirected\\.yml$"),
   list(term = "nodefactor", directed = FALSE, pattern = "nodefactor\\.undirected\\.yml$"),
   list(term = "nodecov", directed = FALSE, pattern = "nodecov\\.undirected\\.yml$"),
   list(term = "absdiff", directed = FALSE, pattern = "absdiff\\.undirected\\.yml$"),
@@ -120,8 +121,8 @@ for (term in c("gwb1dsp", "gwb2dsp", "b1factor", "b2factor",
 }
 
 # .get_term_yml_data reads undirected key term math and figures
-for (term in c("gwesp", "gwdsp", "gwdegree", "nodefactor", "nodecov",
-               "absdiff", "nodemix", "edgecov")) {
+for (term in c("gwesp", "gwdsp", "gwdegree", "altkstar", "nodefactor",
+               "nodecov", "absdiff", "nodemix", "edgecov")) {
   data <- tabulergm:::.get_term_yml_data(term, directed = FALSE)
   expect_false(is.na(data$math),
     info = sprintf("math found for %s (undirected)", term))
@@ -138,6 +139,36 @@ for (term in c("gwesp", "gwdsp", "transitiveties", "cyclicalties",
   expect_false(is.na(data$figure),
     info = sprintf("figure found for %s (directed)", term))
 }
+
+
+# ---- Drawing-convention notes ------------------------------------------------
+
+# Structural terms produce no notes
+notes <- tabulergm:::.term_drawing_notes(c("edges", "triangle"))
+expect_equal(length(notes), 0L)
+
+# Attribute terms produce the orange note
+notes <- tabulergm:::.term_drawing_notes(c("edges", "nodematch"))
+expect_equal(length(notes), 1L)
+expect_true(grepl("Orange nodes", notes))
+
+# Mixing terms produce the orange/teal note (and no plain orange note)
+notes <- tabulergm:::.term_drawing_notes(c("edges", "nodemix"))
+expect_equal(length(notes), 1L)
+expect_true(grepl("Orange and teal", notes))
+
+# Attribute + mixing terms produce both color notes
+notes <- tabulergm:::.term_drawing_notes(c("nodematch", "nodemix"))
+expect_equal(length(notes), 2L)
+
+# Bipartite terms produce the square/circle note
+notes <- tabulergm:::.term_drawing_notes("b1factor")
+expect_true(any(grepl("Square nodes", notes)))
+expect_true(any(grepl("Orange nodes", notes)))
+
+# Unknown terms are skipped quietly
+notes <- tabulergm:::.term_drawing_notes(c("edges", NA, "no_such_term"))
+expect_equal(length(notes), 0L)
 
 
 # ---- Caching mechanism -------------------------------------------------------
@@ -257,11 +288,11 @@ expect_false(is.na(result4$math[result4$term == "b2starmix"]))
 
 # Key covariate and structural terms have YAML data
 f5 <- y ~ gwdsp(0.5, fixed = TRUE) + gwdegree(0.5, fixed = TRUE) +
-  nodefactor("race") + nodecov("age") + absdiff("age") +
-  nodemix("race") + edgecov("dist")
+  altkstar(2, fixed = TRUE) + nodefactor("race") + nodecov("age") +
+  absdiff("age") + nodemix("race") + edgecov("dist")
 result5 <- parse_ergm_formula(f5)
-for (term in c("gwdsp", "gwdegree", "nodefactor", "nodecov", "absdiff",
-               "nodemix", "edgecov")) {
+for (term in c("gwdsp", "gwdegree", "altkstar", "nodefactor", "nodecov",
+               "absdiff", "nodemix", "edgecov")) {
   expect_false(is.na(result5$math[result5$term == term]),
     info = sprintf("formula math found for %s", term))
 }

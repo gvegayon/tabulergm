@@ -408,17 +408,38 @@ tabulergm_save.default <- function(object, path, ...) {
 }
 
 .render_save_markdown <- function(df) {
+  notes <- .save_table_notes(df)
   df <- .preprocess_columns(df, "markdown", copy_figures = FALSE)
-  as.character(knitr::kable(df, format = "pipe", row.names = FALSE,
+  code <- as.character(knitr::kable(df, format = "pipe", row.names = FALSE,
     escape = FALSE
   ))
+  if (length(notes) > 0L) {
+    code <- c(code, "", paste0("*Note: ", paste(notes, collapse = " "), "*"))
+  }
+  code
 }
 
 .render_save_latex <- function(df, latex_image_width) {
+  notes <- .save_table_notes(df)
   df <- .preprocess_latex_columns(df, latex_image_width = latex_image_width)
-  as.character(knitr::kable(df, format = "latex", row.names = FALSE,
+  code <- as.character(knitr::kable(df, format = "latex", row.names = FALSE,
     escape = FALSE
   ))
+  if (length(notes) > 0L) {
+    code <- c(
+      code,
+      "",
+      sprintf("\\emph{Note: %s}", paste(notes, collapse = " "))
+    )
+  }
+  code
+}
+
+.save_table_notes <- function(df) {
+  if (!"term" %in% names(df)) {
+    return(character(0))
+  }
+  .term_drawing_notes(df[["term"]])
 }
 
 .preprocess_latex_columns <- function(df, latex_image_width) {

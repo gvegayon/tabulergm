@@ -97,7 +97,7 @@ with both directed and undirected definitions (`edges`, `gwesp`,
 dictionary_terms <- network ~
   edges + mutual + triangle +
   gwesp(0.5, fixed = TRUE) + gwdsp(0.5, fixed = TRUE) +
-  gwdegree(0.5, fixed = TRUE) +
+  gwdegree(0.5, fixed = TRUE) + altkstar(2, fixed = TRUE) +
   nodematch("attr") + nodefactor("attr") + nodemix("attr") +
   nodecov("attr") + absdiff("attr") + edgecov("cov") +
   transitiveties + cyclicalties +
@@ -118,6 +118,7 @@ tabulergm_table(dictionary_terms, format = "markdown")
 | gwesp | <img src="man/figures/README-gwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP_i(y)$ | Geometrically weighted edgewise shared partner distribution |
 | gwdsp | <img src="man/figures/README-gwdsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Geometrically weighted dyadwise shared partner distribution |
 | gwdegree | <img src="man/figures/README-gwdegree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D_i(y)$ | Geometrically weighted degree distribution |
+| altkstar | <img src="man/figures/README-altkstar.png" width="80" /> | $\sum_{k=2}^{n-1} (-1)^k \frac{S_k(y)}{\lambda^{k-2}}$ | Alternating k-star |
 | nodematch | <img src="man/figures/README-nodematch.png" width="80" /> | $\sum_{i<j} y_{ij} \mathbf{1}(x_i = x_j)$ | Uniform homophily and differential homophily |
 | nodefactor | <img src="man/figures/README-nodefactor.png" width="80" /> | $\sum_{i<j} y_{ij} \left[\mathbf{1}(x_i = k) + \mathbf{1}(x_j = k)\right]$ | Factor attribute effect |
 | nodemix | <img src="man/figures/README-nodemix.png" width="80" /> | $\sum_{i<j} y_{ij} \mathbf{1}(\{x_i, x_j\} = \{k, l\})$ | Nodal attribute mixing |
@@ -136,6 +137,11 @@ tabulergm_table(dictionary_terms, format = "markdown")
 | b2nodematch | <img src="man/figures/README-b2nodematch.png" width="80" /> | $\sum_{k\in B_1} \sum_{i<j \in B_2} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Nodal attribute-based homophily effect for the second mode in a bipartite network |
 | b1starmix | <img src="man/figures/README-b1starmix.png" width="80" /> | $\sum_{i \in B_1} \mathbf{1}(x_i = p) \sum_{j_1 < \cdots < j_k \in B_2} \prod_{l=1}^{k} y_{i j_l} \mathbf{1}(x_{j_l} = q)$ | Mixing matrix for k-stars centered on the first mode of a bipartite network |
 | b2starmix | <img src="man/figures/README-b2starmix.png" width="80" /> | $\sum_{j \in B_2} \mathbf{1}(x_j = p) \sum_{i_1 < \cdots < i_k \in B_1} \prod_{l=1}^{k} y_{i_l j} \mathbf{1}(x_{i_l} = q)$ | Mixing matrix for k-stars centered on the second mode of a bipartite network |
+
+*Note: Orange nodes indicate nodes with a focal attribute. Orange and
+teal nodes represent nodes with different values of the focal attribute.
+Square nodes represent nodes in the first mode and circle nodes in the
+second mode.*
 
 ## Code of Conduct
 

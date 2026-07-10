@@ -1,5 +1,33 @@
 # Agent Instructions for tabulergm
 
+## Adding or Editing ERGM Term Definitions
+
+Before touching the YAML term database (`inst/terms/`), read the standards
+documented in `R/notation.R` (help topic `?"tabulergm-notation"`). In short:
+
+- **Math**: `y_ij` for ties (sum over `i<j` undirected, `i != j` directed),
+  `x_i` for vertex attributes, `\mathbf{1}(...)` for indicators, `B_1`/`B_2`
+  for bipartite modes, and the Hunter (2007) parameterization for
+  geometrically weighted terms. Verify formulas against the `ergm` manual
+  and source literature; when ambiguous, compare numerically against
+  `summary(nw ~ term)` on a small test network.
+- **Drawings**: black = focal structure, gray = non-focal context (both
+  attribute-irrelevant nodes and structurally non-focal nodes/edges,
+  e.g., shared partners in gwesp/gwdsp), orange = attribute-bearing
+  nodes (matched pairs share orange), orange vs. teal (`"#008080"`) =
+  mixing between two attribute values; squares mark
+  first-mode (B1) nodes and circles second-mode (B2) nodes, with the first
+  mode drawn on the left; one-mode drawings use circles only; vertex size
+  1.0 for focal nodes, .5 for context; dashed lines for match/covariate
+  annotations. These conventions drive the explanatory notes that
+  `tabulergm_table()` appends below rendered tables.
+- **Wiring**: no parser changes needed — files are looked up by term name
+  as `inst/terms/<term>.<directed|undirected>.yml`.
+- **Coverage**: add tinytest cases in `inst/tinytest/test_term_db.R`, and
+  add the term to the dictionary tables in `README.qmd` and
+  `vignettes/ergm-with-tabulergm.Rmd` (hidden coverage-check chunks fail
+  the render if a term is missing).
+
 ## Before Pushing Changes
 
 Always run the following commands before pushing changes to ensure

@@ -8,7 +8,10 @@
 #'   [formula][stats::formula].
 #' @param ... Additional arguments passed to methods.
 #' @return A `data.frame` (default), or a `knitr_kable` object when
-#'   `format` is `"html"` or `"markdown"`.
+#'   `format` is `"html"` or `"markdown"`. When the term figures use
+#'   drawing conventions (orange for focal attributes, orange/teal for
+#'   mixing, squares/circles for bipartite modes), an explanatory note is
+#'   appended below `"html"` and `"markdown"` tables.
 #' @export
 #' @seealso [tabulergm_table.ergm()], [tabulergm_table.formula()]
 tabulergm_table <- function(object, ...) {
@@ -568,6 +571,12 @@ tabulergm_table.formula <- function(
     )
   }
 
+  notes <- if ("term" %in% names(df)) {
+    .term_drawing_notes(df[["term"]])
+  } else {
+    character(0)
+  }
+
   df <- .preprocess_columns(df, format, figures_dir = figures_dir)
 
   knitr_format <- switch(format,
@@ -575,7 +584,40 @@ tabulergm_table.formula <- function(
     markdown = "pipe"
   )
 
-  knitr::kable(df, format = knitr_format, row.names = FALSE, escape = FALSE)
+  out <- knitr::kable(df, format = knitr_format, row.names = FALSE,
+    escape = FALSE
+  )
+  .append_table_notes(out, notes, format)
+}
+
+
+#' Append drawing-convention notes below a formatted table
+#'
+#' When the figures in the table use drawing conventions (attribute
+#' colors, mixing colors, or bipartite shapes), an explanatory note is
+#' appended after the table so that readers can interpret the drawings.
+#'
+#' @param kable_obj A `knitr_kable` object.
+#' @param notes Character vector of notes (possibly empty).
+#' @param format Either `"html"` or `"markdown"`.
+#' @return The `knitr_kable` object, with notes appended when present.
+#' @noRd
+.append_table_notes <- function(kable_obj, notes, format) {
+  if (length(notes) == 0L) {
+    return(kable_obj)
+  }
+
+  note_text <- paste(notes, collapse = " ")
+  lines <- if (format == "markdown") {
+    c(as.character(kable_obj), "", paste0("*Note: ", note_text, "*"))
+  } else {
+    c(
+      as.character(kable_obj),
+      sprintf('<p class="tabulergm-note"><em>Note: %s</em></p>', note_text)
+    )
+  }
+
+  structure(lines, format = attr(kable_obj, "format"), class = "knitr_kable")
 }
 
 

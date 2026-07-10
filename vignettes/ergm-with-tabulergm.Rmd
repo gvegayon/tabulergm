@@ -81,21 +81,41 @@ tabulergm_table(
 )
 ```
 
-## Bipartite ERGM terms
+## The term dictionary
 
-Bipartite ERGMs often use mode-specific terms: `b1*` terms summarize the first
-mode, and `b2*` terms summarize the second mode.  `tabulergm` can inspect these
-terms from a formula in the same way it handles one-mode ERGM terms.
+`tabulergm` ships math and network drawings for commonly used ERGM terms,
+including directed variants and mode-specific bipartite terms (`b1*` terms
+summarize the first mode, and `b2*` terms summarize the second mode).
+The table below covers every term currently included in the dictionary;
+terms with both directed and undirected definitions (`edges`, `gwesp`,
+`gwdsp`) display the undirected version:
 
-```{r bipartite-formula-table, results = "asis"}
-tabulergm_table(
-  network ~
-    edges + 
-    gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
-    b1factor("type") + b2factor("group") +
-    b1nodematch("type") + b2nodematch("group"),
-  format = "markdown"
+```{r term-dictionary, results = "asis"}
+dictionary_terms <- network ~
+  edges + mutual + triangle +
+  gwesp(0.5, fixed = TRUE) + gwdsp(0.5, fixed = TRUE) +
+  gwdegree(0.5, fixed = TRUE) + altkstar(2, fixed = TRUE) +
+  nodematch("attr") + nodefactor("attr") + nodemix("attr") +
+  nodecov("attr") + absdiff("attr") + edgecov("cov") +
+  transitiveties + cyclicalties +
+  nodeicov("attr") + nodeocov("attr") +
+  gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+  b1factor("type") + b2factor("group") +
+  b1nodematch("type") + b2nodematch("group") +
+  b1starmix(2, "type") + b2starmix(2, "group")
+
+tabulergm_table(dictionary_terms, format = "markdown")
+```
+
+```{r term-coverage, include = FALSE}
+# Fails the render if a term in inst/terms/ is missing from the table above
+yml_terms <- unique(
+  sub(
+    "\\.(un)?directed\\.yml$", "",
+    list.files(system.file("terms", package = "tabulergm"))
+  )
 )
+stopifnot(all(yml_terms %in% parse_ergm_formula(dictionary_terms)$term))
 ```
 
 ## Interactive preview with `tabulergm_view()`

@@ -1,11 +1,10 @@
 plot:
   edgelist: "0->1"
-  vcolor:
-    - orange
-    - orange
+  vcolor: [orange, orange]
+  vsize: [1.0, .6]
   ecolor: black
   layout:
     x: [0, 1]
     y: [0, 0]
 math: |
-  \sum_{i<j} y_{ij} \mathbf{1}(x_i = x_j)
+  \sum_{i<j} y_{ij} (x_i + x_j)

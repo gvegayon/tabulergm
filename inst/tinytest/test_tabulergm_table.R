@@ -35,6 +35,57 @@ if (requireNamespace("knitr", quietly = TRUE)) {
     info = "markdown math does not HTML-escape '<' in TeX")
 }
 
+# ---- Drawing-convention notes below rendered tables --------------------------
+
+if (requireNamespace("knitr", quietly = TRUE)) {
+
+  # Structural-only tables have no note
+  md <- tabulergm_table(y ~ edges + triangle, format = "markdown")
+  md_str <- paste(as.character(md), collapse = "\n")
+  expect_false(grepl("Note:", md_str, fixed = TRUE),
+    info = "no note for structural-only tables")
+
+  # Attribute terms add the orange note
+  md <- tabulergm_table(y ~ edges + nodematch("g"), format = "markdown")
+  md_str <- paste(as.character(md), collapse = "\n")
+  expect_true(grepl("*Note: Orange nodes", md_str, fixed = TRUE),
+    info = "orange note for attribute terms")
+  expect_false(grepl("teal", md_str, fixed = TRUE),
+    info = "no teal note without mixing terms")
+  expect_false(grepl("Square nodes", md_str, fixed = TRUE),
+    info = "no bipartite note for one-mode tables")
+
+  # Mixing terms add the orange/teal note
+  md <- tabulergm_table(y ~ edges + nodemix("g"), format = "markdown")
+  md_str <- paste(as.character(md), collapse = "\n")
+  expect_true(grepl("Orange and teal nodes", md_str, fixed = TRUE),
+    info = "orange/teal note for mixing terms")
+
+  # Bipartite terms add the square/circle note
+  md <- tabulergm_table(y ~ edges + b1factor("g"), format = "markdown")
+  md_str <- paste(as.character(md), collapse = "\n")
+  expect_true(grepl("Square nodes represent nodes in the first mode",
+    md_str, fixed = TRUE),
+    info = "bipartite note for b1/b2 terms")
+
+  # HTML output wraps the note in a paragraph
+  html <- tabulergm_table(y ~ edges + nodematch("g"), format = "html")
+  html_str <- paste(as.character(html), collapse = "\n")
+  expect_true(grepl('<p class="tabulergm-note">', html_str, fixed = TRUE),
+    info = "html note uses a dedicated paragraph")
+
+  # Notes survive in saved markdown and latex output
+  out_dir <- tempfile("tabulergm-notes-")
+  saved <- tabulergm_save(y ~ edges + nodemix("g"), out_dir)
+  md_lines <- readLines(saved$files[["markdown"]])
+  expect_true(any(grepl("Orange and teal nodes", md_lines, fixed = TRUE)),
+    info = "saved markdown includes the note")
+  tex_lines <- readLines(saved$files[["latex"]])
+  expect_true(any(grepl("\\emph{Note:", tex_lines, fixed = TRUE)),
+    info = "saved latex includes the note")
+}
+
+
 # ---- tabulergm_table.ergm (uses pre-fitted ergm object) ----------------------
 
 if (requireNamespace("network", quietly = TRUE) &&

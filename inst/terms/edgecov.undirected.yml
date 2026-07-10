@@ -1,0 +1,10 @@
+plot:
+  edgelist: "0->1"
+  vcolor: [gray, gray]
+  ecolor: orange
+  elinetype: [2]
+  layout:
+    x: [0, 1]
+    y: [0, 0]
+math: |
+  \sum_{i<j} y_{ij} x_{ij}

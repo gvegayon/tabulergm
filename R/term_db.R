@@ -219,6 +219,80 @@ tabulergm_get_plotfun <- function() {
 }
 
 
+# ---- Drawing-convention notes ----
+
+# Hex value used to draw "teal" mixing nodes (not a named R color).
+.tabulergm_teal <- "#008080"
+
+#' Collect drawing-convention flags for a set of terms
+#'
+#' Reads the plot specification of every term's YAML file and reports
+#' which drawing conventions the figures use: `orange` (a focal node
+#' attribute, without teal in the same drawing), `teal` (mixing between
+#' two attribute values), and `bipartite` (square first-mode nodes).
+#'
+#' @param term_names Character vector of term names (possibly with `NA`s).
+#' @return A named logical vector with elements `orange`, `teal`, and
+#'   `bipartite`.
+#' @noRd
+.term_drawing_flags <- function(term_names) {
+  flags <- c(orange = FALSE, teal = FALSE, bipartite = FALSE)
+
+  for (tn in unique(term_names[!is.na(term_names)])) {
+    yml_path <- .find_term_yml(tn, directed = NULL)
+    if (is.null(yml_path)) next
+
+    yml_data <- yaml::read_yaml(yml_path, handlers = list(
+      "bool#yes" = function(x) x,
+      "bool#no"  = function(x) x
+    ))
+    plot_data <- yml_data$plot
+    if (is.null(plot_data)) next
+
+    vcolor <- tolower(as.character(plot_data$vcolor))
+    vshape <- tolower(as.character(plot_data$vshape))
+
+    has_teal <- any(vcolor %in% c("teal", tolower(.tabulergm_teal)))
+    if (has_teal) flags[["teal"]] <- TRUE
+    if (any(vcolor == "orange") && !has_teal) flags[["orange"]] <- TRUE
+    if (any(vshape == "square")) flags[["bipartite"]] <- TRUE
+  }
+
+  flags
+}
+
+#' Build explanatory notes for the drawing conventions used in a table
+#'
+#' @param term_names Character vector of term names shown in the table.
+#' @return A character vector of notes (possibly empty).
+#' @noRd
+.term_drawing_notes <- function(term_names) {
+  flags <- .term_drawing_flags(term_names)
+  notes <- character(0)
+
+  if (flags[["orange"]]) {
+    notes <- c(notes,
+      "Orange nodes indicate nodes with a focal attribute.")
+  }
+  if (flags[["teal"]]) {
+    notes <- c(notes,
+      paste(
+        "Orange and teal nodes represent nodes with different values",
+        "of the focal attribute."
+      ))
+  }
+  if (flags[["bipartite"]]) {
+    notes <- c(notes,
+      paste(
+        "Square nodes represent nodes in the first mode and circle",
+        "nodes in the second mode."
+      ))
+  }
+
+  notes
+}
+
+
 # ---- Figure caching ----
 
 #' Get a cached figure or draw a new one
@@ -303,6 +377,15 @@ tabulergm_get_plotfun <- function() {
     elinetype <- rep(elinetype, length.out = n_edges)
   }
 
+  # netplot draws edges in as.edgelist() order (sorted tail/head, with
+  # undirected pairs normalized), not insertion order. Permute the
+  # per-edge attributes so YAML vectors follow the edgelist as written.
+  if (n_edges > 1L) {
+    perm <- .edge_draw_order(nw, edges, nodes, directed)
+    ecolor    <- ecolor[perm]
+    elinetype <- elinetype[perm]
+  }
+
   # Adding transparent nodes to ensure we cover enough space for the layout
   if (!is.null(layout)) {
 
@@ -369,6 +452,43 @@ tabulergm_get_plotfun <- function() {
   )
 
   outfile
+}
+
+
+# ---- Edge drawing order ----
+
+#' Map edgelist insertion order to netplot's drawing order
+#'
+#' [netplot::nplot()] receives edges via [network::as.edgelist()], which
+#' sorts them by tail then head index (normalizing undirected pairs to
+#' (min, max)). Per-edge attributes supplied in YAML insertion order must
+#' therefore be permuted before drawing.
+#'
+#' @param nw The [network::network] object with the edges added.
+#' @param edges Two-column character matrix of edges in insertion order.
+#' @param nodes Character vector of node labels in index order.
+#' @param directed Logical. Whether the network is directed.
+#' @return An integer vector `perm` such that `attr[perm]` is in drawing
+#'   order.
+#' @noRd
+.edge_draw_order <- function(nw, edges, nodes, directed) {
+  drawn <- network::as.edgelist(nw)
+
+  ins_tail <- match(edges[, "from"], nodes)
+  ins_head <- match(edges[, "to"], nodes)
+
+  if (directed) {
+    key_ins   <- paste(ins_tail, ins_head)
+    key_drawn <- paste(drawn[, 1], drawn[, 2])
+  } else {
+    key_ins <- paste(pmin(ins_tail, ins_head), pmax(ins_tail, ins_head))
+    key_drawn <- paste(
+      pmin(drawn[, 1], drawn[, 2]),
+      pmax(drawn[, 1], drawn[, 2])
+    )
+  }
+
+  match(key_drawn, key_ins)
 }
 
 

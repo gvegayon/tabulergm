@@ -26,5 +26,4 @@ BugReports: https://github.com/gvegayon/tabulergm/issues
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
-Remotes:
-    usccana/netplot@copilot/fix-edge-width-issue
+

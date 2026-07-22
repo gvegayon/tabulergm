@@ -48,3 +48,17 @@ jobs:
         with:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+      
+      # Building the tar.gz file for ubuntu-latest and release R version
+      - name: Build package
+        if: ${{ matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release' }}
+        run: |
+          R CMD build .
+
+      # Upload the built package as an artifact
+      - uses: actions/upload-artifact@v7
+        if: ${{ matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release' }}
+        with:
+          name: ${{ matrix.config.os }}-pkg
+          path: ${{ github.workspace }}/*.tar.gz
+

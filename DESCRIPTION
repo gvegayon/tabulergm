@@ -4,8 +4,7 @@ Version: 0.1.0
 Authors@R: 
     person("George", "Vega Yon", , "g.vegayon@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3171-0844"))
-Description: Translates models estimated with the 'ergm' framework into
-    publication-ready tables and explanatory summaries.
+Description: Exponential-family Random Graph Models (ERGMs) are the most popular class of statistical models for social networks. The 'tabulergm' package provides a user-friendly interface that allows users to easily document their ERGM models by creating publication-ready tables featuring descriptions, mathematical representations, and graphical representations of ERGMs' terms. Users can generate descriptive tables from ERGM formulas and model fits, and integrate them into 'quarto' and 'rmarkdown' documents.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

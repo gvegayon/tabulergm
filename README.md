@@ -9,9 +9,23 @@
 [![R-CMD-check](https://github.com/gvegayon/tabulergm/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gvegayon/tabulergm/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-`tabulergm` is an R package designed to translate models estimated with
-the [`ergm`](https://cran.r-project.org/package=ergm) framework into
-publication-ready tables and explanatory summaries.
+The `tabulergm` package provides an easy way to generate
+publication-ready tables and explanatory summaries for
+Exponential-Random Graph Family Models \[ERGMs\]. Users can generate
+tables either directly from fitted models or by parsing a formula to
+inspect the available terms and their metadata. Generated tables can be
+incorporated into Quarto or RMarkdown documents, and can also be
+exported as Markdown or LaTeX snippets for use in other projects.
+
+The package includes a term dictionary with metadata for each term,
+including descriptions, references, and example figures. Figures are
+currently drawn using the
+[`netplot`](https://cran.r-project.org/package=netplot) package, but
+users can also provide their own custom figure generation methods.
+
+Future version of this package may extend its functionality to support
+stochastic actor-oriented models (SAOMs) and other network modeling
+frameworks.
 
 ## Installation
 

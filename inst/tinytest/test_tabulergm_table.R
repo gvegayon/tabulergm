@@ -33,6 +33,14 @@ if (requireNamespace("knitr", quietly = TRUE)) {
     info = "markdown math keeps raw '<' in TeX")
   expect_false(grepl("\\sum_{i&lt;j} y_{ij}", md_formula_str, fixed = TRUE),
     info = "markdown math does not HTML-escape '<' in TeX")
+
+  md_absdiff <- tabulergm_table(y ~ absdiff("age"), format = "markdown")
+  md_absdiff_str <- paste(as.character(md_absdiff), collapse = "\n")
+  expect_true(grepl("\\left\\lvert{}x_i - x_j\\right\\rvert{}",
+    md_absdiff_str, fixed = TRUE),
+    info = "markdown math uses TeX commands for vertical-bar delimiters")
+  expect_false(grepl("&#124;", md_absdiff_str, fixed = TRUE),
+    info = "markdown math does not contain pipe-table HTML entities")
 }
 
 # ---- Drawing-convention notes below rendered tables --------------------------

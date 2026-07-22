@@ -141,6 +141,11 @@ tabulergm_table.formula <- function(
       )
       df[["math"]][has_math] <- paste0("$$", math_values, "$$")
     } else {
+      math_values <- vapply(
+        math_values,
+        .escape_math_markdown,
+        FUN.VALUE = character(1)
+      )
       df[["math"]][has_math] <- paste0("$", math_values, "$")
     }
   }
@@ -189,6 +194,23 @@ tabulergm_table.formula <- function(
   x <- gsub("&", "&amp;", x, fixed = TRUE)
   x <- gsub("<", "&lt;", x, fixed = TRUE)
   gsub(">", "&gt;", x, fixed = TRUE)
+}
+
+
+#' Escape pipe-table delimiters inside TeX math strings
+#'
+#' `knitr::kable(format = "pipe")` converts literal vertical bars to the HTML
+#' entity `&#124;` so they cannot be mistaken for table delimiters. That entity
+#' is not valid inside TeX math. Replace bars with equivalent TeX delimiter
+#' commands before passing the table to knitr.
+#'
+#' @param x A TeX math string.
+#' @return A TeX string without literal vertical bars.
+#' @noRd
+.escape_math_markdown <- function(x) {
+  x <- gsub("\\left|", "\\left\\lvert{}", x, fixed = TRUE)
+  x <- gsub("\\right|", "\\right\\rvert{}", x, fixed = TRUE)
+  gsub("|", "\\vert{}", x, fixed = TRUE)
 }
 
 

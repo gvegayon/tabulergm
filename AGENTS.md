@@ -1,5 +1,11 @@
 # Agent Instructions for tabulergm
 
+## Committing Changes
+
+Agents should commit completed changes in most cases unless the user asks them
+not to. When an agent commits changes, the commit message must include a
+`Co-authored-by:` trailer identifying that agent.
+
 ## Adding or Editing ERGM Term Definitions
 
 Before touching the YAML term database (`inst/terms/`), read the standards

@@ -2,7 +2,7 @@
 
 <!-- README.md is generated from README.qmd. Please edit that file -->
 
-## tabulergm
+## tabulergm <img src="man/figures/logo.png" align="right" height="200" alt="rgexf hex sticker logo"/>
 
 <!-- badges: start -->
 

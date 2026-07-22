@@ -12,3 +12,4 @@ AGENTS\.md
 ^\.devcontainer$
 ^\.vscode$
 ^CODE_OF_CONDUCT\.md$
+logo\.svg$

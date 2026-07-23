@@ -13,7 +13,7 @@ Depends:
 Imports:
     base64enc,
     ergm,
-    netplot,
+    netplot (>= 0.4-0),
     network,
     yaml
 Suggests:

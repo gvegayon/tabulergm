@@ -52,26 +52,21 @@ parse_ergm_model <- function(object) {
   ses       <- .extract_coef_column(coef_table, "Std")
   pvalues   <- .extract_coef_column(coef_table, "Pr")
 
-  # Map each coefficient name to its originating formula term
+  # Map each coefficient name to its originating formula term. Mapping is
+  # by term position (not name) so that repeated terms, e.g.
+  # nodecov("wealth") + nodecov("priorates"), keep their own attributes.
   term_names <- vapply(terms_info, `[[`, character(1), "name")
   term_attrs <- vapply(terms_info, function(ti) {
     if (length(ti[["attributes"]]) == 0L) NA_character_
     else paste(ti[["attributes"]], collapse = ", ")
   }, character(1))
-  names(term_attrs) <- term_names
 
-  mapped_terms <- .map_coefs_to_terms(object, coef_names, term_names)
-
-  mapped_attrs <- ifelse(
-    is.na(mapped_terms),
-    NA_character_,
-    term_attrs[mapped_terms]
-  )
+  mapped_idx <- .map_coefs_to_terms(object, coef_names, term_names)
 
   result <- data.frame(
-    term      = mapped_terms,
+    term      = term_names[mapped_idx],
     coef_name = coef_names,
-    attribute = mapped_attrs,
+    attribute = term_attrs[mapped_idx],
     estimate  = unname(estimates),
     se        = unname(ses),
     pvalue    = unname(pvalues),
@@ -91,6 +86,11 @@ parse_ergm_model <- function(object) {
 #' database where available.
 #'
 #' @param formula An ERGM [formula][stats::formula].
+#' @param directed Logical or `NULL`. Whether the network is directed, used
+#'   to select the matching term metadata (math and figures). When `NULL`
+#'   (the default), directedness is inferred from the network on the
+#'   left-hand side of the formula if it can be evaluated; otherwise the
+#'   lookup tries undirected metadata first, then directed.
 #' @return A data frame with columns:
 #' \describe{
 #'   \item{term}{Character. The canonical ERGM term name.}
@@ -112,9 +112,22 @@ parse_ergm_model <- function(object) {
 #' @examples
 #' library(ergm)
 #' parse_ergm_formula(network ~ edges + nodematch("gender"))
-parse_ergm_formula <- function(formula) {
+#'
+#' # Directedness can be stated explicitly when the formula has no
+#' # network on its left-hand side
+#' parse_ergm_formula(~ edges + mutual, directed = TRUE)
+parse_ergm_formula <- function(formula, directed = NULL) {
   if (!inherits(formula, "formula")) {
     stop("'formula' must be a formula object.", call. = FALSE)
+  }
+
+  if (!is.null(directed) &&
+      (!is.logical(directed) || length(directed) != 1L || is.na(directed))) {
+    stop("'directed' must be NULL, TRUE, or FALSE.", call. = FALSE)
+  }
+
+  if (is.null(directed)) {
+    directed <- .infer_formula_directedness(formula)
   }
 
   terms_info <- .parse_formula_terms(formula)
@@ -132,13 +145,38 @@ parse_ergm_formula <- function(formula) {
     stringsAsFactors = FALSE
   )
 
-  result <- .add_term_metadata(result)
+  result <- .add_term_metadata(result, directed = directed)
   rownames(result) <- NULL
   result
 }
 
 
 # ---- Internal Helpers: Formula Parsing ----
+
+#' Infer network directedness from the left-hand side of a formula
+#'
+#' Evaluates the LHS in the formula's environment; if it yields a
+#' [network::network] object, its directedness is returned. One-sided
+#' formulas and LHS expressions that fail to evaluate (or evaluate to
+#' something other than a network) yield `NULL`.
+#'
+#' @param formula A formula object.
+#' @return `TRUE`, `FALSE`, or `NULL` when directedness cannot be inferred.
+#' @noRd
+.infer_formula_directedness <- function(formula) {
+  if (length(formula) != 3L) return(NULL)
+
+  nw <- tryCatch(
+    eval(formula[[2]], envir = environment(formula)),
+    error = function(e) NULL
+  )
+
+  if (network::is.network(nw)) {
+    return(network::is.directed(nw))
+  }
+
+  NULL
+}
 
 #' Recursively collect individual term expressions from the RHS of a formula
 #' @param expr An R expression (the RHS of a formula).
@@ -226,7 +264,7 @@ parse_ergm_formula <- function(formula) {
   }
 }
 
-#' Map coefficient names to formula term names
+#' Map coefficient names to formula term positions
 #'
 #' Uses [ergm::ergm_model()] to build the term-to-coefficient mapping, which
 #' correctly handles terms where the coefficient prefix differs from the term
@@ -234,11 +272,16 @@ parse_ergm_formula <- function(formula) {
 #' `b1stark`). Falls back to longest-prefix matching for any coefficient names
 #' not covered by the model, or if the model cannot be constructed.
 #'
+#' The mapping is returned as positions into the parsed formula terms rather
+#' than term names, so repeated terms (e.g. two `nodecov` calls with different
+#' attributes) stay distinguishable.
+#'
 #' @param object A fitted [ergm][ergm::ergm] object.
 #' @param coef_names Character vector of coefficient names from the summary.
 #' @param formula_term_names Character vector of term names parsed from the
 #'   formula.
-#' @return Character vector of mapped term names (same length as `coef_names`).
+#' @return Integer vector of term positions (same length as `coef_names`),
+#'   `NA` where no term matches.
 #' @noRd
 .map_coefs_to_terms <- function(object, coef_names, formula_term_names) {
   model <- tryCatch(
@@ -257,7 +300,7 @@ parse_ergm_formula <- function(formula) {
       if (is.null(cnames)) next
 
       for (cn in cnames) {
-        coef_to_term[[cn]] <- formula_term_names[i]
+        coef_to_term[[cn]] <- i
       }
     }
 
@@ -265,15 +308,29 @@ parse_ergm_formula <- function(formula) {
       return(vapply(coef_names, function(cn) {
         val <- coef_to_term[[cn]]
         if (!is.null(val)) val
-        else .match_coef_to_term(cn, formula_term_names)
-      }, character(1), USE.NAMES = FALSE))
+        else .match_coef_to_index(cn, formula_term_names)
+      }, integer(1), USE.NAMES = FALSE))
     }
   }
 
   # Fallback: prefix matching
   vapply(coef_names, function(cn) {
-    .match_coef_to_term(cn, formula_term_names)
-  }, character(1), USE.NAMES = FALSE)
+    .match_coef_to_index(cn, formula_term_names)
+  }, integer(1), USE.NAMES = FALSE)
+}
+
+#' Match a coefficient name to a formula term position
+#'
+#' Name-based wrapper around `.match_coef_to_term()`; when term names are
+#' duplicated the first occurrence is returned.
+#'
+#' @param coef_name A single coefficient name.
+#' @param term_names Character vector of formula term names.
+#' @return The matched term position, or `NA_integer_`.
+#' @noRd
+.match_coef_to_index <- function(coef_name, term_names) {
+  matched <- .match_coef_to_term(coef_name, term_names)
+  if (is.na(matched)) NA_integer_ else match(matched, term_names)
 }
 
 #' Match a coefficient name to the best-fitting formula term

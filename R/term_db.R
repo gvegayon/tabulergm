@@ -10,6 +10,7 @@
 #' @noRd
 .tabulergm_env <- new.env(parent = emptyenv())
 .tabulergm_env$plotfun <- NULL
+.tabulergm_env$plotfun_generation <- 0L
 
 
 #' Default Plot Function for Term Figures
@@ -100,7 +101,8 @@ tabulergm_default_plotfun <- function(
 #'
 #' Replaces the current plot function used when drawing term figures.
 #' The function must accept `netobj`, `layout`, `vcolor`, `ecolor`,
-#' `directed`, and `...`.
+#' `directed`, and `...`. Setting a plot function invalidates previously
+#' cached term figures, so subsequent renders use the new function.
 #'
 #' @param plotfun A function with signature
 #'   `function(netobj, layout, vcolor, ecolor, directed, ...)`.
@@ -123,6 +125,10 @@ tabulergm_set_plotfun <- function(plotfun) {
   }
   old <- .tabulergm_env$plotfun
   .tabulergm_env$plotfun <- plotfun
+  # Start a new figure-cache generation so figures cached for the
+  # previous plot function are never reused for this one (see
+  # .get_cached_figure()).
+  .tabulergm_env$plotfun_generation <- .tabulergm_env$plotfun_generation + 1L
   invisible(old)
 }
 
@@ -186,8 +192,8 @@ tabulergm_get_plotfun <- function() {
 #'
 #' Reads a term's YAML file and returns math and figure data.
 #' The figure is drawn using the active plot function (see
-#' [tabulergm_get_plotfun()]) and cached based on an MD5 hash of the
-#' YAML file.
+#' [tabulergm_get_plotfun()]) and cached based on the YAML file's MD5
+#' hash, the active plot function, and directedness.
 #'
 #' @param term_name A single term name (character).
 #' @param directed Logical or `NULL`.
@@ -297,9 +303,16 @@ tabulergm_get_plotfun <- function() {
 
 #' Get a cached figure or draw a new one
 #'
-#' Computes the MD5 hash of the YAML file and checks whether a
-#' corresponding PNG already exists under [tempdir()]. If it does,
-#' returns its path; otherwise draws a new figure and caches it.
+#' Builds a cache key from the MD5 hash of the YAML file, a hash of the
+#' active plot function's source, the plot-function generation counter
+#' (bumped by [tabulergm_set_plotfun()]), and the directedness flag, then
+#' checks whether a corresponding PNG already exists under [tempdir()].
+#' If it does, returns its path; otherwise draws a new figure and caches
+#' it. Keying on the plot function ensures that [tabulergm_set_plotfun()]
+#' takes effect even for figures already rendered with a different
+#' function; the generation counter additionally invalidates cached
+#' figures for closures whose source is identical but whose captured
+#' data differ.
 #'
 #' @param yml_path Path to the YAML file.
 #' @param plot_data List with plot specifications (`edgelist`, `vcolor`,
@@ -308,14 +321,38 @@ tabulergm_get_plotfun <- function() {
 #' @return Path to the cached PNG file, or `NA_character_` on failure.
 #' @noRd
 .get_cached_figure <- function(yml_path, plot_data, directed) {
-  hash <- unname(tools::md5sum(yml_path))
-  cache_path <- file.path(tempdir(), paste0(hash, ".png"))
+  key <- paste(
+    unname(tools::md5sum(yml_path)),
+    .plotfun_hash(tabulergm_get_plotfun()),
+    .tabulergm_env$plotfun_generation,
+    if (directed) "directed" else "undirected",
+    sep = "-"
+  )
+  cache_path <- file.path(tempdir(), paste0("tabulergm-", key, ".png"))
 
   if (file.exists(cache_path)) {
     return(cache_path)
   }
 
   .draw_term_figure(plot_data, directed, cache_path)
+}
+
+#' Hash a plot function's source for use in figure cache keys
+#'
+#' Hashes the deparsed function (formals and body). Uses
+#' [tools::md5sum()] on a temporary file to avoid a dependency on a
+#' hashing package. Closures that differ only in captured data hash
+#' identically; the generation counter bumped by
+#' [tabulergm_set_plotfun()] keeps their cache entries separate.
+#'
+#' @param plotfun A function.
+#' @return A 32-character MD5 string.
+#' @noRd
+.plotfun_hash <- function(plotfun) {
+  tf <- tempfile()
+  on.exit(unlink(tf), add = TRUE)
+  writeLines(deparse(plotfun), tf)
+  unname(tools::md5sum(tf))
 }
 
 

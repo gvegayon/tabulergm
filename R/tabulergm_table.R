@@ -79,6 +79,11 @@ tabulergm_table.ergm <- function(
 #' `term`, `figure`, `math`, and `description`. Coefficient statistics
 #' are excluded because no fitted model is available.
 #'
+#' @param directed Logical or `NULL`. Whether the network is directed.
+#'   Passed to [parse_ergm_formula()]; when `NULL` (the default),
+#'   directedness is inferred from the network on the left-hand side of
+#'   the formula when possible.
+#'
 #' @export
 #' @examples
 #' library(ergm)
@@ -87,11 +92,12 @@ tabulergm_table.formula <- function(
     object,
     format = c("data.frame", "html", "markdown"),
     figures_dir = NULL,
+    directed = NULL,
     ...) {
 
   format <- match.arg(format)
 
-  parsed <- parse_ergm_formula(object)
+  parsed <- parse_ergm_formula(object, directed = directed)
 
   # Formula-only columns (no coefficient statistics)
   cols <- c("term", "figure", "math", "description")

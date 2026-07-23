@@ -4,10 +4,16 @@
 \alias{parse_ergm_formula}
 \title{Parse an ERGM Formula}
 \usage{
-parse_ergm_formula(formula)
+parse_ergm_formula(formula, directed = NULL)
 }
 \arguments{
 \item{formula}{An ERGM \link[stats:formula]{formula}.}
+
+\item{directed}{Logical or \code{NULL}. Whether the network is directed, used
+to select the matching term metadata (math and figures). When \code{NULL}
+(the default), directedness is inferred from the network on the
+left-hand side of the formula if it can be evaluated; otherwise the
+lookup tries undirected metadata first, then directed.}
 }
 \value{
 A data frame with columns:
@@ -34,6 +40,10 @@ database where available.
 \examples{
 library(ergm)
 parse_ergm_formula(network ~ edges + nodematch("gender"))
+
+# Directedness can be stated explicitly when the formula has no
+# network on its left-hand side
+parse_ergm_formula(~ edges + mutual, directed = TRUE)
 }
 \seealso{
 \code{\link[=parse_ergm_model]{parse_ergm_model()}} for parsing fitted models,

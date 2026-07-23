@@ -192,6 +192,57 @@ result2 <- tabulergm:::.get_cached_figure(
 )
 expect_equal(result, result2)
 
+# Directedness is part of the cache key, even for the same YAML file
+result_directed <- tabulergm:::.get_cached_figure(
+  yml_path, yml_data$plot, directed = TRUE
+)
+expect_false(identical(result, result_directed))
+
+# Changing the plot function invalidates the cache: rendering the same
+# term with a custom plotfun must invoke it and produce a new cache entry
+local({
+  yml_path <- tabulergm:::.find_term_yml("edges", directed = FALSE)
+  yml_data <- yaml::read_yaml(yml_path, handlers = list(
+    "bool#yes" = function(x) x,
+    "bool#no"  = function(x) x
+  ))
+
+  default_fig <- tabulergm:::.get_cached_figure(
+    yml_path, yml_data$plot, directed = FALSE
+  )
+
+  called <- new.env(parent = emptyenv())
+  called$n <- 0L
+  custom <- function(netobj, layout, vcolor, ecolor, directed, ...) {
+    called$n <- called$n + 1L
+    invisible(NULL)
+  }
+  old <- tabulergm_set_plotfun(custom)
+  on.exit(tabulergm_set_plotfun(old), add = TRUE)
+
+  custom_fig <- tabulergm:::.get_cached_figure(
+    yml_path, yml_data$plot, directed = FALSE
+  )
+  expect_equal(called$n, 1L)
+  expect_false(identical(default_fig, custom_fig))
+
+  # Re-rendering with the same custom function hits its own cache
+  custom_fig2 <- tabulergm:::.get_cached_figure(
+    yml_path, yml_data$plot, directed = FALSE
+  )
+  expect_equal(called$n, 1L)
+  expect_equal(custom_fig, custom_fig2)
+
+  # Restoring the previous function starts a fresh cache generation,
+  # so the figure is redrawn rather than served from the custom entry
+  tabulergm_set_plotfun(old)
+  restored_fig <- tabulergm:::.get_cached_figure(
+    yml_path, yml_data$plot, directed = FALSE
+  )
+  expect_false(identical(restored_fig, custom_fig))
+  expect_true(file.exists(restored_fig))
+})
+
 
 # ---- Plotfun API -------------------------------------------------------------
 
@@ -334,6 +385,21 @@ for (term in c("transitiveties", "cyclicalties", "nodeicov", "nodeocov")) {
   expect_false(is.na(result6$math[result6$term == term]),
     info = sprintf("formula math found for %s", term))
 }
+
+# Explicit directedness selects the matching YAML variant
+res_directed <- parse_ergm_formula(y ~ edges, directed = TRUE)
+expect_true(grepl("neq", res_directed$math))
+res_undirected <- parse_ergm_formula(y ~ edges, directed = FALSE)
+expect_true(grepl("i<j", res_undirected$math))
+
+# Directedness is inferred from the network on the formula's LHS
+nw_formula_dir <- network::network.initialize(5, directed = TRUE)
+res_inferred <- parse_ergm_formula(nw_formula_dir ~ edges)
+expect_true(grepl("neq", res_inferred$math))
+
+nw_formula_undir <- network::network.initialize(5, directed = FALSE)
+res_inferred_u <- parse_ergm_formula(nw_formula_undir ~ edges)
+expect_true(grepl("i<j", res_inferred_u$math))
 
 
 # ---- Integration with parse_ergm_model (requires ergm) -----------------------

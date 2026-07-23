@@ -22,6 +22,7 @@ tabulergm_table(object, ...)
   object,
   format = c("data.frame", "html", "markdown"),
   figures_dir = NULL,
+  directed = NULL,
   ...
 )
 }
@@ -48,6 +49,11 @@ Default \code{FALSE}.}
 \code{format = "markdown"}. When \code{NULL}, figures are copied automatically to
 the active knitr/Quarto/R Markdown figure path during non-interactive
 document rendering.}
+
+\item{directed}{Logical or \code{NULL}. Whether the network is directed.
+Passed to \code{\link[=parse_ergm_formula]{parse_ergm_formula()}}; when \code{NULL} (the default),
+directedness is inferred from the network on the left-hand side of
+the formula when possible.}
 }
 \value{
 A \code{data.frame} (default), or a \code{knitr_kable} object when

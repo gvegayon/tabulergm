@@ -85,4 +85,12 @@ fit_bipartite_match <- ergm(
 )
 saveRDS(fit_bipartite_match, file.path(fits_dir, "fit_bipartite_match.rds"))
 
+# 9. Repeated terms: edges + nodecov("wealth") + nodecov("priorates")
+#    (regression fixture: duplicate term names must keep their own attribute)
+data(florentine)
+fit_nodecov_twice <- ergm(
+  flomarriage ~ edges + nodecov("wealth") + nodecov("priorates")
+)
+saveRDS(fit_nodecov_twice, file.path(fits_dir, "fit_nodecov_twice.rds"))
+
 message("All model fits saved to ", fits_dir)

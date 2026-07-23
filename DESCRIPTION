@@ -1,10 +1,19 @@
 Package: tabulergm
-Title: Publication-Ready Tables and Summaries for ERGM Models
+Title: Publication-Ready Tables and Summaries for Exponential-Family
+    Random Graph Models
 Version: 0.1.0
 Authors@R: 
     person("George", "Vega Yon", , "g.vegayon@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3171-0844"))
-Description: Exponential-family Random Graph Models (ERGMs) are the most popular class of statistical models for social networks. The 'tabulergm' package provides a user-friendly interface that allows users to easily document their ERGM models by creating publication-ready tables featuring descriptions, mathematical representations, and graphical representations of ERGMs' terms. Users can generate descriptive tables from ERGM formulas and model fits, and integrate them into 'quarto' and 'rmarkdown' documents.
+Description: Creates publication-ready tables documenting
+    exponential-family random graph models (ERGMs), a class of statistical
+    models for social networks (Robins et al., 2007,
+    <doi:10.1016/j.socnet.2006.08.002>). Tables describe model terms
+    through their definitions, mathematical representations, and graphical
+    representations, and can be generated from ERGM formulas or from
+    models fitted with the 'ergm' package (Hunter et al., 2008,
+    <doi:10.18637/jss.v024.i03>). Resulting tables can be integrated into
+    'quarto' and 'rmarkdown' documents.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

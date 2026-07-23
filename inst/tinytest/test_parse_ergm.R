@@ -47,9 +47,31 @@ result <- parse_ergm_formula(f)
 expect_equal(result$term, c("edges", "nodemix"))
 expect_equal(result$attribute[2], "race, gender")
 
+# parse_ergm_formula keeps attributes of repeated terms separate
+f <- y ~ edges + nodecov("wealth") + nodecov("priorates")
+result <- parse_ergm_formula(f)
+expect_equal(result$term, c("edges", "nodecov", "nodecov"))
+expect_equal(result$attribute, c(NA_character_, "wealth", "priorates"))
+
 # parse_ergm_formula errors on non-formula input
 expect_error(parse_ergm_formula("not a formula"))
 expect_error(parse_ergm_formula(42))
+
+# parse_ergm_formula validates the 'directed' argument
+expect_error(parse_ergm_formula(y ~ edges, directed = NA))
+expect_error(parse_ergm_formula(y ~ edges, directed = c(TRUE, FALSE)))
+expect_error(parse_ergm_formula(y ~ edges, directed = "yes"))
+
+# .infer_formula_directedness reads directedness from the LHS network
+nw_directed   <- network::network.initialize(5, directed = TRUE)
+nw_undirected <- network::network.initialize(5, directed = FALSE)
+expect_true(tabulergm:::.infer_formula_directedness(nw_directed ~ edges))
+expect_false(tabulergm:::.infer_formula_directedness(nw_undirected ~ edges))
+
+# ... and returns NULL for one-sided formulas or non-network LHS
+expect_null(tabulergm:::.infer_formula_directedness(~ edges))
+expect_null(tabulergm:::.infer_formula_directedness(undefined_object ~ edges))
+expect_null(tabulergm:::.infer_formula_directedness(letters ~ edges))
 
 # parse_ergm_formula handles bipartite terms
 f <- y ~ edges + b1star(2) + gwb1dsp(0.5, fixed = TRUE) +
@@ -135,6 +157,7 @@ if (requireNamespace("network", quietly = TRUE) &&
   fit_bip_dsp <- readRDS(system.file("fits", "fit_bipartite_dsp.rds", package = "tabulergm"))
   fit_bip_factor <- readRDS(system.file("fits", "fit_bipartite_factor.rds", package = "tabulergm"))
   fit_bip_match <- readRDS(system.file("fits", "fit_bipartite_match.rds", package = "tabulergm"))
+  fit_nc_twice <- readRDS(system.file("fits", "fit_nodecov_twice.rds", package = "tabulergm"))
 
   # parse_ergm_model works with a simple edges-only model
   result <- parse_ergm_model(fit)
@@ -172,6 +195,20 @@ if (requireNamespace("network", quietly = TRUE) &&
   # nodemix produces multiple coefficients for mixing categories
   expect_true(nrow(mix_rows) >= 1L)
   expect_true(all(mix_rows$attribute == "role"))
+
+  # parse_ergm_model maps repeated terms to occurrence-specific attributes
+  # (regression: attributes used to be joined by term name, so duplicate
+  # terms all reported the first occurrence's attribute)
+  result_nc <- parse_ergm_model(fit_nc_twice)
+  expect_equal(result_nc$term, c("edges", "nodecov", "nodecov"))
+  expect_equal(
+    result_nc$coef_name,
+    c("edges", "nodecov.wealth", "nodecov.priorates")
+  )
+  expect_equal(
+    result_nc$attribute,
+    c(NA_character_, "wealth", "priorates")
+  )
 
   # parse_ergm_model handles bipartite network with b1star
   result_bip <- parse_ergm_model(fit_bip)

@@ -16,7 +16,8 @@ Invisibly returns the previous plot function.
 \description{
 Replaces the current plot function used when drawing term figures.
 The function must accept \code{netobj}, \code{layout}, \code{vcolor}, \code{ecolor},
-\code{directed}, and \code{...}.
+\code{directed}, and \code{...}. Setting a plot function invalidates previously
+cached term figures, so subsequent renders use the new function.
 }
 \examples{
 \dontrun{

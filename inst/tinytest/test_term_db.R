@@ -59,10 +59,18 @@ yml_test_cases <- list(
   list(term = "gwdegree", directed = FALSE, pattern = "gwdegree\\.undirected\\.yml$"),
   list(term = "altkstar", directed = FALSE, pattern = "altkstar\\.undirected\\.yml$"),
   list(term = "nodefactor", directed = FALSE, pattern = "nodefactor\\.undirected\\.yml$"),
+  list(term = "nodefactor", directed = TRUE,  pattern = "nodefactor\\.directed\\.yml$"),
   list(term = "nodecov", directed = FALSE, pattern = "nodecov\\.undirected\\.yml$"),
+  list(term = "nodecov", directed = TRUE,  pattern = "nodecov\\.directed\\.yml$"),
   list(term = "absdiff", directed = FALSE, pattern = "absdiff\\.undirected\\.yml$"),
+  list(term = "absdiff", directed = TRUE,  pattern = "absdiff\\.directed\\.yml$"),
   list(term = "nodemix", directed = FALSE, pattern = "nodemix\\.undirected\\.yml$"),
+  list(term = "nodemix", directed = TRUE,  pattern = "nodemix\\.directed\\.yml$"),
   list(term = "edgecov", directed = FALSE, pattern = "edgecov\\.undirected\\.yml$"),
+  list(term = "edgecov", directed = TRUE,  pattern = "edgecov\\.directed\\.yml$"),
+  list(term = "nodematch", directed = FALSE, pattern = "nodematch\\.undirected\\.yml$"),
+  list(term = "nodematch", directed = TRUE,  pattern = "nodematch\\.directed\\.yml$"),
+  list(term = "triangle", directed = TRUE,  pattern = "triangle\\.directed\\.yml$"),
   list(term = "transitiveties", directed = TRUE, pattern = "transitiveties\\.directed\\.yml$"),
   list(term = "cyclicalties", directed = TRUE, pattern = "cyclicalties\\.directed\\.yml$"),
   list(term = "nodeicov", directed = TRUE, pattern = "nodeicov\\.directed\\.yml$"),
@@ -132,7 +140,8 @@ for (term in c("gwesp", "gwdsp", "gwdegree", "altkstar", "nodefactor",
 
 # .get_term_yml_data reads directed key term math and figures
 for (term in c("gwesp", "gwdsp", "transitiveties", "cyclicalties",
-               "nodeicov", "nodeocov")) {
+               "nodeicov", "nodeocov", "nodematch", "absdiff", "nodecov",
+               "nodefactor", "nodemix", "edgecov", "triangle")) {
   data <- tabulergm:::.get_term_yml_data(term, directed = TRUE)
   expect_false(is.na(data$math),
     info = sprintf("math found for %s (directed)", term))
@@ -329,6 +338,34 @@ local({
 })
 
 
+# .draw_term_figure passes directedness through to the plot function via
+# both the `directed` argument and the network object itself, so plot
+# functions (e.g. netplot, which adds arrowheads only for directed
+# networks) can draw edges accordingly
+local({
+  captured <- new.env(parent = emptyenv())
+  custom <- function(netobj, layout, vcolor, ecolor, directed, ...) {
+    captured$directed_arg <- directed
+    captured$directed_net <- network::is.directed(netobj)
+    invisible(NULL)
+  }
+  old <- tabulergm_set_plotfun(custom)
+  on.exit(tabulergm_set_plotfun(old), add = TRUE)
+
+  spec <- list(edgelist = "0->1", vcolor = "black", ecolor = "black")
+
+  tabulergm:::.draw_term_figure(spec, directed = TRUE,
+                                outfile = tempfile(fileext = ".png"))
+  expect_true(captured$directed_arg)
+  expect_true(captured$directed_net)
+
+  tabulergm:::.draw_term_figure(spec, directed = FALSE,
+                                outfile = tempfile(fileext = ".png"))
+  expect_false(captured$directed_arg)
+  expect_false(captured$directed_net)
+})
+
+
 # ---- Integration with parse_ergm_formula -------------------------------------
 
 # parse_ergm_formula populates math from YAML for known terms
@@ -384,6 +421,21 @@ result6 <- parse_ergm_formula(f6)
 for (term in c("transitiveties", "cyclicalties", "nodeicov", "nodeocov")) {
   expect_false(is.na(result6$math[result6$term == term]),
     info = sprintf("formula math found for %s", term))
+}
+
+# Attribute and structural terms resolve on directed networks too
+nw_formula_attr <- network::network.initialize(5, directed = TRUE)
+f7 <- nw_formula_attr ~ nodematch("a") + absdiff("a") + nodecov("a") +
+  nodefactor("a") + nodemix("a") + edgecov("d") + triangle
+result7 <- parse_ergm_formula(f7)
+for (term in c("nodematch", "absdiff", "nodecov", "nodefactor",
+               "nodemix", "edgecov", "triangle")) {
+  expect_false(is.na(result7$math[result7$term == term]),
+    info = sprintf("formula math found for %s (directed)", term))
+  expect_false(is.na(result7$figure[result7$term == term]),
+    info = sprintf("formula figure found for %s (directed)", term))
+  expect_true(grepl("neq", result7$math[result7$term == term]),
+    info = sprintf("directed math (ordered pairs) used for %s", term))
 }
 
 # Explicit directedness selects the matching YAML variant

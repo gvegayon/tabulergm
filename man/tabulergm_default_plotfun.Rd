@@ -52,7 +52,6 @@ A plot function must accept the arguments \code{netobj}, \code{layout}, \code{vc
 \code{ecolor}, \code{directed}, and \code{...}, and draw on the current graphics device.
 }
 \examples{
-\dontrun{
 # See the default implementation
 tabulergm_default_plotfun
 
@@ -61,8 +60,10 @@ my_plotfun <- function(netobj, layout, vcolor, ecolor, directed, vshape, vrotati
   netplot::nplot(netobj, vertex.color = vcolor, edge.color = ecolor,
                  layout = layout)
 }
+old <- tabulergm_get_plotfun()
 tabulergm_set_plotfun(my_plotfun)
-}
+# Restore the previous plot function
+tabulergm_set_plotfun(old)
 }
 \seealso{
 \code{\link[=tabulergm_set_plotfun]{tabulergm_set_plotfun()}}, \code{\link[=tabulergm_get_plotfun]{tabulergm_get_plotfun()}}

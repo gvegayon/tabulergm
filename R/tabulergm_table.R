@@ -664,14 +664,12 @@ tabulergm_table.formula <- function(
 #' @export
 #' @seealso [tabulergm_table()]
 #' @examples
-#' \dontrun{
 #' library(ergm)
 #' fit <- readRDS(system.file("fits", "fit_edges.rds", package = "tabulergm"))
 #' tabulergm_view(fit)
 #'
 #' # Also works with a formula (shows term metadata only)
 #' tabulergm_view(network ~ edges + triangle)
-#' }
 tabulergm_view <- function(object, ...) {
   UseMethod("tabulergm_view")
 }

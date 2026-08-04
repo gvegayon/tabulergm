@@ -37,7 +37,6 @@
 #' @export
 #' @seealso [tabulergm_set_plotfun()], [tabulergm_get_plotfun()]
 #' @examples
-#' \dontrun{
 #' # See the default implementation
 #' tabulergm_default_plotfun
 #'
@@ -46,8 +45,10 @@
 #'   netplot::nplot(netobj, vertex.color = vcolor, edge.color = ecolor,
 #'                  layout = layout)
 #' }
+#' old <- tabulergm_get_plotfun()
 #' tabulergm_set_plotfun(my_plotfun)
-#' }
+#' # Restore the previous plot function
+#' tabulergm_set_plotfun(old)
 tabulergm_default_plotfun <- function(
   netobj,
   layout,
@@ -110,15 +111,14 @@ tabulergm_default_plotfun <- function(
 #' @export
 #' @seealso [tabulergm_default_plotfun()], [tabulergm_get_plotfun()]
 #' @examples
-#' \dontrun{
 #' my_plotfun <- function(netobj, layout, vcolor, ecolor, directed, ...) {
 #'   netplot::nplot(netobj, vertex.color = vcolor, edge.color = ecolor,
 #'                  layout = layout)
 #' }
-#' old <- tabulergm_set_plotfun(my_plotfun)
-#' # Restore the default
-#' tabulergm_set_plotfun(tabulergm_default_plotfun)
-#' }
+#' old <- tabulergm_get_plotfun()
+#' tabulergm_set_plotfun(my_plotfun)
+#' # Restore the previous plot function
+#' tabulergm_set_plotfun(old)
 tabulergm_set_plotfun <- function(plotfun) {
   if (!is.function(plotfun)) {
     stop("'plotfun' must be a function.", call. = FALSE)

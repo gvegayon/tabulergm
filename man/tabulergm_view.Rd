@@ -34,14 +34,12 @@ viewer pane when available, falling back to \code{\link[utils:browseURL]{utils::
 
 }}
 \examples{
-\dontrun{
 library(ergm)
 fit <- readRDS(system.file("fits", "fit_edges.rds", package = "tabulergm"))
 tabulergm_view(fit)
 
 # Also works with a formula (shows term metadata only)
 tabulergm_view(network ~ edges + triangle)
-}
 }
 \seealso{
 \code{\link[=tabulergm_table]{tabulergm_table()}}

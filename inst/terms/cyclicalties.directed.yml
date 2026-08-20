@@ -1,3 +1,7 @@
+title: Cyclical ties
+description: >-
+  Counts the ties that take part in at least one cycle, capturing
+  generalized exchange rather than hierarchy.
 plot:
   edgelist: "0->1->2->0"
   vcolor: [black, black, black]

@@ -1,3 +1,11 @@
+title: Triangles
+description: >-
+  Counts transitive and cyclic triples among three connected nodes, the
+  directed analogue of clustering. Equals the sum of the ttriple and
+  ctriple statistics.
+citation:
+  - key: frank1986
+    doi: 10.1080/01621459.1986.10478342
 plot:
   edgelist: "0->1->2, 0->2"
   vcolor: black

@@ -17,9 +17,43 @@
 #' `<term>` is the canonical `ergm` term name as written in a model formula
 #' (e.g., `gwesp`, `b1nodematch`). Terms available for both directed and
 #' undirected networks get one file per variant; bipartite terms use
-#' `undirected`. Each file has two top-level entries: `plot` (the network
-#' drawing specification) and `math` (a LaTeX expression). No parser changes
-#' are needed for new terms: files are looked up by term name.
+#' `undirected`. A file has up to five top-level entries: `title` and
+#' `description` (text, both optional), `citation` (optional, see below),
+#' `plot` (the network drawing specification), and `math` (a LaTeX
+#' expression). No parser changes are needed for new terms: files are
+#' looked up by term name.
+#'
+#' @section Titles, descriptions, and citations:
+#' `title` is a short label, capitalized like a heading and without a
+#' trailing period (e.g. `Uniform homophily`). `description` is one to
+#' three sentences of prose saying what the statistic counts and why a
+#' modeler would include it; write it as a folded block scalar (`>-`) so
+#' the source stays readable. Both fields are optional: when absent,
+#' `tabulergm` falls back to the `title` and `description` recorded in the
+#' `ergm` term database, which are accurate but often too long, too
+#' technical, or full of raw LaTeX for a table cell. Prefer writing them
+#' here.
+#'
+#' `citation` records the source(s) that introduced the term. Each entry
+#' carries a `key` (the marker shown in the table, conventionally
+#' `lastnameYEAR`) and, where one exists, a machine-readable identifier so
+#' readers can pull the full reference into their own bibliography:
+#'
+#' \preformatted{citation:
+#'   - key: hunter2007
+#'     doi: 10.1016/j.socnet.2006.08.005
+#' }
+#'
+#' Accepted identifier fields are `doi`, `arxiv`, `pmid`, and `url`; an
+#' entry may also carry free-text `text`, which is the right choice when
+#' no stable identifier can be verified. \strong{Always resolve an
+#' identifier before committing it} (for a DOI, `https://doi.org/<id>`);
+#' an identifier that points at the wrong paper is worse than none.
+#'
+#' `tabulergm_table()` renders a `(key)` marker next to the term's
+#' description and a matching `[key] identifier` line below the table. Users
+#' can replace any of these fields per table through the `override`
+#' arguments of [tabulergm_table()] without editing the YAML.
 #'
 #' @section Math notation:
 #' \itemize{
@@ -85,7 +119,9 @@
 #'
 #' @section Checklist for a new term:
 #' \enumerate{
-#'   \item Add the YAML file(s) following the standards above.
+#'   \item Add the YAML file(s) following the standards above, including a
+#'     `title` and `description`, and a `citation` when the term has an
+#'     identifiable source.
 #'   \item Add tinytest coverage in `inst/tinytest/test_term_db.R`
 #'     (file lookup, math/figure reading, and formula integration).
 #'   \item Add the term to the dictionary tables in `README.qmd` and
@@ -97,9 +133,12 @@
 #' @references
 #' Hunter, D. R. (2007). Curved exponential family models for social
 #' networks. \emph{Social Networks}, 29(2), 216--230.
+#' \doi{10.1016/j.socnet.2006.08.005}
 #'
 #' Bomiriya, R. P., Bansal, S., & Hunter, D. R. (2014). Modeling homophily
-#' in ERGMs for bipartite networks. arXiv:1412.1151.
+#' in ERGMs for bipartite networks. (No stable identifier verified; the
+#' arXiv id previously given here, 1412.1151, belongs to an unrelated
+#' paper.)
 #'
 #' @name tabulergm-notation
 #' @keywords internal

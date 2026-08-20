@@ -1,3 +1,8 @@
+title: First-mode mixing k-stars
+description: >-
+  Counts the k-stars centered on a first-mode node with one attribute
+  value whose second-mode neighbors all share another, capturing mixing
+  and degree together.
 plot:
   edgelist: "0->1, 0->2"
   vcolor: [orange, "#008080", "#008080"]

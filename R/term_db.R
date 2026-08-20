@@ -190,20 +190,31 @@ tabulergm_get_plotfun <- function() {
 
 #' Read term data from a YAML file
 #'
-#' Reads a term's YAML file and returns math and figure data.
-#' The figure is drawn using the active plot function (see
-#' [tabulergm_get_plotfun()]) and cached based on the YAML file's MD5
-#' hash, the active plot function, and directedness.
+#' Reads a term's YAML file and returns its metadata. `title`,
+#' `description`, and `citation` are optional: when a file omits them the
+#' corresponding element is `NA` (or an empty list for citations), and the
+#' caller falls back to the `ergm` term database. The figure is drawn using
+#' the active plot function (see [tabulergm_get_plotfun()]) and cached based
+#' on the YAML file's MD5 hash, the active plot function, and directedness.
 #'
 #' @param term_name A single term name (character).
 #' @param directed Logical or `NULL`.
-#' @return A named list with elements `math` and `figure`.
+#' @return A named list with elements `title`, `description`, `math`,
+#'   `figure`, and `citation`.
 #' @noRd
 .get_term_yml_data <- function(term_name, directed = NULL) {
   yml_path <- .find_term_yml(term_name, directed)
 
+  empty <- list(
+    title       = NA_character_,
+    description = NA_character_,
+    math        = NA_character_,
+    figure      = NA_character_,
+    citation    = list()
+  )
+
   if (is.null(yml_path)) {
-    return(list(math = NA_character_, figure = NA_character_))
+    return(empty)
   }
 
   # YAML 1.1 treats bare 'y', 'n', 'yes', 'no' as booleans.  Identity
@@ -213,15 +224,50 @@ tabulergm_get_plotfun <- function() {
     "bool#no"  = function(x) x
   ))
 
-  math <- if (!is.null(yml_data$math)) trimws(yml_data$math) else NA_character_
-
-  figure <- NA_character_
-  if (!is.null(yml_data$plot)) {
-    is_directed <- grepl("\\.directed\\.yml$", yml_path)
-    figure <- .get_cached_figure(yml_path, yml_data$plot, is_directed)
+  out <- empty
+  out$title       <- .yml_text(yml_data$title)
+  out$description <- .yml_text(yml_data$description)
+  out$math        <- if (!is.null(yml_data$math)) {
+    trimws(yml_data$math)
+  } else {
+    NA_character_
   }
 
-  list(math = math, figure = figure)
+  out$citation <- tryCatch(
+    .normalize_citations(yml_data$citation),
+    error = function(e) {
+      warning(
+        sprintf(
+          "Ignoring malformed 'citation' entry in %s: %s",
+          basename(yml_path), conditionMessage(e)
+        ),
+        call. = FALSE
+      )
+      list()
+    }
+  )
+
+  if (!is.null(yml_data$plot)) {
+    is_directed <- grepl("\\.directed\\.yml$", yml_path)
+    out$figure <- .get_cached_figure(yml_path, yml_data$plot, is_directed)
+  }
+
+  out
+}
+
+#' Read an optional free-text YAML field
+#'
+#' Collapses internal whitespace so that block scalars written across
+#' several lines render as a single paragraph in a table cell.
+#'
+#' @param x The raw YAML value, possibly `NULL`.
+#' @return A character scalar, or `NA_character_` when absent or empty.
+#' @noRd
+.yml_text <- function(x) {
+  if (is.null(x)) return(NA_character_)
+  x <- paste(as.character(x), collapse = " ")
+  x <- trimws(gsub("[[:space:]]+", " ", x))
+  if (!nzchar(x)) NA_character_ else x
 }
 
 
@@ -588,4 +634,269 @@ tabulergm_get_plotfun <- function() {
   }
 
   do.call(rbind, all_edges)
+}
+
+
+# ---- Citations ----
+
+# Identifier fields recognized in a YAML `citation:` entry, in display order.
+.tabulergm_citation_ids <- c("doi", "arxiv", "pmid", "url")
+
+# Field names a single citation entry may carry.
+.tabulergm_citation_fields <- c("key", "text", .tabulergm_citation_ids)
+
+
+#' Render a citation identifier as human-readable text
+#'
+#' @param field One of `"doi"`, `"arxiv"`, `"pmid"`, `"url"`.
+#' @param value The identifier value.
+#' @return A character scalar such as `"doi:10.1016/j.socnet.2006.08.002"`.
+#' @noRd
+.citation_id_label <- function(field, value) {
+  switch(field,
+    doi   = paste0("doi:", value),
+    arxiv = paste0("arXiv:", sub("^arxiv:", "", value, ignore.case = TRUE)),
+    pmid  = paste0("PMID:", sub("^pmid:", "", value, ignore.case = TRUE)),
+    value
+  )
+}
+
+#' Build a resolvable URL for a citation identifier
+#'
+#' @param field One of `"doi"`, `"arxiv"`, `"pmid"`, `"url"`.
+#' @param value The identifier value.
+#' @return A character scalar URL.
+#' @noRd
+.citation_id_url <- function(field, value) {
+  switch(field,
+    doi   = paste0("https://doi.org/", value),
+    arxiv = paste0(
+      "https://arxiv.org/abs/",
+      sub("^arxiv:", "", value, ignore.case = TRUE)
+    ),
+    pmid  = paste0(
+      "https://pubmed.ncbi.nlm.nih.gov/",
+      sub("^pmid:", "", value, ignore.case = TRUE), "/"
+    ),
+    value
+  )
+}
+
+#' Test whether a list looks like a single citation entry
+#'
+#' A list of entries (`citation:` holding several references) is
+#' distinguished from a single entry by its names: a single entry uses only
+#' the recognized field names, while a list of entries is unnamed.
+#'
+#' @param x A list.
+#' @return Logical scalar.
+#' @noRd
+.is_citation_entry <- function(x) {
+  nms <- names(x)
+  length(nms) > 0L && all(nzchar(nms)) && all(nms %in% .tabulergm_citation_fields)
+}
+
+#' Coerce one citation entry into normalized form
+#'
+#' @param e A list with any of `key`, `text`, `doi`, `arxiv`, `pmid`, `url`.
+#' @return A list with elements `key`, `text`, and `ids` (a list of
+#'   `label`/`url` pairs), or `NULL` when the entry carries nothing usable.
+#' @noRd
+.citation_entry <- function(e) {
+  if (!is.list(e) || is.null(names(e))) return(NULL)
+
+  ids <- list()
+  for (field in .tabulergm_citation_ids) {
+    value <- e[[field]]
+    if (is.null(value)) next
+    value <- trimws(as.character(value)[[1L]])
+    if (is.na(value) || !nzchar(value)) next
+    ids[[length(ids) + 1L]] <- list(
+      label = .citation_id_label(field, value),
+      url   = .citation_id_url(field, value)
+    )
+  }
+
+  key <- e[["key"]]
+  key <- if (is.null(key)) NA_character_ else trimws(as.character(key)[[1L]])
+  if (is.na(key) || !nzchar(key)) {
+    key <- if (length(ids) > 0L) ids[[1L]][["label"]] else NA_character_
+  }
+  if (is.na(key)) return(NULL)
+
+  text <- e[["text"]]
+  text <- if (is.null(text)) {
+    ""
+  } else {
+    trimws(gsub("[[:space:]]+", " ", paste(as.character(text), collapse = " ")))
+  }
+
+  list(key = key, text = text, ids = ids)
+}
+
+#' Coerce a bare citation string into normalized form
+#'
+#' Accepts either a plain key (`"hunter2007"`), a prefixed identifier
+#' (`"doi:10.1016/j.socnet.2006.08.002"`), or a URL.
+#'
+#' @param s A character scalar.
+#' @return A normalized citation entry, or `NULL`.
+#' @noRd
+.citation_from_string <- function(s) {
+  s <- trimws(as.character(s)[[1L]])
+  if (is.na(s) || !nzchar(s)) return(NULL)
+
+  for (field in .tabulergm_citation_ids) {
+    if (startsWith(tolower(s), paste0(field, ":"))) {
+      value <- sub("^[^:]+:", "", s)
+      entry <- list(key = value)
+      entry[[field]] <- value
+      return(.citation_entry(entry))
+    }
+  }
+
+  if (grepl("^https?://", s, ignore.case = TRUE)) {
+    return(.citation_entry(list(key = s, url = s)))
+  }
+
+  .citation_entry(list(key = s))
+}
+
+#' Normalize the `citation` field of a term definition
+#'
+#' Accepts a bare string, a character vector, a single entry list, or a list
+#' of entry lists, and returns a list of normalized entries.
+#'
+#' @param x The raw `citation` value from YAML or from an override.
+#' @return A list of normalized citation entries (possibly empty).
+#' @noRd
+.normalize_citations <- function(x) {
+  if (is.null(x) || (length(x) == 1L && !is.list(x) && is.na(x))) {
+    return(list())
+  }
+
+  if (is.character(x)) {
+    return(Filter(Negate(is.null), lapply(unname(x), .citation_from_string)))
+  }
+
+  if (!is.list(x)) {
+    stop(
+      "'citation' must be a string or a list of citation entries.",
+      call. = FALSE
+    )
+  }
+
+  entries <- if (.is_citation_entry(x)) list(x) else x
+
+  normalized <- lapply(entries, function(e) {
+    if (is.character(e)) .citation_from_string(e) else .citation_entry(e)
+  })
+
+  Filter(Negate(is.null), normalized)
+}
+
+#' Collapse citation entries into a bibliography keyed by citation key
+#'
+#' @param entry_lists A list whose elements are lists of normalized entries.
+#' @return A list of unique entries, in first-seen order.
+#' @noRd
+.citation_bibliography <- function(entry_lists) {
+  bib <- list()
+  seen <- character(0)
+
+  for (entries in entry_lists) {
+    for (e in entries) {
+      if (e[["key"]] %in% seen) next
+      seen <- c(seen, e[["key"]])
+      bib[[length(bib) + 1L]] <- e
+    }
+  }
+
+  bib
+}
+
+#' Format one citation identifier for a given output format
+#'
+#' @param id A list with `label` and `url`.
+#' @param format One of `"html"`, `"markdown"`, or `"latex"`.
+#' @return A character scalar.
+#' @noRd
+.format_citation_id <- function(id, format) {
+  switch(format,
+    html = sprintf(
+      '<a href="%s">%s</a>',
+      .escape_html_text(id[["url"]]),
+      .escape_html_text(id[["label"]])
+    ),
+    markdown = sprintf("[%s](%s)", id[["label"]], id[["url"]]),
+    id[["label"]]
+  )
+}
+
+#' Build footnote lines for a bibliography
+#'
+#' Each line reads `[key] text identifier(s)`, mirroring the marker
+#' appended next to the term description.
+#'
+#' @param bib A list of normalized citation entries.
+#' @param format One of `"html"`, `"markdown"`, or `"latex"`.
+#' @return A character vector of footnote lines (possibly empty).
+#' @noRd
+.render_citation_notes <- function(bib, format) {
+  if (length(bib) == 0L) return(character(0))
+
+  vapply(bib, function(e) {
+    parts <- character(0)
+    if (nzchar(e[["text"]])) {
+      parts <- c(parts, switch(format,
+        html  = .escape_html_text(e[["text"]]),
+        latex = .escape_latex_text(e[["text"]]),
+        e[["text"]]
+      ))
+    }
+    if (length(e[["ids"]]) > 0L) {
+      parts <- c(parts, paste(
+        vapply(e[["ids"]], .format_citation_id, character(1), format = format),
+        collapse = " "
+      ))
+    }
+
+    body <- paste(parts, collapse = " ")
+    key <- switch(format,
+      html     = .escape_html_text(e[["key"]]),
+      markdown = .escape_markdown_brackets(e[["key"]]),
+      latex    = .escape_latex_text(e[["key"]]),
+      e[["key"]]
+    )
+
+    # Markdown reads a bare [key] as a shortcut reference link; escaping the
+    # brackets keeps the marker literal regardless of the surrounding document.
+    label <- if (identical(format, "markdown")) {
+      sprintf("\\[%s\\]", key)
+    } else {
+      sprintf("[%s]", key)
+    }
+
+    if (!nzchar(body)) label else paste(label, body)
+  }, character(1), USE.NAMES = FALSE)
+}
+
+#' Escape HTML-sensitive characters in plain text
+#' @param x A character vector.
+#' @return The escaped vector.
+#' @noRd
+.escape_html_text <- function(x) {
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;", x, fixed = TRUE)
+  x <- gsub(">", "&gt;", x, fixed = TRUE)
+  gsub("\"", "&quot;", x, fixed = TRUE)
+}
+
+#' Escape square brackets so Markdown does not read them as a reference link
+#' @param x A character vector.
+#' @return The escaped vector.
+#' @noRd
+.escape_markdown_brackets <- function(x) {
+  x <- gsub("[", "\\[", x, fixed = TRUE)
+  gsub("]", "\\]", x, fixed = TRUE)
 }

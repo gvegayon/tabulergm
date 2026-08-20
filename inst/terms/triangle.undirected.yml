@@ -1,3 +1,10 @@
+title: Triangles
+description: >-
+  Counts the sets of three mutually connected nodes, the basic measure
+  of local clustering in an undirected network.
+citation:
+  - key: frank1986
+    doi: 10.1080/01621459.1986.10478342
 plot:
   edgelist: "0->1->2->0"
   vcolor: black

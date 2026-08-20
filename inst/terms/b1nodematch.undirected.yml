@@ -1,3 +1,11 @@
+title: First-mode homophily
+description: >-
+  Counts the pairs of first-mode nodes that share an attribute value and
+  are both tied to the same second-mode node. The alpha and beta
+  discount parameters temper the count when nodes share many partners.
+citation:
+  - key: bomiriya2014
+    text: "Bomiriya, R. P., Bansal, S., and Hunter, D. R. (2014). Modeling homophily in ERGMs for bipartite networks."
 plot:
   edgelist: "0->3, 1->3, 2->3"
   vcolor: [orange, orange, gray, gray]

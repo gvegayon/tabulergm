@@ -1,3 +1,7 @@
+title: First-mode attribute activity
+description: >-
+  Counts the ties incident on first-mode nodes at each level of a
+  categorical attribute, measuring how active those nodes are.
 plot:
   edgelist: "0->2, 0->1, 0->3"
   vcolor: [orange, gray, gray, gray]

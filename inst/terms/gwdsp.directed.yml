@@ -1,3 +1,12 @@
+title: Geometrically weighted dyadwise shared partners
+description: >-
+  Directed counterpart of the dyadwise shared partner statistic,
+  computed over every ordered dyad. Outgoing two-paths are counted by
+  default; the term's type argument selects a different two-path
+  orientation.
+citation:
+  - key: hunter2007
+    doi: 10.1016/j.socnet.2006.08.005
 plot:
   edgelist: "0->2, 2->1, 0->3, 3->1, 0->4, 4->1"
   vcolor: [black, gray, gray, gray, black]

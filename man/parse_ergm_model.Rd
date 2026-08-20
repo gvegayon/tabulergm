@@ -4,10 +4,36 @@
 \alias{parse_ergm_model}
 \title{Parse an ERGM Model Object}
 \usage{
-parse_ergm_model(object)
+parse_ergm_model(
+  object,
+  override = NULL,
+  override.title = NULL,
+  override.desc = NULL,
+  override.math = NULL,
+  override.figure = NULL,
+  override.citation = NULL
+)
 }
 \arguments{
 \item{object}{A fitted \link[ergm:ergm]{ergm} object.}
+
+\item{override}{A named list keyed by term name, each element a named
+list of fields to replace, e.g.
+\code{list(edges = list(title = "Density", citation = "doi:10.1234/x"))}.
+Valid fields are \code{title}, \code{description} (or \code{desc}), \code{math}, \code{figure},
+and \code{citation}.}
+
+\item{override.title, override.desc, override.math, override.figure}{Named
+character vectors keyed by term name, e.g.
+\code{override.title = c(edges = "Density")}. These take precedence over
+\code{override}.}
+
+\item{override.citation}{A named list keyed by term name whose elements
+are citation specifications in the same form the YAML \verb{citation:}
+field accepts: a bare key (\code{"hunter2007"}), a prefixed identifier
+(\code{"doi:10.1016/j.socnet.2006.08.002"}), a single entry list
+(\code{list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.002")}), or
+a list of such entries.}
 }
 \value{
 A data frame with columns:
@@ -19,12 +45,14 @@ comma-separated when multiple.}
 \item{estimate}{Numeric. The coefficient estimate.}
 \item{se}{Numeric. The standard error.}
 \item{pvalue}{Numeric. The p-value.}
-\item{description}{Character or \code{NA}. Term description from the ERGM
-term database.}
-\item{math}{Character or \code{NA}. The mathematical definition
-(reserved for future use).}
-\item{figure}{Character or \code{NA}. Path to an associated figure
-(reserved for future use).}
+\item{title}{Character or \code{NA}. Short one-line label for the term.}
+\item{description}{Character or \code{NA}. Prose description of the term.}
+\item{math}{Character or \code{NA}. The LaTeX definition of the statistic.}
+\item{figure}{Character or \code{NA}. Path to the rendered term figure.}
+\item{citation}{Character or \code{NA}. Citation key(s) for the term,
+comma-separated when several. The corresponding bibliography is
+attached to the data frame as the \code{"tabulergm_citations"}
+attribute.}
 }
 }
 \description{
@@ -35,13 +63,34 @@ for use in publication-ready tables.
 \details{
 The coefficient names produced by \code{ergm} (which may expand terms into
 multiple rows, e.g., \code{nodefactor.race.Black}) are mapped back to the
-canonical term names from the formula. Term metadata is looked up from
-the ERGM term database using \code{\link[ergm:search.ergmTerms]{ergm::search.ergmTerms()}}.
+canonical term names from the formula.
 }
+\section{Metadata sources}{
+
+Each metadata field is resolved from three sources, in increasing order
+of precedence: the \code{ergm} term database (via
+\code{\link[ergm:search.ergmTerms]{ergm::search.ergmTerms()}}, which supplies \code{title} and \code{description}),
+the YAML term database shipped in \verb{inst/terms/} (which may supply
+\code{title}, \code{description}, \code{math}, \code{figure}, and \code{citation}), and the
+\verb{override*} arguments documented below.
+
+Override names are matched against the \code{term} column first and against
+\code{coef_name} second, so an expanded coefficient such as
+\code{nodefactor.race.Black} can be targeted individually. Names matching no
+row produce a warning.
+}
+
 \examples{
 library(ergm)
 fit <- readRDS(system.file("fits", "fit_nodematch.rds", package = "tabulergm"))
 parse_ergm_model(fit)
+
+# Replace the title and description of a single term
+parse_ergm_model(
+  fit,
+  override.title = c(edges = "Density"),
+  override.desc  = c(edges = "Baseline propensity to form ties.")
+)
 }
 \seealso{
 \code{\link[=parse_ergm_formula]{parse_ergm_formula()}} for formula-only parsing,

@@ -1,3 +1,12 @@
+title: Uniform homophily
+description: >-
+  Counts the ties joining nodes that share the same value of a
+  categorical attribute, the standard measure of homophily. Setting diff
+  = TRUE adds one statistic per attribute value (differential
+  homophily).
+citation:
+  - key: mcpherson2001
+    doi: 10.1146/annurev.soc.27.1.415
 plot:
   edgelist: "0->1"
   vcolor:

@@ -1,3 +1,8 @@
+title: Dyadic covariate
+description: >-
+  Sums a fixed dyad-level covariate over the observed ties, letting an
+  external matrix such as distance or a previously observed network
+  predict tie formation.
 plot:
   edgelist: "0->1"
   vcolor: [gray, gray]

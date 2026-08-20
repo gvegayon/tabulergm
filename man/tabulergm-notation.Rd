@@ -15,9 +15,45 @@ Each term lives in \verb{inst/terms/<term>.<directed|undirected>.yml}, where
 \verb{<term>} is the canonical \code{ergm} term name as written in a model formula
 (e.g., \code{gwesp}, \code{b1nodematch}). Terms available for both directed and
 undirected networks get one file per variant; bipartite terms use
-\code{undirected}. Each file has two top-level entries: \code{plot} (the network
-drawing specification) and \code{math} (a LaTeX expression). No parser changes
-are needed for new terms: files are looked up by term name.
+\code{undirected}. A file has up to five top-level entries: \code{title} and
+\code{description} (text, both optional), \code{citation} (optional, see below),
+\code{plot} (the network drawing specification), and \code{math} (a LaTeX
+expression). No parser changes are needed for new terms: files are
+looked up by term name.
+}
+
+\section{Titles, descriptions, and citations}{
+
+\code{title} is a short label, capitalized like a heading and without a
+trailing period (e.g. \verb{Uniform homophily}). \code{description} is one to
+three sentences of prose saying what the statistic counts and why a
+modeler would include it; write it as a folded block scalar (\verb{>-}) so
+the source stays readable. Both fields are optional: when absent,
+\code{tabulergm} falls back to the \code{title} and \code{description} recorded in the
+\code{ergm} term database, which are accurate but often too long, too
+technical, or full of raw LaTeX for a table cell. Prefer writing them
+here.
+
+\code{citation} records the source(s) that introduced the term. Each entry
+carries a \code{key} (the marker shown in the table, conventionally
+\code{lastnameYEAR}) and, where one exists, a machine-readable identifier so
+readers can pull the full reference into their own bibliography:
+
+\preformatted{citation:
+  - key: hunter2007
+    doi: 10.1016/j.socnet.2006.08.005
+}
+
+Accepted identifier fields are \code{doi}, \code{arxiv}, \code{pmid}, and \code{url}; an
+entry may also carry free-text \code{text}, which is the right choice when
+no stable identifier can be verified. \strong{Always resolve an
+identifier before committing it} (for a DOI, \verb{https://doi.org/<id>});
+an identifier that points at the wrong paper is worse than none.
+
+\code{tabulergm_table()} renders a \code{(key)} marker next to the term's
+description and a matching \verb{[key] identifier} line below the table. Users
+can replace any of these fields per table through the \code{override}
+arguments of \code{\link[=tabulergm_table]{tabulergm_table()}} without editing the YAML.
 }
 
 \section{Math notation}{
@@ -89,7 +125,9 @@ automatically for \code{.directed.yml} terms.
 \section{Checklist for a new term}{
 
 \enumerate{
-\item Add the YAML file(s) following the standards above.
+\item Add the YAML file(s) following the standards above, including a
+\code{title} and \code{description}, and a \code{citation} when the term has an
+identifiable source.
 \item Add tinytest coverage in \code{inst/tinytest/test_term_db.R}
 (file lookup, math/figure reading, and formula integration).
 \item Add the term to the dictionary tables in \code{README.qmd} and
@@ -102,8 +140,11 @@ coverage-check chunk that fails the render if a term is missing.
 \references{
 Hunter, D. R. (2007). Curved exponential family models for social
 networks. \emph{Social Networks}, 29(2), 216--230.
+\doi{10.1016/j.socnet.2006.08.005}
 
 Bomiriya, R. P., Bansal, S., & Hunter, D. R. (2014). Modeling homophily
-in ERGMs for bipartite networks. arXiv:1412.1151.
+in ERGMs for bipartite networks. (No stable identifier verified; the
+arXiv id previously given here, 1412.1151, belongs to an unrelated
+paper.)
 }
 \keyword{internal}

@@ -1,3 +1,8 @@
+title: Absolute attribute difference
+description: >-
+  Sums the absolute difference in a quantitative attribute across tied
+  nodes. Negative estimates indicate homophily, since similar nodes
+  contribute less.
 plot:
   edgelist: "0->1"
   vcolor: [orange, orange]

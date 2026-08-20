@@ -4,7 +4,16 @@
 \alias{parse_ergm_formula}
 \title{Parse an ERGM Formula}
 \usage{
-parse_ergm_formula(formula, directed = NULL)
+parse_ergm_formula(
+  formula,
+  directed = NULL,
+  override = NULL,
+  override.title = NULL,
+  override.desc = NULL,
+  override.math = NULL,
+  override.figure = NULL,
+  override.citation = NULL
+)
 }
 \arguments{
 \item{formula}{An ERGM \link[stats:formula]{formula}.}
@@ -14,6 +23,24 @@ to select the matching term metadata (math and figures). When \code{NULL}
 (the default), directedness is inferred from the network on the
 left-hand side of the formula if it can be evaluated; otherwise the
 lookup tries undirected metadata first, then directed.}
+
+\item{override}{A named list keyed by term name, each element a named
+list of fields to replace, e.g.
+\code{list(edges = list(title = "Density", citation = "doi:10.1234/x"))}.
+Valid fields are \code{title}, \code{description} (or \code{desc}), \code{math}, \code{figure},
+and \code{citation}.}
+
+\item{override.title, override.desc, override.math, override.figure}{Named
+character vectors keyed by term name, e.g.
+\code{override.title = c(edges = "Density")}. These take precedence over
+\code{override}.}
+
+\item{override.citation}{A named list keyed by term name whose elements
+are citation specifications in the same form the YAML \verb{citation:}
+field accepts: a bare key (\code{"hunter2007"}), a prefixed identifier
+(\code{"doi:10.1016/j.socnet.2006.08.002"}), a single entry list
+(\code{list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.002")}), or
+a list of such entries.}
 }
 \value{
 A data frame with columns:
@@ -24,18 +51,25 @@ comma-separated when multiple.}
 \item{estimate}{Numeric. Always \code{NA} for formula-only parsing.}
 \item{se}{Numeric. Always \code{NA} for formula-only parsing.}
 \item{pvalue}{Numeric. Always \code{NA} for formula-only parsing.}
-\item{description}{Character or \code{NA}. Term description from the ERGM
-term database.}
-\item{math}{Character or \code{NA}. The mathematical definition
-(reserved for future use).}
-\item{figure}{Character or \code{NA}. Path to an associated figure
-(reserved for future use).}
+\item{title}{Character or \code{NA}. Short one-line label for the term.}
+\item{description}{Character or \code{NA}. Prose description of the term.}
+\item{math}{Character or \code{NA}. The LaTeX definition of the statistic.}
+\item{figure}{Character or \code{NA}. Path to the rendered term figure.}
+\item{citation}{Character or \code{NA}. Citation key(s) for the term,
+comma-separated when several. The corresponding bibliography is
+attached to the data frame as the \code{"tabulergm_citations"}
+attribute.}
 }
 }
 \description{
 Extracts ERGM term names and attributes from a formula. No fitted model is
 required. Returns a standardized data frame with metadata from the ERGM term
 database where available.
+}
+\details{
+Metadata is resolved from the same three sources, and with the same
+precedence, as \code{\link[=parse_ergm_model]{parse_ergm_model()}}; see its \dQuote{Metadata sources}
+section.
 }
 \examples{
 library(ergm)
@@ -44,6 +78,15 @@ parse_ergm_formula(network ~ edges + nodematch("gender"))
 # Directedness can be stated explicitly when the formula has no
 # network on its left-hand side
 parse_ergm_formula(~ edges + mutual, directed = TRUE)
+
+# Attach a citation to a term that has none in the term dictionary
+parse_ergm_formula(
+  ~ edges + kstar(2),
+  directed = FALSE,
+  override.citation = list(
+    kstar = list(key = "frank1986", doi = "10.1080/0022250X.1986.9990013")
+  )
+)
 }
 \seealso{
 \code{\link[=parse_ergm_model]{parse_ergm_model()}} for parsing fitted models,

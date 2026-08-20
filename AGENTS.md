@@ -27,6 +27,16 @@ documented in `R/notation.R` (help topic `?"tabulergm-notation"`). In short:
   1.0 for focal nodes, .5 for context; dashed lines for match/covariate
   annotations. These conventions drive the explanatory notes that
   `tabulergm_table()` appends below rendered tables.
+- **Text**: give every term a short `title` (heading case, no trailing
+  period) and a one-to-three-sentence `description` written as a folded
+  block scalar (`>-`). Without them the table falls back to the `ergm`
+  database, whose text is often too long or contains raw LaTeX.
+- **Citations**: add a `citation:` entry when a term has an identifiable
+  source, with a `key` (`lastnameYEAR`) plus a `doi`, `arxiv`, `pmid`, or
+  `url`. **Resolve every identifier before committing it** (e.g.
+  `curl -sLH "Accept: application/x-bibtex" https://doi.org/<id>`); use the
+  free-text `text:` field when no identifier can be verified rather than
+  guessing one.
 - **Wiring**: no parser changes needed — files are looked up by term name
   as `inst/terms/<term>.<directed|undirected>.yml`.
 - **Coverage**: add tinytest cases in `inst/tinytest/test_term_db.R`, and

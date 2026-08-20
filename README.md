@@ -17,11 +17,15 @@ inspect the available terms and their metadata. Generated tables can be
 incorporated into Quarto or RMarkdown documents, and can also be
 exported as Markdown or LaTeX snippets for use in other projects.
 
-The package includes a term dictionary with metadata for each term,
-including descriptions, references, and example figures. Figures are
-currently drawn using the
+The package includes a term dictionary with metadata for each term: a
+short title, a plain-language description, a LaTeX definition, an
+example figure, and – where the term has an identifiable source – a
+citation. Figures are currently drawn using the
 [`netplot`](https://cran.r-project.org/package=netplot) package, but
-users can also provide their own custom figure generation methods.
+users can also provide their own custom figure generation methods. Every
+text field can be replaced on a per-table basis without editing the
+dictionary (see [Customizing term
+metadata](#customizing-term-metadata)).
 
 Future version of this package may extend its functionality to support
 stochastic actor-oriented models (SAOMs) and other network modeling
@@ -56,10 +60,10 @@ model <- ergm(
 
 # Parse the model
 model_terms <- parse_ergm_model(model)
-model_terms[, c("term", "estimate", "se", "pvalue", "description")]
-#>       term   estimate        se       pvalue                    description
-#> 1    edges -1.6507266 0.3179320 2.079634e-07 Number of edges in the network
-#> 2 triangle  0.1082377 0.5183562 8.345969e-01                      Triangles
+model_terms[, c("term", "title", "estimate", "se", "pvalue")]
+#>       term           title   estimate        se       pvalue
+#> 1    edges Number of edges -1.6507266 0.3179320 2.079634e-07
+#> 2 triangle       Triangles  0.1082377 0.5183562 8.345969e-01
 ```
 
 You can also export the table code and generated term figures into a
@@ -88,7 +92,7 @@ bipartite_terms <- parse_ergm_formula(
     b1nodematch("type") + b2nodematch("group")
 )
 
-bipartite_terms[, c("term", "attribute", "description")]
+bipartite_terms[, c("term", "attribute", "title")]
 #>          term attribute
 #> 1     gwb1dsp      <NA>
 #> 2     gwb2dsp      <NA>
@@ -96,14 +100,78 @@ bipartite_terms[, c("term", "attribute", "description")]
 #> 4    b2factor     group
 #> 5 b1nodematch      type
 #> 6 b2nodematch     group
-#>                                                                                       description
-#> 1  Geometrically weighted dyadwise shared partner distribution for dyads in the first bipartition
-#> 2 Geometrically weighted dyadwise shared partner distribution for dyads in the second bipartition
-#> 3                               Factor attribute effect for the first mode in a bipartite network
-#> 4                              Factor attribute effect for the second mode in a bipartite network
-#> 5                Nodal attribute-based homophily effect for the first mode in a bipartite network
-#> 6               Nodal attribute-based homophily effect for the second mode in a bipartite network
+#>                                                           title
+#> 1  Geometrically weighted dyadwise shared partners (first mode)
+#> 2 Geometrically weighted dyadwise shared partners (second mode)
+#> 3                                 First-mode attribute activity
+#> 4                                Second-mode attribute activity
+#> 5                                          First-mode homophily
+#> 6                                         Second-mode homophily
 ```
+
+## Customizing term metadata
+
+Titles and descriptions come from the term dictionary, falling back to
+the `ergm` term database for terms the dictionary does not cover. Either
+can be replaced for a single table with the `override.*` arguments,
+which are keyed by term name:
+
+``` r
+custom <- tabulergm_table(
+  model,
+  include_title  = TRUE,
+  override.title = c(edges = "Density"),
+  override.desc  = c(edges = "Baseline propensity to form ties.")
+)
+
+custom[, c("term", "title")]
+#>                   term     title
+#> 1                edges   Density
+#> 2 triangle (frank1986) Triangles
+```
+
+`triangle` picks up a `(frank1986)` marker because it carries a citation
+in the term dictionary. The marker attaches to the description when that
+column is shown and to the term otherwise, so a citation is never
+silently dropped.
+
+The same works for `math`, `figure`, and `citation`, and a single
+`override` list can set several fields of several terms at once:
+
+``` r
+tabulergm_table(
+  model,
+  override = list(
+    edges     = list(title = "Density", desc = "Baseline tie propensity."),
+    nodematch = list(citation = "doi:10.1146/annurev.soc.27.1.415")
+  )
+)
+```
+
+Terms that carry a citation get a `(key)` marker next to their
+description, and the matching reference is appended below the table.
+Storing a DOI, arXiv id, or PubMed id (rather than a formatted
+reference) lets readers pull the full citation into their own
+bibliography software:
+
+``` r
+tabulergm_table(
+  network ~ gwesp(0.5, fixed = TRUE) + triangle,
+  format = "markdown"
+)
+```
+
+| term | figure | math | description |
+|:---|:---|:---|:---|
+| gwesp | <img src="man/figures/README-gwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP_i(y)$ | Summarizes how many partners tied nodes share, weighting each additional shared partner geometrically less than the last. Provides a better-behaved measure of transitive closure than a raw triangle count; the decay parameter controls how fast the weights fall off. (hunter2007) |
+| triangle | <img src="man/figures/README-triangle.png" width="80" /> | $\sum_{i<j<k} y_{ij} y_{jk} y_{ik}$ | Counts the sets of three mutually connected nodes, the basic measure of local clustering in an undirected network. (frank1986) |
+
+*\[hunter2007\]
+[doi:10.1016/j.socnet.2006.08.005](https://doi.org/10.1016/j.socnet.2006.08.005)*\
+*\[frank1986\]
+[doi:10.1080/01621459.1986.10478342](https://doi.org/10.1080/01621459.1986.10478342)*
+
+## The term dictionary
 
 We can also embed the table in quarto/Rmarkdown. The table below covers
 every term currently included in `tabulergm`’s term dictionary; terms
@@ -129,36 +197,49 @@ tabulergm_table(dictionary_terms, format = "markdown")
 
 | term | figure | math | description |
 |:---|:---|:---|:---|
-| edges | <img src="man/figures/README-edges.png" width="80" /> | $\sum_{i<j} y_{ij}$ | Number of edges in the network |
-| mutual | <img src="man/figures/README-mutual.png" width="80" /> | $\sum_{i<j} y_{ij} y_{ji}$ | Mutuality |
-| triangle | <img src="man/figures/README-triangle.png" width="80" /> | $\sum_{i<j<k} y_{ij} y_{jk} y_{ik}$ | Triangles |
-| gwesp | <img src="man/figures/README-gwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP_i(y)$ | Geometrically weighted edgewise shared partner distribution |
-| gwdsp | <img src="man/figures/README-gwdsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Geometrically weighted dyadwise shared partner distribution |
-| gwdegree | <img src="man/figures/README-gwdegree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D_i(y)$ | Geometrically weighted degree distribution |
-| altkstar | <img src="man/figures/README-altkstar.png" width="80" /> | $\sum_{k=2}^{n-1} (-1)^k \frac{S_k(y)}{\lambda^{k-2}}$ | Alternating k-star |
-| nodematch | <img src="man/figures/README-nodematch.png" width="80" /> | $\sum_{i<j} y_{ij} \mathbf{1}(x_i = x_j)$ | Uniform homophily and differential homophily |
-| nodefactor | <img src="man/figures/README-nodefactor.png" width="80" /> | $\sum_{i<j} y_{ij} \left[\mathbf{1}(x_i = k) + \mathbf{1}(x_j = k)\right]$ | Factor attribute effect |
-| nodemix | <img src="man/figures/README-nodemix.png" width="80" /> | $\sum_{i<j} y_{ij} \mathbf{1}(\{x_i, x_j\} = \{k, l\})$ | Nodal attribute mixing |
-| nodecov | <img src="man/figures/README-nodecov.png" width="80" /> | $\sum_{i<j} y_{ij} (x_i + x_j)$ | Main effect of a covariate |
-| absdiff | <img src="man/figures/README-absdiff.png" width="80" /> | $\sum_{i<j} y_{ij} \left\lvert{}x_i - x_j\right\rvert{}$ | Absolute difference in nodal attribute |
-| edgecov | <img src="man/figures/README-edgecov.png" width="80" /> | $\sum_{i<j} y_{ij} x_{ij}$ | Edge covariate |
-| transitiveties | <img src="man/figures/README-transitiveties.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}\left(\exists k : y_{ik} y_{kj} = 1\right)$ | Transitive ties |
-| cyclicalties | <img src="man/figures/README-cyclicalties.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}\left(\exists k : y_{jk} y_{ki} = 1\right)$ | Cyclical ties |
-| nodeicov | <img src="man/figures/README-nodeicov.png" width="80" /> | $\sum_{i \neq j} y_{ij} x_j$ | Main effect of a covariate for in-edges |
-| nodeocov | <img src="man/figures/README-nodeocov.png" width="80" /> | $\sum_{i \neq j} y_{ij} x_i$ | Main effect of a covariate for out-edges |
-| gwb1dsp | <img src="man/figures/README-gwb1dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_2}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Geometrically weighted dyadwise shared partner distribution for dyads in the first bipartition |
-| gwb2dsp | <img src="man/figures/README-gwb2dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Geometrically weighted dyadwise shared partner distribution for dyads in the second bipartition |
-| b1factor | <img src="man/figures/README-b1factor.png" width="80" /> | $\sum_{i \in B_1} \sum_{j \in B_2} y_{ij} \mathbf{1}(x_i = k)$ | Factor attribute effect for the first mode in a bipartite network |
-| b2factor | <img src="man/figures/README-b2factor.png" width="80" /> | $\sum_{i \in B_1} \sum_{j \in B_2} y_{ij} \mathbf{1}(x_j = k)$ | Factor attribute effect for the second mode in a bipartite network |
-| b1nodematch | <img src="man/figures/README-b1nodematch.png" width="80" /> | $\sum_{k\in B_2} \sum_{i<j \in B_1} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Nodal attribute-based homophily effect for the first mode in a bipartite network |
-| b2nodematch | <img src="man/figures/README-b2nodematch.png" width="80" /> | $\sum_{k\in B_1} \sum_{i<j \in B_2} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Nodal attribute-based homophily effect for the second mode in a bipartite network |
-| b1starmix | <img src="man/figures/README-b1starmix.png" width="80" /> | $\sum_{i \in B_1} \mathbf{1}(x_i = p) \sum_{j_1 < \cdots < j_k \in B_2} \prod_{l=1}^{k} y_{i j_l} \mathbf{1}(x_{j_l} = q)$ | Mixing matrix for k-stars centered on the first mode of a bipartite network |
-| b2starmix | <img src="man/figures/README-b2starmix.png" width="80" /> | $\sum_{j \in B_2} \mathbf{1}(x_j = p) \sum_{i_1 < \cdots < i_k \in B_1} \prod_{l=1}^{k} y_{i_l j} \mathbf{1}(x_{i_l} = q)$ | Mixing matrix for k-stars centered on the second mode of a bipartite network |
+| edges | <img src="man/figures/README-edges.png" width="80" /> | $\sum_{i<j} y_{ij}$ | Counts the ties present in the network. Acts as the baseline density term, playing the role an intercept plays in a regression model. |
+| mutual | <img src="man/figures/README-mutual.png" width="80" /> | $\sum_{i<j} y_{ij} y_{ji}$ | Counts the dyads in which both directed ties are present, capturing the tendency for ties to be returned. (holland1981) |
+| triangle | <img src="man/figures/README-triangle.png" width="80" /> | $\sum_{i<j<k} y_{ij} y_{jk} y_{ik}$ | Counts the sets of three mutually connected nodes, the basic measure of local clustering in an undirected network. (frank1986) |
+| gwesp | <img src="man/figures/README-gwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP_i(y)$ | Summarizes how many partners tied nodes share, weighting each additional shared partner geometrically less than the last. Provides a better-behaved measure of transitive closure than a raw triangle count; the decay parameter controls how fast the weights fall off. (hunter2007) |
+| gwdsp | <img src="man/figures/README-gwdsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes shared partners over every dyad, tied or not, with geometrically decreasing weights. Commonly paired with gwesp to separate shared partnership from closure itself. (hunter2007) |
+| gwdegree | <img src="man/figures/README-gwdegree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D_i(y)$ | Summarizes the degree distribution with geometrically decreasing weights. Captures whether ties concentrate on a few high-degree nodes or spread evenly, and stabilizes models that would otherwise degenerate. (snijders2006; hunter2007) |
+| altkstar | <img src="man/figures/README-altkstar.png" width="80" /> | $\sum_{k=2}^{n-1} (-1)^k \frac{S_k(y)}{\lambda^{k-2}}$ | Alternating sum of the k-star counts, an equivalent parameterization of the geometrically weighted degree distribution used to model degree heterogeneity. (snijders2006; hunter2007) |
+| nodematch | <img src="man/figures/README-nodematch.png" width="80" /> | $\sum_{i<j} y_{ij} \mathbf{1}(x_i = x_j)$ | Counts the ties joining nodes that share the same value of a categorical attribute, the standard measure of homophily. Setting diff = TRUE adds one statistic per attribute value (differential homophily). (mcpherson2001) |
+| nodefactor | <img src="man/figures/README-nodefactor.png" width="80" /> | $\sum_{i<j} y_{ij} \left[\mathbf{1}(x_i = k) + \mathbf{1}(x_j = k)\right]$ | Counts the tie endpoints belonging to each level of a categorical attribute, measuring how active nodes with that value are in forming ties. |
+| nodemix | <img src="man/figures/README-nodemix.png" width="80" /> | $\sum_{i<j} y_{ij} \mathbf{1}(\{x_i, x_j\} = \{k, l\})$ | Counts the ties for every pairing of attribute values, reproducing the full mixing matrix of a categorical attribute. |
+| nodecov | <img src="man/figures/README-nodecov.png" width="80" /> | $\sum_{i<j} y_{ij} (x_i + x_j)$ | Sums a quantitative attribute over both ends of each tie, measuring how strongly that attribute drives tie formation. |
+| absdiff | <img src="man/figures/README-absdiff.png" width="80" /> | $\sum_{i<j} y_{ij} \left\lvert{}x_i - x_j\right\rvert{}$ | Sums the absolute difference in a quantitative attribute across tied nodes. Negative estimates indicate homophily, since similar nodes contribute less. |
+| edgecov | <img src="man/figures/README-edgecov.png" width="80" /> | $\sum_{i<j} y_{ij} x_{ij}$ | Sums a fixed dyad-level covariate over the observed ties, letting an external matrix such as distance or a previously observed network predict tie formation. |
+| transitiveties | <img src="man/figures/README-transitiveties.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}\left(\exists k : y_{ik} y_{kj} = 1\right)$ | Counts the ties closed by at least one two-path. Unlike a triple count, a tie contributes once no matter how many shared partners it has. |
+| cyclicalties | <img src="man/figures/README-cyclicalties.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}\left(\exists k : y_{jk} y_{ki} = 1\right)$ | Counts the ties that take part in at least one cycle, capturing generalized exchange rather than hierarchy. |
+| nodeicov | <img src="man/figures/README-nodeicov.png" width="80" /> | $\sum_{i \neq j} y_{ij} x_j$ | Sums the receiving node’s attribute value over all ties, measuring how a quantitative attribute drives incoming ties (popularity). |
+| nodeocov | <img src="man/figures/README-nodeocov.png" width="80" /> | $\sum_{i \neq j} y_{ij} x_i$ | Sums the sending node’s attribute value over all ties, measuring how a quantitative attribute drives outgoing ties (activity). |
+| gwb1dsp | <img src="man/figures/README-gwb1dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_2}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes how many second-mode nodes each pair of first-mode nodes has in common, weighting additional shared partners geometrically less. |
+| gwb2dsp | <img src="man/figures/README-gwb2dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes how many first-mode nodes each pair of second-mode nodes has in common, weighting additional shared partners geometrically less. |
+| b1factor | <img src="man/figures/README-b1factor.png" width="80" /> | $\sum_{i \in B_1} \sum_{j \in B_2} y_{ij} \mathbf{1}(x_i = k)$ | Counts the ties incident on first-mode nodes at each level of a categorical attribute, measuring how active those nodes are. |
+| b2factor | <img src="man/figures/README-b2factor.png" width="80" /> | $\sum_{i \in B_1} \sum_{j \in B_2} y_{ij} \mathbf{1}(x_j = k)$ | Counts the ties incident on second-mode nodes at each level of a categorical attribute, measuring how active those nodes are. |
+| b1nodematch | <img src="man/figures/README-b1nodematch.png" width="80" /> | $\sum_{k\in B_2} \sum_{i<j \in B_1} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Counts the pairs of first-mode nodes that share an attribute value and are both tied to the same second-mode node. The alpha and beta discount parameters temper the count when nodes share many partners. (bomiriya2014) |
+| b2nodematch | <img src="man/figures/README-b2nodematch.png" width="80" /> | $\sum_{k\in B_1} \sum_{i<j \in B_2} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Counts the pairs of second-mode nodes that share an attribute value and are both tied to the same first-mode node. The alpha and beta discount parameters temper the count when nodes share many partners. (bomiriya2014) |
+| b1starmix | <img src="man/figures/README-b1starmix.png" width="80" /> | $\sum_{i \in B_1} \mathbf{1}(x_i = p) \sum_{j_1 < \cdots < j_k \in B_2} \prod_{l=1}^{k} y_{i j_l} \mathbf{1}(x_{j_l} = q)$ | Counts the k-stars centered on a first-mode node with one attribute value whose second-mode neighbors all share another, capturing mixing and degree together. |
+| b2starmix | <img src="man/figures/README-b2starmix.png" width="80" /> | $\sum_{j \in B_2} \mathbf{1}(x_j = p) \sum_{i_1 < \cdots < i_k \in B_1} \prod_{l=1}^{k} y_{i_l j} \mathbf{1}(x_{i_l} = q)$ | Counts the k-stars centered on a second-mode node with one attribute value whose first-mode neighbors all share another, capturing mixing and degree together. |
 
 *Note: Orange nodes indicate nodes with a focal attribute. Orange and
 teal nodes represent nodes with different values of the focal attribute.
 Square nodes represent nodes in the first mode and circle nodes in the
 second mode.*
+
+*\[holland1981\]
+[doi:10.1080/01621459.1981.10477598](https://doi.org/10.1080/01621459.1981.10477598)*\
+*\[frank1986\]
+[doi:10.1080/01621459.1986.10478342](https://doi.org/10.1080/01621459.1986.10478342)*\
+*\[hunter2007\]
+[doi:10.1016/j.socnet.2006.08.005](https://doi.org/10.1016/j.socnet.2006.08.005)*\
+*\[snijders2006\]
+[doi:10.1111/j.1467-9531.2006.00176.x](https://doi.org/10.1111/j.1467-9531.2006.00176.x)*\
+*\[mcpherson2001\]
+[doi:10.1146/annurev.soc.27.1.415](https://doi.org/10.1146/annurev.soc.27.1.415)*\
+*\[bomiriya2014\]
+[doi:10.48550/arXiv.2312.05673](https://doi.org/10.48550/arXiv.2312.05673)*
 
 ## Code of Conduct
 

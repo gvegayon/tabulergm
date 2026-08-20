@@ -1,3 +1,11 @@
+title: Second-mode homophily
+description: >-
+  Counts the pairs of second-mode nodes that share an attribute value
+  and are both tied to the same first-mode node. The alpha and beta
+  discount parameters temper the count when nodes share many partners.
+citation:
+  - key: bomiriya2014
+    doi: 10.48550/arXiv.2312.05673
 plot:
   edgelist: "0->2, 0->1, 0->3"
   vcolor: [gray, orange, orange, gray]

@@ -409,6 +409,7 @@ tabulergm_save.default <- function(object, path, ...) {
 
 .render_save_markdown <- function(df) {
   notes <- .save_table_notes(df)
+  citation_notes <- .save_citation_notes(df, "markdown")
   df <- .preprocess_columns(df, "markdown", copy_figures = FALSE)
   code <- as.character(knitr::kable(df, format = "pipe", row.names = FALSE,
     escape = FALSE
@@ -416,11 +417,15 @@ tabulergm_save.default <- function(object, path, ...) {
   if (length(notes) > 0L) {
     code <- c(code, "", paste0("*Note: ", paste(notes, collapse = " "), "*"))
   }
+  if (length(citation_notes) > 0L) {
+    code <- c(code, "", .markdown_note_block(citation_notes))
+  }
   code
 }
 
 .render_save_latex <- function(df, latex_image_width) {
   notes <- .save_table_notes(df)
+  citation_notes <- .save_citation_notes(df, "latex")
   df <- .preprocess_latex_columns(df, latex_image_width = latex_image_width)
   code <- as.character(knitr::kable(df, format = "latex", row.names = FALSE,
     escape = FALSE
@@ -432,6 +437,13 @@ tabulergm_save.default <- function(object, path, ...) {
       sprintf("\\emph{Note: %s}", paste(notes, collapse = " "))
     )
   }
+  if (length(citation_notes) > 0L) {
+    code <- c(
+      code,
+      "",
+      paste(sprintf("\\emph{%s}", citation_notes), collapse = " \\\\\n")
+    )
+  }
   code
 }
 
@@ -440,6 +452,12 @@ tabulergm_save.default <- function(object, path, ...) {
     return(character(0))
   }
   .term_drawing_notes(df[["term"]])
+}
+
+# Citation footnotes ride along on the table as an attribute set by
+# tabulergm_table(); a data frame assembled by hand simply has none.
+.save_citation_notes <- function(df, format) {
+  .render_citation_notes(attr(df, "tabulergm_citations"), format)
 }
 
 .preprocess_latex_columns <- function(df, latex_image_width) {

@@ -1,3 +1,11 @@
+title: Geometrically weighted dyadwise shared partners
+description: >-
+  Summarizes shared partners over every dyad, tied or not, with
+  geometrically decreasing weights. Commonly paired with gwesp to
+  separate shared partnership from closure itself.
+citation:
+  - key: hunter2007
+    doi: 10.1016/j.socnet.2006.08.005
 plot:
   edgelist: "0->2, 1->2, 0->3, 1->3, 0->4, 1->4"
   vcolor: [black, black, gray, gray, gray]

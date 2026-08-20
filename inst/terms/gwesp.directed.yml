@@ -1,3 +1,12 @@
+title: Geometrically weighted edgewise shared partners
+description: >-
+  Directed counterpart of the edgewise shared partner statistic,
+  measuring transitive closure with geometrically decreasing weights.
+  Outgoing two-paths are counted by default; the term's type argument
+  selects a different two-path orientation.
+citation:
+  - key: hunter2007
+    doi: 10.1016/j.socnet.2006.08.005
 plot:
   edgelist: "0->1, 0->2, 2->1, 0->3, 3->1, 0->4, 4->1"
   vcolor: [black, gray, gray, gray, black]

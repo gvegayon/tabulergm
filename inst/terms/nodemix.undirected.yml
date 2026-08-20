@@ -1,3 +1,7 @@
+title: Attribute mixing
+description: >-
+  Counts the ties for every pairing of attribute values, reproducing the
+  full mixing matrix of a categorical attribute.
 plot:
   edgelist: "0->1"
   vcolor: [orange, "#008080"]

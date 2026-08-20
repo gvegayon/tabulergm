@@ -1,3 +1,14 @@
+title: Geometrically weighted degree distribution
+description: >-
+  Summarizes the degree distribution with geometrically decreasing
+  weights. Captures whether ties concentrate on a few high-degree nodes
+  or spread evenly, and stabilizes models that would otherwise
+  degenerate.
+citation:
+  - key: snijders2006
+    doi: 10.1111/j.1467-9531.2006.00176.x
+  - key: hunter2007
+    doi: 10.1016/j.socnet.2006.08.005
 plot:
   edgelist: "0->1, 0->2, 0->3"
   vcolor: [black, black, black, black]

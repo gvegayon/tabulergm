@@ -1,3 +1,7 @@
+title: Sender effect of a quantitative attribute
+description: >-
+  Sums the sending node's attribute value over all ties, measuring how a
+  quantitative attribute drives outgoing ties (activity).
 plot:
   edgelist: "0->1, 0->2, 0->3"
   vcolor: [orange, gray, gray, gray]

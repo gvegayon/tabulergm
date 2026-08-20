@@ -13,8 +13,15 @@ tabulergm_table(object, ...)
   include_description = FALSE,
   include_math = FALSE,
   include_attribute = FALSE,
+  include_title = FALSE,
   format = c("data.frame", "html", "markdown"),
   figures_dir = NULL,
+  override = NULL,
+  override.title = NULL,
+  override.desc = NULL,
+  override.math = NULL,
+  override.figure = NULL,
+  override.citation = NULL,
   ...
 )
 
@@ -23,6 +30,13 @@ tabulergm_table(object, ...)
   format = c("data.frame", "html", "markdown"),
   figures_dir = NULL,
   directed = NULL,
+  include_title = FALSE,
+  override = NULL,
+  override.title = NULL,
+  override.desc = NULL,
+  override.math = NULL,
+  override.figure = NULL,
+  override.citation = NULL,
   ...
 )
 }
@@ -41,6 +55,9 @@ Default \code{FALSE}.}
 \item{include_attribute}{Logical. Include the attribute column? Default
 \code{FALSE}.}
 
+\item{include_title}{Logical. Include the short term-title column?
+Default \code{FALSE}.}
+
 \item{format}{Character. Output format: \code{"data.frame"} (default),
 \code{"html"}, or \code{"markdown"}. HTML and Markdown output require the
 \pkg{knitr} package.}
@@ -49,6 +66,24 @@ Default \code{FALSE}.}
 \code{format = "markdown"}. When \code{NULL}, figures are copied automatically to
 the active knitr/Quarto/R Markdown figure path during non-interactive
 document rendering.}
+
+\item{override}{A named list keyed by term name, each element a named
+list of fields to replace, e.g.
+\code{list(edges = list(title = "Density", citation = "doi:10.1234/x"))}.
+Valid fields are \code{title}, \code{description} (or \code{desc}), \code{math}, \code{figure},
+and \code{citation}.}
+
+\item{override.title, override.desc, override.math, override.figure}{Named
+character vectors keyed by term name, e.g.
+\code{override.title = c(edges = "Density")}. These take precedence over
+\code{override}.}
+
+\item{override.citation}{A named list keyed by term name whose elements
+are citation specifications in the same form the YAML \verb{citation:}
+field accepts: a bare key (\code{"hunter2007"}), a prefixed identifier
+(\code{"doi:10.1016/j.socnet.2006.08.002"}), a single entry list
+(\code{list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.002")}), or
+a list of such entries.}
 
 \item{directed}{Logical or \code{NULL}. Whether the network is directed.
 Passed to \code{\link[=parse_ergm_formula]{parse_ergm_formula()}}; when \code{NULL} (the default),
@@ -60,7 +95,9 @@ A \code{data.frame} (default), or a \code{knitr_kable} object when
 \code{format} is \code{"html"} or \code{"markdown"}. When the term figures use
 drawing conventions (orange for focal attributes, orange/teal for
 mixing, squares/circles for bipartite modes), an explanatory note is
-appended below \code{"html"} and \code{"markdown"} tables.
+appended below \code{"html"} and \code{"markdown"} tables. Terms carrying a
+citation get a \code{(key)} marker next to their description, and the
+matching \verb{[key] identifier} lines are appended below the table.
 }
 \description{
 S3 generic that dispatches to methods for fitted \link[ergm:ergm]{ergm} objects
@@ -73,8 +110,9 @@ engine and returning a formatted table.
 
 Calls \code{\link[=parse_ergm_model]{parse_ergm_model()}} and returns a table with default columns
 \code{term}, \code{figure}, \code{estimate}, \code{se}, and \code{pvalue}.
-Optional columns (\code{description}, \code{math}, \code{attribute}) can be included
-via logical arguments.
+Optional columns (\code{title}, \code{description}, \code{math}, \code{attribute}) can be
+included via logical arguments. The \code{title} column, when included, is
+placed immediately after \code{term}.
 
 \item \code{tabulergm_table(formula)}: Method for formula objects.
 
@@ -89,6 +127,15 @@ fit <- readRDS(system.file("fits", "fit_edges.rds", package = "tabulergm"))
 tabulergm_table(fit)
 tabulergm_table(fit, include_description = TRUE)
 tabulergm_table(fit, format = "markdown")
+
+# Replace the shipped title and description for one term
+tabulergm_table(
+  fit,
+  include_title = TRUE,
+  include_description = TRUE,
+  override.title = c(edges = "Density"),
+  override.desc  = c(edges = "Baseline propensity to form ties.")
+)
 library(ergm)
 tabulergm_table(network ~ edges + nodematch("gender"))
 }

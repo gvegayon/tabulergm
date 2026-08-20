@@ -1,3 +1,7 @@
+title: Main effect of a quantitative attribute
+description: >-
+  Sums a quantitative attribute over both ends of each directed tie,
+  measuring how strongly that attribute drives tie formation.
 plot:
   edgelist: "0->1"
   vcolor: [orange, orange]

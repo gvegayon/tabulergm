@@ -6,10 +6,37 @@
 #'
 #' The coefficient names produced by `ergm` (which may expand terms into
 #' multiple rows, e.g., `nodefactor.race.Black`) are mapped back to the
-#' canonical term names from the formula. Term metadata is looked up from
-#' the ERGM term database using [ergm::search.ergmTerms()].
+#' canonical term names from the formula.
+#'
+#' @section Metadata sources:
+#' Each metadata field is resolved from three sources, in increasing order
+#' of precedence: the `ergm` term database (via
+#' [ergm::search.ergmTerms()], which supplies `title` and `description`),
+#' the YAML term database shipped in `inst/terms/` (which may supply
+#' `title`, `description`, `math`, `figure`, and `citation`), and the
+#' `override*` arguments documented below.
+#'
+#' Override names are matched against the `term` column first and against
+#' `coef_name` second, so an expanded coefficient such as
+#' `nodefactor.race.Black` can be targeted individually. Names matching no
+#' row produce a warning.
 #'
 #' @param object A fitted [ergm][ergm::ergm] object.
+#' @param override A named list keyed by term name, each element a named
+#'   list of fields to replace, e.g.
+#'   `list(edges = list(title = "Density", citation = "doi:10.1234/x"))`.
+#'   Valid fields are `title`, `description` (or `desc`), `math`, `figure`,
+#'   and `citation`.
+#' @param override.title,override.desc,override.math,override.figure Named
+#'   character vectors keyed by term name, e.g.
+#'   `override.title = c(edges = "Density")`. These take precedence over
+#'   `override`.
+#' @param override.citation A named list keyed by term name whose elements
+#'   are citation specifications in the same form the YAML `citation:`
+#'   field accepts: a bare key (`"hunter2007"`), a prefixed identifier
+#'   (`"doi:10.1016/j.socnet.2006.08.002"`), a single entry list
+#'   (`list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.002")`), or
+#'   a list of such entries.
 #' @return A data frame with columns:
 #' \describe{
 #'   \item{term}{Character. The canonical ERGM term name.}
@@ -19,12 +46,14 @@
 #'   \item{estimate}{Numeric. The coefficient estimate.}
 #'   \item{se}{Numeric. The standard error.}
 #'   \item{pvalue}{Numeric. The p-value.}
-#'   \item{description}{Character or `NA`. Term description from the ERGM
-#'     term database.}
-#'   \item{math}{Character or `NA`. The mathematical definition
-#'     (reserved for future use).}
-#'   \item{figure}{Character or `NA`. Path to an associated figure
-#'     (reserved for future use).}
+#'   \item{title}{Character or `NA`. Short one-line label for the term.}
+#'   \item{description}{Character or `NA`. Prose description of the term.}
+#'   \item{math}{Character or `NA`. The LaTeX definition of the statistic.}
+#'   \item{figure}{Character or `NA`. Path to the rendered term figure.}
+#'   \item{citation}{Character or `NA`. Citation key(s) for the term,
+#'     comma-separated when several. The corresponding bibliography is
+#'     attached to the data frame as the `"tabulergm_citations"`
+#'     attribute.}
 #' }
 #' @export
 #' @seealso [parse_ergm_formula()] for formula-only parsing,
@@ -33,10 +62,29 @@
 #' library(ergm)
 #' fit <- readRDS(system.file("fits", "fit_nodematch.rds", package = "tabulergm"))
 #' parse_ergm_model(fit)
-parse_ergm_model <- function(object) {
+#'
+#' # Replace the title and description of a single term
+#' parse_ergm_model(
+#'   fit,
+#'   override.title = c(edges = "Density"),
+#'   override.desc  = c(edges = "Baseline propensity to form ties.")
+#' )
+parse_ergm_model <- function(
+    object,
+    override = NULL,
+    override.title = NULL,
+    override.desc = NULL,
+    override.math = NULL,
+    override.figure = NULL,
+    override.citation = NULL) {
   if (!inherits(object, "ergm")) {
     stop("'object' must be of class 'ergm'.", call. = FALSE)
   }
+
+  overrides <- .normalize_overrides(
+    override, override.title, override.desc, override.math,
+    override.figure, override.citation
+  )
 
   # Extract the formula and parse its terms
   f <- object[["formula"]]
@@ -74,7 +122,9 @@ parse_ergm_model <- function(object) {
   )
 
   directed <- network::is.directed(object[["network"]])
-  result <- .add_term_metadata(result, directed = directed)
+  result <- .add_term_metadata(
+    result, directed = directed, overrides = overrides
+  )
   rownames(result) <- NULL
   result
 }
@@ -85,12 +135,17 @@ parse_ergm_model <- function(object) {
 #' required. Returns a standardized data frame with metadata from the ERGM term
 #' database where available.
 #'
+#' Metadata is resolved from the same three sources, and with the same
+#' precedence, as [parse_ergm_model()]; see its \dQuote{Metadata sources}
+#' section.
+#'
 #' @param formula An ERGM [formula][stats::formula].
 #' @param directed Logical or `NULL`. Whether the network is directed, used
 #'   to select the matching term metadata (math and figures). When `NULL`
 #'   (the default), directedness is inferred from the network on the
 #'   left-hand side of the formula if it can be evaluated; otherwise the
 #'   lookup tries undirected metadata first, then directed.
+#' @inheritParams parse_ergm_model
 #' @return A data frame with columns:
 #' \describe{
 #'   \item{term}{Character. The canonical ERGM term name.}
@@ -99,12 +154,14 @@ parse_ergm_model <- function(object) {
 #'   \item{estimate}{Numeric. Always `NA` for formula-only parsing.}
 #'   \item{se}{Numeric. Always `NA` for formula-only parsing.}
 #'   \item{pvalue}{Numeric. Always `NA` for formula-only parsing.}
-#'   \item{description}{Character or `NA`. Term description from the ERGM
-#'     term database.}
-#'   \item{math}{Character or `NA`. The mathematical definition
-#'     (reserved for future use).}
-#'   \item{figure}{Character or `NA`. Path to an associated figure
-#'     (reserved for future use).}
+#'   \item{title}{Character or `NA`. Short one-line label for the term.}
+#'   \item{description}{Character or `NA`. Prose description of the term.}
+#'   \item{math}{Character or `NA`. The LaTeX definition of the statistic.}
+#'   \item{figure}{Character or `NA`. Path to the rendered term figure.}
+#'   \item{citation}{Character or `NA`. Citation key(s) for the term,
+#'     comma-separated when several. The corresponding bibliography is
+#'     attached to the data frame as the `"tabulergm_citations"`
+#'     attribute.}
 #' }
 #' @export
 #' @seealso [parse_ergm_model()] for parsing fitted models,
@@ -116,10 +173,32 @@ parse_ergm_model <- function(object) {
 #' # Directedness can be stated explicitly when the formula has no
 #' # network on its left-hand side
 #' parse_ergm_formula(~ edges + mutual, directed = TRUE)
-parse_ergm_formula <- function(formula, directed = NULL) {
+#'
+#' # Attach a citation to a term that has none in the term dictionary
+#' parse_ergm_formula(
+#'   ~ edges + kstar(2),
+#'   directed = FALSE,
+#'   override.citation = list(
+#'     kstar = list(key = "frank1986", doi = "10.1080/0022250X.1986.9990013")
+#'   )
+#' )
+parse_ergm_formula <- function(
+    formula,
+    directed = NULL,
+    override = NULL,
+    override.title = NULL,
+    override.desc = NULL,
+    override.math = NULL,
+    override.figure = NULL,
+    override.citation = NULL) {
   if (!inherits(formula, "formula")) {
     stop("'formula' must be a formula object.", call. = FALSE)
   }
+
+  overrides <- .normalize_overrides(
+    override, override.title, override.desc, override.math,
+    override.figure, override.citation
+  )
 
   if (!is.null(directed) &&
       (!is.logical(directed) || length(directed) != 1L || is.na(directed))) {
@@ -145,7 +224,9 @@ parse_ergm_formula <- function(formula, directed = NULL) {
     stringsAsFactors = FALSE
   )
 
-  result <- .add_term_metadata(result, directed = directed)
+  result <- .add_term_metadata(
+    result, directed = directed, overrides = overrides
+  )
   rownames(result) <- NULL
   result
 }
@@ -406,56 +487,297 @@ parse_ergm_formula <- function(formula, directed = NULL) {
 
 # ---- Internal Helpers: Metadata Lookup ----
 
-#' Add term metadata from the ERGM term database
+#' Add term metadata from the ERGM and YAML term databases
 #'
-#' Looks up unique term names in the ERGM term database and joins the
-#' metadata (description, math, figure) back to the data frame. After the
-#' ERGM database lookup, overlays any additional math or figure data found
-#' in the YAML term database under `inst/terms/`.
+#' Resolves each metadata field from three sources, in increasing order of
+#' precedence:
+#'
+#' \enumerate{
+#'   \item the `ergm` term database, which supplies `title` and
+#'     `description` (see [ergm::search.ergmTerms()]);
+#'   \item the YAML term database under `inst/terms/`, which may supply
+#'     `title`, `description`, `math`, `figure`, and `citation`;
+#'   \item per-term overrides supplied by the caller.
+#' }
+#'
+#' Citations are stored two ways: the `citation` column holds the citation
+#' keys as they appear in the marker next to the description, while the
+#' full bibliography is attached to the data frame as the
+#' `"tabulergm_citations"` attribute so that footnotes can be rendered
+#' later without re-reading the YAML files.
 #'
 #' @param df A data frame with at least a `term` column.
 #' @param directed Logical or `NULL`. Network directedness used for the
 #'   YAML term database lookup. `NULL` tries both undirected and directed.
-#' @return The data frame with `description`, `math`, and `figure` columns
-#'   appended.
+#' @param overrides A normalized override list, as returned by
+#'   `.normalize_overrides()`.
+#' @return The data frame with `title`, `description`, `math`, `figure`,
+#'   and `citation` columns appended, carrying a `"tabulergm_citations"`
+#'   attribute.
 #' @noRd
-.add_term_metadata <- function(df, directed = NULL) {
+.add_term_metadata <- function(df, directed = NULL, overrides = list()) {
+  n <- nrow(df)
+  df[["title"]]       <- rep(NA_character_, n)
+  df[["description"]] <- rep(NA_character_, n)
+  df[["math"]]        <- rep(NA_character_, n)
+  df[["figure"]]      <- rep(NA_character_, n)
+  df[["citation"]]    <- rep(NA_character_, n)
+
+  row_citations <- rep(list(list()), n)
+
   unique_terms <- unique(df[["term"]])
   unique_terms <- unique_terms[!is.na(unique_terms)]
 
-  if (length(unique_terms) == 0L) {
-    df[["description"]] <- NA_character_
-    df[["math"]]        <- NA_character_
-    df[["figure"]]      <- NA_character_
-    return(df)
+  if (length(unique_terms) > 0L) {
+    meta <- .lookup_term_metadata(unique_terms)
+    pos <- match(df[["term"]], meta[["term"]])
+
+    for (field in c("title", "description", "math", "figure")) {
+      df[[field]] <- meta[[field]][pos]
+    }
+
+    # Overlay the YAML term database, which wins over the ergm database.
+    for (tn in unique_terms) {
+      yml <- .get_term_yml_data(tn, directed = directed)
+      idx <- which(df[["term"]] == tn)
+
+      for (field in c("title", "description", "math", "figure")) {
+        if (!is.na(yml[[field]])) df[[field]][idx] <- yml[[field]]
+      }
+
+      if (length(yml[["citation"]]) > 0L) {
+        row_citations[idx] <- rep(list(yml[["citation"]]), length(idx))
+      }
+    }
   }
 
-  meta <- .lookup_term_metadata(unique_terms)
+  # Overlay caller-supplied overrides, which win over both databases.
+  applied <- .apply_overrides(df, row_citations, overrides)
+  df <- applied[["df"]]
+  row_citations <- applied[["citations"]]
 
-  df[["description"]] <- meta[["description"]][match(df[["term"]], meta[["term"]])]
-  df[["math"]]        <- meta[["math"]][match(df[["term"]], meta[["term"]])]
-  df[["figure"]]      <- meta[["figure"]][match(df[["term"]], meta[["term"]])]
+  has_citation <- vapply(row_citations, length, integer(1)) > 0L
+  df[["citation"]][has_citation] <- vapply(
+    row_citations[has_citation],
+    function(entries) {
+      paste(vapply(entries, `[[`, character(1), "key"), collapse = ", ")
+    },
+    character(1)
+  )
 
-  # Overlay YAML term database data (math and figure)
-  for (tn in unique_terms) {
-    yml <- .get_term_yml_data(tn, directed = directed)
-    idx <- which(df[["term"]] == tn)
-    if (!is.na(yml[["math"]]))   df[["math"]][idx]   <- yml[["math"]]
-    if (!is.na(yml[["figure"]])) df[["figure"]][idx] <- yml[["figure"]]
-  }
-
+  attr(df, "tabulergm_citations") <- .citation_bibliography(row_citations)
   df
+}
+
+#' Apply per-term metadata overrides to a parsed table
+#'
+#' Override names are matched against the `term` column first and against
+#' `coef_name` second, so a single expanded coefficient (for example
+#' `nodefactor.race.Black`) can be targeted without affecting the other
+#' rows of the same term.
+#'
+#' @param df The data frame being built.
+#' @param row_citations A list of per-row citation entry lists.
+#' @param overrides A normalized override list.
+#' @return A list with the updated `df` and `citations`.
+#' @noRd
+.apply_overrides <- function(df, row_citations, overrides) {
+  if (length(overrides) == 0L) {
+    return(list(df = df, citations = row_citations))
+  }
+
+  unmatched <- character(0)
+
+  for (name in names(overrides)) {
+    idx <- which(!is.na(df[["term"]]) & df[["term"]] == name)
+
+    if (length(idx) == 0L && "coef_name" %in% names(df)) {
+      idx <- which(!is.na(df[["coef_name"]]) & df[["coef_name"]] == name)
+    }
+
+    if (length(idx) == 0L) {
+      unmatched <- c(unmatched, name)
+      next
+    }
+
+    spec <- overrides[[name]]
+
+    for (field in c("title", "description", "math", "figure")) {
+      if (!is.null(spec[[field]])) df[[field]][idx] <- spec[[field]]
+    }
+
+    if (!is.null(spec[["citation"]])) {
+      row_citations[idx] <- rep(list(spec[["citation"]]), length(idx))
+    }
+  }
+
+  if (length(unmatched) > 0L) {
+    warning(
+      "Override(s) for term(s) not present in the table were ignored: ",
+      paste(unmatched, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  list(df = df, citations = row_citations)
+}
+
+
+# ---- Internal Helpers: Metadata Overrides ----
+
+# Fields an override may set, and the argument that sets each one.
+.tabulergm_override_fields <- c(
+  title       = "override.title",
+  description = "override.desc",
+  math        = "override.math",
+  figure      = "override.figure",
+  citation    = "override.citation"
+)
+
+#' Normalize the override arguments into a single per-term list
+#'
+#' Collapses the bulk `override` list and the per-field `override.*`
+#' arguments into one named list of the form
+#' `list(<term> = list(title = ..., description = ...))`. Per-field
+#' arguments take precedence over the bulk list, since they are the more
+#' specific way of saying the same thing.
+#'
+#' @param override A named list keyed by term, each element a named list of
+#'   fields, or `NULL`.
+#' @param override.title,override.desc,override.math,override.figure Named
+#'   character vectors keyed by term, or `NULL`.
+#' @param override.citation A named list (or named character vector) keyed
+#'   by term, holding citation specifications, or `NULL`.
+#' @return A named list of normalized override specifications.
+#' @noRd
+.normalize_overrides <- function(
+    override = NULL,
+    override.title = NULL,
+    override.desc = NULL,
+    override.math = NULL,
+    override.figure = NULL,
+    override.citation = NULL) {
+
+  out <- list()
+
+  if (!is.null(override)) {
+    if (!is.list(override) || is.null(names(override)) ||
+          !all(nzchar(names(override)))) {
+      stop(
+        "'override' must be a named list keyed by term name, e.g. ",
+        "list(edges = list(title = \"Density\")).",
+        call. = FALSE
+      )
+    }
+
+    known <- names(.tabulergm_override_fields)
+    for (name in names(override)) {
+      spec <- override[[name]]
+      if (!is.list(spec) || is.null(names(spec)) || !all(nzchar(names(spec)))) {
+        stop(
+          "Each element of 'override' must be a named list of fields; ",
+          "element '", name, "' is not.",
+          call. = FALSE
+        )
+      }
+
+      # Accept `desc` as an alias for `description`, matching override.desc.
+      names(spec)[names(spec) == "desc"] <- "description"
+
+      unknown <- setdiff(names(spec), known)
+      if (length(unknown) > 0L) {
+        stop(
+          "Unknown override field(s) for term '", name, "': ",
+          paste(unknown, collapse = ", "),
+          ". Valid fields are: ", paste(known, collapse = ", "), ".",
+          call. = FALSE
+        )
+      }
+
+      out[[name]] <- .normalize_override_spec(spec, name)
+    }
+  }
+
+  per_field <- list(
+    title       = override.title,
+    description = override.desc,
+    math        = override.math,
+    figure      = override.figure,
+    citation    = override.citation
+  )
+
+  for (field in names(per_field)) {
+    value <- per_field[[field]]
+    if (is.null(value)) next
+
+    arg_name <- .tabulergm_override_fields[[field]]
+    if (length(value) == 0L) next
+
+    names_value <- names(value)
+    if (is.null(names_value) || !all(nzchar(names_value))) {
+      stop(
+        "'", arg_name, "' must be named by term, e.g. ",
+        arg_name, " = c(edges = \"...\").",
+        call. = FALSE
+      )
+    }
+
+    for (i in seq_along(value)) {
+      name <- names_value[[i]]
+      spec <- list()
+      spec[[field]] <- if (is.list(value)) value[[i]] else value[[i]]
+      spec <- .normalize_override_spec(spec, name)
+
+      out[[name]] <- utils::modifyList(
+        if (is.null(out[[name]])) list() else out[[name]],
+        spec
+      )
+    }
+  }
+
+  out
+}
+
+#' Validate and normalize one override specification
+#'
+#' @param spec A named list of override fields for a single term.
+#' @param name The term name, used in error messages.
+#' @return The normalized specification.
+#' @noRd
+.normalize_override_spec <- function(spec, name) {
+  out <- list()
+
+  for (field in c("title", "description", "math", "figure")) {
+    value <- spec[[field]]
+    if (is.null(value)) next
+    if (length(value) != 1L || !is.character(value) || is.na(value)) {
+      stop(
+        "Override '", field, "' for term '", name,
+        "' must be a single non-missing character string.",
+        call. = FALSE
+      )
+    }
+    out[[field]] <- value
+  }
+
+  if (!is.null(spec[["citation"]])) {
+    out[["citation"]] <- .normalize_citations(spec[["citation"]])
+  }
+
+  out
 }
 
 #' Look up metadata for a vector of term names
 #' @param term_names Character vector of canonical term names.
-#' @return A data frame with columns `term`, `description`, `math`, `figure`.
+#' @return A data frame with columns `term`, `title`, `description`, `math`,
+#'   and `figure`.
 #' @noRd
 .lookup_term_metadata <- function(term_names) {
   results <- lapply(term_names, function(tn) {
     meta <- .lookup_single_term(tn)
     data.frame(
       term        = tn,
+      title       = meta[["title"]],
       description = meta[["description"]],
       math        = meta[["math"]],
       figure      = meta[["figure"]],
@@ -469,7 +791,9 @@ parse_ergm_formula <- function(formula, directed = NULL) {
 #'
 #' Uses [ergm::search.ergmTerms()] with `name` to retrieve structured term
 #' data from the ERGM term database. The invisible return value contains the
-#' term's `title` (used as description), `description`, and `concepts`.
+#' term's `title` (a one-line label) and `description` (a prose paragraph),
+#' which become the defaults for the corresponding table columns when the
+#' YAML term database supplies neither.
 #'
 #' Terms the database does not know about yield `NA` metadata:
 #' [ergm::search.ergmTerms()] reports an empty result for them rather than
@@ -477,20 +801,25 @@ parse_ergm_formula <- function(formula, directed = NULL) {
 #' the case where the lookup itself fails.
 #'
 #' @param term_name A single term name (character).
-#' @return A named list with elements `description`, `math`, and `figure`.
+#' @return A named list with elements `title`, `description`, `math`, and
+#'   `figure`.
 #' @noRd
 .lookup_single_term <- function(term_name) {
+  empty <- list(
+    title       = NA_character_,
+    description = NA_character_,
+    math        = NA_character_,
+    figure      = NA_character_
+  )
+
   .do_lookup <- function() {
     utils::capture.output(
       result <- ergm::search.ergmTerms(name = term_name)
     )
-    desc <- result[["title"]]
-    if (is.null(desc) || length(desc) == 0L) desc <- NA_character_
-    list(
-      description = desc,
-      math        = NA_character_,
-      figure      = NA_character_
-    )
+    out <- empty
+    out[["title"]]       <- .ergm_text_field(result[["title"]])
+    out[["description"]] <- .ergm_text_field(result[["description"]])
+    out
   }
 
   tryCatch(
@@ -508,13 +837,26 @@ parse_ergm_formula <- function(formula, directed = NULL) {
             ),
             call. = FALSE
           )
-          list(
-            description = NA_character_,
-            math        = NA_character_,
-            figure      = NA_character_
-          )
+          empty
         }
       )
     }
   )
+}
+
+#' Tidy a free-text field coming from the ERGM term database
+#'
+#' Database entries wrap across lines and, when a term name matches more
+#' than one entry, come back as a list. Keep the first entry and collapse
+#' internal whitespace so the text fits in a table cell.
+#'
+#' @param x The raw field value.
+#' @return A character scalar, or `NA_character_` when absent or empty.
+#' @noRd
+.ergm_text_field <- function(x) {
+  if (is.null(x) || length(x) == 0L) return(NA_character_)
+  x <- as.character(x[[1L]])
+  if (is.na(x)) return(NA_character_)
+  x <- trimws(gsub("[[:space:]]+", " ", x))
+  if (!nzchar(x)) NA_character_ else x
 }

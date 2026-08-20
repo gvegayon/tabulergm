@@ -1,3 +1,13 @@
+title: Alternating k-stars
+description: >-
+  Alternating sum of the k-star counts, an equivalent parameterization
+  of the geometrically weighted degree distribution used to model degree
+  heterogeneity.
+citation:
+  - key: snijders2006
+    doi: 10.1111/j.1467-9531.2006.00176.x
+  - key: hunter2007
+    doi: 10.1016/j.socnet.2006.08.005
 plot:
   edgelist: "0->1, 0->2, 0->3, 0->4"
   vcolor: [black, black, black, black, black]

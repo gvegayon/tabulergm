@@ -1,3 +1,8 @@
+title: Number of edges
+description: >-
+  Counts the directed ties present in the network. Acts as the baseline
+  density term, playing the role an intercept plays in a regression
+  model.
 plot:
   edgelist: "0->1"
   vcolor: black

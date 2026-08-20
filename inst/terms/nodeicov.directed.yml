@@ -1,3 +1,7 @@
+title: Receiver effect of a quantitative attribute
+description: >-
+  Sums the receiving node's attribute value over all ties, measuring how
+  a quantitative attribute drives incoming ties (popularity).
 plot:
   edgelist: "1->0, 2->0, 3->0"
   vcolor: [gray, gray, gray, orange]

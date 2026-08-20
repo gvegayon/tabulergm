@@ -21,7 +21,9 @@ This vignette demonstrates how to:
 1. Fit an ERGM using the **ergm** package.
 2. Produce a publication-ready Markdown table with `tabulergm_table(format = "markdown")`.
 3. Render the table inline in a Quarto or R Markdown document using `results: asis`.
-4. Interactively preview the table in the RStudio viewer (or a browser) with
+4. Replace the shipped term titles, descriptions, and citations for a single
+   table.
+5. Interactively preview the table in the RStudio viewer (or a browser) with
    `tabulergm_view()`.
 
 ## Setup
@@ -67,6 +69,54 @@ tabulergm_table(
   include_math        = TRUE,
   include_description = TRUE,
   format              = "markdown"
+)
+```
+
+## Customizing titles, descriptions, and citations
+
+Each term carries a short `title` and a plain-language `description`, taken
+from `tabulergm`'s term dictionary and falling back to the `ergm` term
+database for terms the dictionary does not cover. Add the `title` column with
+`include_title = TRUE`, and replace either field for a single table with the
+`override.*` arguments:
+
+```{r overrides, results = "asis"}
+tabulergm_table(
+  model,
+  include_title       = TRUE,
+  include_description = TRUE,
+  override.title      = c(edges = "Density"),
+  override.desc       = c(edges = "Baseline propensity to form ties."),
+  format              = "markdown"
+)
+```
+
+`override.math`, `override.figure`, and `override.citation` work the same way,
+and the single `override` argument sets several fields at once:
+
+```{r overrides-bulk, eval = FALSE}
+tabulergm_table(
+  model,
+  override = list(
+    edges     = list(title = "Density", desc = "Baseline tie propensity."),
+    nodematch = list(citation = "doi:10.1146/annurev.soc.27.1.415")
+  )
+)
+```
+
+Override names are matched against the term name first and the coefficient
+name second, so an expanded coefficient such as `nodematch.wealth.3` can be
+targeted on its own.
+
+Terms with a citation show a `(key)` marker next to their description, and the
+matching `[key] identifier` line is appended below the table. Citations are
+stored as a DOI, arXiv id, PubMed id, or URL rather than a formatted
+reference, so readers can import them into their own bibliography software:
+
+```{r citations, results = "asis"}
+tabulergm_table(
+  flomarriage ~ gwesp(0.5, fixed = TRUE) + gwdegree(0.5, fixed = TRUE),
+  format = "markdown"
 )
 ```
 

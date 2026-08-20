@@ -1,3 +1,10 @@
+title: Reciprocated ties
+description: >-
+  Counts the dyads in which both directed ties are present, capturing
+  the tendency for ties to be returned.
+citation:
+  - key: holland1981
+    doi: 10.1080/01621459.1981.10477598
 plot:
   edgelist: "0->1->0"
   vcolor: black

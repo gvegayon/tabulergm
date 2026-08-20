@@ -11,7 +11,9 @@
 #'   `format` is `"html"` or `"markdown"`. When the term figures use
 #'   drawing conventions (orange for focal attributes, orange/teal for
 #'   mixing, squares/circles for bipartite modes), an explanatory note is
-#'   appended below `"html"` and `"markdown"` tables.
+#'   appended below `"html"` and `"markdown"` tables. Terms carrying a
+#'   citation get a `(key)` marker next to their description, and the
+#'   matching `[key] identifier` lines are appended below the table.
 #' @export
 #' @seealso [tabulergm_table.ergm()], [tabulergm_table.formula()]
 tabulergm_table <- function(object, ...) {
@@ -22,8 +24,9 @@ tabulergm_table <- function(object, ...) {
 #'
 #' Calls [parse_ergm_model()] and returns a table with default columns
 #' `term`, `figure`, `estimate`, `se`, and `pvalue`.
-#' Optional columns (`description`, `math`, `attribute`) can be included
-#' via logical arguments.
+#' Optional columns (`title`, `description`, `math`, `attribute`) can be
+#' included via logical arguments. The `title` column, when included, is
+#' placed immediately after `term`.
 #'
 #' @param include_description Logical. Include the term description column?
 #'   Default `FALSE`.
@@ -31,6 +34,8 @@ tabulergm_table <- function(object, ...) {
 #'   Default `FALSE`.
 #' @param include_attribute Logical. Include the attribute column? Default
 #'   `FALSE`.
+#' @param include_title Logical. Include the short term-title column?
+#'   Default `FALSE`.
 #' @param format Character. Output format: `"data.frame"` (default),
 #'   `"html"`, or `"markdown"`. HTML and Markdown output require the
 #'   \pkg{knitr} package.
@@ -38,6 +43,7 @@ tabulergm_table <- function(object, ...) {
 #'   `format = "markdown"`. When `NULL`, figures are copied automatically to
 #'   the active knitr/Quarto/R Markdown figure path during non-interactive
 #'   document rendering.
+#' @inheritParams parse_ergm_model
 #'
 #' @export
 #' @examples
@@ -46,21 +52,48 @@ tabulergm_table <- function(object, ...) {
 #' tabulergm_table(fit)
 #' tabulergm_table(fit, include_description = TRUE)
 #' tabulergm_table(fit, format = "markdown")
+#'
+#' # Replace the shipped title and description for one term
+#' tabulergm_table(
+#'   fit,
+#'   include_title = TRUE,
+#'   include_description = TRUE,
+#'   override.title = c(edges = "Density"),
+#'   override.desc  = c(edges = "Baseline propensity to form ties.")
+#' )
 tabulergm_table.ergm <- function(
     object,
     include_description = FALSE,
     include_math = FALSE,
     include_attribute = FALSE,
+    include_title = FALSE,
     format = c("data.frame", "html", "markdown"),
     figures_dir = NULL,
+    override = NULL,
+    override.title = NULL,
+    override.desc = NULL,
+    override.math = NULL,
+    override.figure = NULL,
+    override.citation = NULL,
     ...) {
 
   format <- match.arg(format)
 
-  parsed <- parse_ergm_model(object)
+  parsed <- parse_ergm_model(
+    object,
+    override          = override,
+    override.title    = override.title,
+    override.desc     = override.desc,
+    override.math     = override.math,
+    override.figure   = override.figure,
+    override.citation = override.citation
+  )
 
-  # Default columns
-  cols <- c("term", "figure", "estimate", "se", "pvalue")
+  # Default columns; `title` reads as a label for `term`, so it sits next to it
+  cols <- c(
+    "term", if (include_title) "title",
+    "figure", "estimate", "se", "pvalue"
+  )
 
   # Optional columns
   if (include_description) cols <- c(cols, "description")
@@ -70,7 +103,13 @@ tabulergm_table.ergm <- function(
   result <- parsed[, cols, drop = FALSE]
   rownames(result) <- NULL
 
-  .format_output(result, format, figures_dir = figures_dir)
+  marked <- .apply_citation_markers(result, parsed)
+
+  .format_output(
+    marked[["df"]], format,
+    figures_dir = figures_dir,
+    citations = marked[["citations"]]
+  )
 }
 
 #' @describeIn tabulergm_table Method for formula objects.
@@ -93,19 +132,103 @@ tabulergm_table.formula <- function(
     format = c("data.frame", "html", "markdown"),
     figures_dir = NULL,
     directed = NULL,
+    include_title = FALSE,
+    override = NULL,
+    override.title = NULL,
+    override.desc = NULL,
+    override.math = NULL,
+    override.figure = NULL,
+    override.citation = NULL,
     ...) {
 
   format <- match.arg(format)
 
-  parsed <- parse_ergm_formula(object, directed = directed)
+  parsed <- parse_ergm_formula(
+    object,
+    directed          = directed,
+    override          = override,
+    override.title    = override.title,
+    override.desc     = override.desc,
+    override.math     = override.math,
+    override.figure   = override.figure,
+    override.citation = override.citation
+  )
 
   # Formula-only columns (no coefficient statistics)
-  cols <- c("term", "figure", "math", "description")
+  cols <- c(
+    "term", if (include_title) "title",
+    "figure", "math", "description"
+  )
 
   result <- parsed[, cols, drop = FALSE]
   rownames(result) <- NULL
 
-  .format_output(result, format, figures_dir = figures_dir)
+  marked <- .apply_citation_markers(result, parsed)
+
+  .format_output(
+    marked[["df"]], format,
+    figures_dir = figures_dir,
+    citations = marked[["citations"]]
+  )
+}
+
+
+# ---- Internal Helpers: Citation Markers ----
+
+#' Append citation markers to a table and collect the bibliography it needs
+#'
+#' The marker goes next to the description, which is where a reader looks
+#' for what the term means. When the table has no `description` column, or
+#' the description of a cited term is missing, the marker falls back to the
+#' `term` cell so that a citation never disappears from a table.
+#'
+#' @param result The column-subset table about to be formatted.
+#' @param parsed The full parsed table, carrying the `citation` column and
+#'   the `"tabulergm_citations"` attribute.
+#' @return A list with the marked-up `df` and the `citations` actually
+#'   referenced, in order of first appearance.
+#' @noRd
+.apply_citation_markers <- function(result, parsed) {
+  empty <- list(df = result, citations = list())
+
+  keys <- parsed[["citation"]]
+  bib <- attr(parsed, "tabulergm_citations")
+  if (is.null(keys) || length(bib) == 0L) {
+    return(empty)
+  }
+
+  has_key <- !is.na(keys) & nzchar(keys)
+  if (!any(has_key)) {
+    return(empty)
+  }
+
+  target <- if ("description" %in% names(result)) "description" else "term"
+  used <- character(0)
+
+  for (i in which(has_key)) {
+    row_keys <- trimws(strsplit(keys[[i]], ",", fixed = TRUE)[[1L]])
+    row_keys <- row_keys[nzchar(row_keys)]
+    if (length(row_keys) == 0L) next
+
+    column <- target
+    if (!identical(column, "term")) {
+      value <- result[[column]][[i]]
+      if (is.na(value) || !nzchar(trimws(value))) column <- "term"
+    }
+
+    value <- result[[column]][[i]]
+    if (is.na(value)) value <- ""
+
+    result[[column]][[i]] <- paste0(
+      trimws(value), " (", paste(row_keys, collapse = "; "), ")"
+    )
+    used <- c(used, row_keys)
+  }
+
+  used <- unique(used)
+  citations <- Filter(function(e) e[["key"]] %in% used, bib)
+
+  list(df = result, citations = citations)
 }
 
 
@@ -581,11 +704,18 @@ tabulergm_table.formula <- function(
 #'
 #' @param df A data frame to format.
 #' @param format One of `"data.frame"`, `"html"`, or `"markdown"`.
+#' @param figures_dir Optional figure asset directory for Markdown output.
+#' @param citations A list of normalized citation entries referenced by the
+#'   table. For `"data.frame"` output these are attached as the
+#'   `"tabulergm_citations"` attribute so that [tabulergm_save()] can render
+#'   the same footnotes.
 #' @return The data frame (if `format = "data.frame"`) or a `knitr_kable`
 #'   object.
 #' @noRd
-.format_output <- function(df, format, figures_dir = NULL) {
+.format_output <- function(df, format, figures_dir = NULL,
+                           citations = list()) {
   if (format == "data.frame") {
+    attr(df, "tabulergm_citations") <- citations
     return(df)
   }
 
@@ -605,6 +735,8 @@ tabulergm_table.formula <- function(
     character(0)
   }
 
+  citation_notes <- .render_citation_notes(citations, format)
+
   df <- .preprocess_columns(df, format, figures_dir = figures_dir)
 
   knitr_format <- switch(format,
@@ -615,37 +747,72 @@ tabulergm_table.formula <- function(
   out <- knitr::kable(df, format = knitr_format, row.names = FALSE,
     escape = FALSE
   )
-  .append_table_notes(out, notes, format)
+  .append_table_notes(out, notes, format, citation_notes)
 }
 
 
-#' Append drawing-convention notes below a formatted table
+#' Append drawing-convention notes and citations below a formatted table
 #'
 #' When the figures in the table use drawing conventions (attribute
 #' colors, mixing colors, or bipartite shapes), an explanatory note is
 #' appended after the table so that readers can interpret the drawings.
+#' Citation footnotes follow, one line per reference, matching the `(key)`
+#' markers shown next to the term descriptions.
 #'
 #' @param kable_obj A `knitr_kable` object.
 #' @param notes Character vector of notes (possibly empty).
 #' @param format Either `"html"` or `"markdown"`.
+#' @param citation_notes Character vector of rendered citation lines
+#'   (possibly empty).
 #' @return The `knitr_kable` object, with notes appended when present.
 #' @noRd
-.append_table_notes <- function(kable_obj, notes, format) {
-  if (length(notes) == 0L) {
+.append_table_notes <- function(kable_obj, notes, format,
+                                citation_notes = character(0)) {
+  if (length(notes) == 0L && length(citation_notes) == 0L) {
     return(kable_obj)
   }
 
-  note_text <- paste(notes, collapse = " ")
-  lines <- if (format == "markdown") {
-    c(as.character(kable_obj), "", paste0("*Note: ", note_text, "*"))
+  lines <- as.character(kable_obj)
+
+  if (format == "markdown") {
+    if (length(notes) > 0L) {
+      lines <- c(lines, "", paste0("*Note: ", paste(notes, collapse = " "), "*"))
+    }
+    if (length(citation_notes) > 0L) {
+      lines <- c(lines, "", .markdown_note_block(citation_notes))
+    }
   } else {
-    c(
-      as.character(kable_obj),
-      sprintf('<p class="tabulergm-note"><em>Note: %s</em></p>', note_text)
-    )
+    if (length(notes) > 0L) {
+      lines <- c(lines, sprintf(
+        '<p class="tabulergm-note"><em>Note: %s</em></p>',
+        paste(notes, collapse = " ")
+      ))
+    }
+    if (length(citation_notes) > 0L) {
+      lines <- c(lines, sprintf(
+        '<p class="tabulergm-citations">%s</p>',
+        paste(sprintf("<em>%s</em>", citation_notes), collapse = "<br>")
+      ))
+    }
   }
 
   structure(lines, format = attr(kable_obj, "format"), class = "knitr_kable")
+}
+
+#' Render note lines as a single italic Markdown block
+#'
+#' Consecutive Markdown lines collapse into one paragraph, so every line
+#' but the last gets the two trailing spaces that force a hard break.
+#'
+#' @param x Character vector of note lines.
+#' @return A character vector ready to be emitted as Markdown.
+#' @noRd
+.markdown_note_block <- function(x) {
+  out <- paste0("*", x, "*")
+  if (length(out) > 1L) {
+    out[-length(out)] <- paste0(out[-length(out)], "  ")
+  }
+  out
 }
 
 

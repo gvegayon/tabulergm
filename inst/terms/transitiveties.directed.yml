@@ -1,3 +1,8 @@
+title: Transitive ties
+description: >-
+  Counts the ties closed by at least one two-path. Unlike a triple
+  count, a tie contributes once no matter how many shared partners it
+  has.
 plot:
   edgelist: "0->1->2, 0->2"
   vcolor: [black, black, black]

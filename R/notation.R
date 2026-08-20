@@ -40,6 +40,10 @@
 #'     exponent is the summation index and \eqn{EP_i}, \eqn{DP_i}, and
 #'     \eqn{D_i} are the edgewise shared partner, dyadwise shared partner,
 #'     and degree counts.
+#'   \item Directed shared-partner terms carry the two-path type as a
+#'     superscript, e.g. \eqn{EP^{\mathrm{OTP}}_i}, because `ergm` counts
+#'     outgoing two-paths (\code{OTP}) by default and `gwesp`/`gwdsp` take a
+#'     \code{type} argument that changes which two-paths are counted.
 #' }
 #' Always verify a new formula against the `ergm` term manual (see
 #' [ergm::ergmTerm] and [ergm::search.ergmTerms()]) and the source

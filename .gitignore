@@ -30,3 +30,9 @@
 
 # Environment
 .Renviron
+
+# macOS
+.DS_Store
+
+# Locally rendered vignette output
+vignettes/*.html

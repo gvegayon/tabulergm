@@ -179,11 +179,21 @@ parse_ergm_formula <- function(formula, directed = NULL) {
 }
 
 #' Recursively collect individual term expressions from the RHS of a formula
+#'
+#' Redundant parentheses are unwrapped: `~ (edges + triangle)` is a formula
+#' `ergm` accepts, and it must yield the same terms as `~ edges + triangle`.
+#'
 #' @param expr An R expression (the RHS of a formula).
 #' @return A list of unevaluated term expressions.
 #' @noRd
 .collect_rhs_terms <- function(expr) {
-  if (is.call(expr) && identical(expr[[1]], as.name("+"))) {
+  while (is.call(expr) && identical(expr[[1]], as.name("(")) &&
+           length(expr) == 2L) {
+    expr <- expr[[2]]
+  }
+
+  if (is.call(expr) && identical(expr[[1]], as.name("+")) &&
+        length(expr) == 3L) {
     c(.collect_rhs_terms(expr[[2]]), .collect_rhs_terms(expr[[3]]))
   } else {
     list(expr)
@@ -202,25 +212,47 @@ parse_ergm_formula <- function(formula, directed = NULL) {
   lapply(exprs, .parse_single_term)
 }
 
+#' Test whether an expression is a `pkg::name` or `pkg:::name` call
+#' @param expr An unevaluated R expression.
+#' @return Logical scalar.
+#' @noRd
+.is_namespace_call <- function(expr) {
+  is.call(expr) && length(expr) == 3L &&
+    (identical(expr[[1]], as.name("::")) ||
+       identical(expr[[1]], as.name(":::")))
+}
+
 #' Parse a single term expression into its name and attributes
 #'
 #' Simple names (e.g., `edges`) return no attribute. Function-call terms
 #' (e.g., `nodematch("gender")`) extract all character string arguments
 #' as attributes (e.g., `mixing("race", "gender")` returns both). The
-#' wrapper `offset()` is unwrapped so that the inner term is parsed.
+#' wrapper `offset()` is unwrapped so that the inner term is parsed, and
+#' namespace qualification (`ergm::nodematch("gender")`) is stripped so the
+#' bare term name is reported.
 #'
 #' @param expr An unevaluated R expression.
 #' @return A list with elements `name` (character) and `attributes`
 #'   (character vector, possibly empty).
 #' @noRd
 .parse_single_term <- function(expr) {
+  # Bare `pkg::term`: parse the term on the right-hand side of `::`.
+  if (.is_namespace_call(expr)) {
+    return(.parse_single_term(expr[[3]]))
+  }
+
   if (is.name(expr)) {
     # Simple term: edges, triangle, etc.
     return(list(name = as.character(expr), attributes = character(0)))
   }
 
   if (is.call(expr)) {
-    fn_name <- as.character(expr[[1]])
+    # `pkg::term(...)` carries a `::` call, not a symbol, in the function
+    # position; deparse anything else exotic rather than letting
+    # as.character() return a vector that `==` cannot test.
+    fn <- expr[[1]]
+    if (.is_namespace_call(fn)) fn <- fn[[3]]
+    fn_name <- if (is.name(fn)) as.character(fn) else deparse1(fn)
 
     # Unwrap offset() to parse the inner term
     if (fn_name == "offset" && length(expr) > 1L) {
@@ -439,7 +471,10 @@ parse_ergm_formula <- function(formula, directed = NULL) {
 #' data from the ERGM term database. The invisible return value contains the
 #' term's `title` (used as description), `description`, and `concepts`.
 #'
-#' If the term is not found, a warning is emitted and `NA` values are returned.
+#' Terms the database does not know about yield `NA` metadata:
+#' [ergm::search.ergmTerms()] reports an empty result for them rather than
+#' signalling an error, so no warning is emitted. The warning below covers
+#' the case where the lookup itself fails.
 #'
 #' @param term_name A single term name (character).
 #' @return A named list with elements `description`, `math`, and `figure`.

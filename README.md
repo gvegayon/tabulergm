@@ -2,7 +2,7 @@
 
 <!-- README.md is generated from README.qmd. Please edit that file -->
 
-## tabulergm <img src="man/figures/logo.png" align="right" height="200" alt="rgexf hex sticker logo"/>
+## tabulergm <img src="man/figures/logo.png" align="right" height="200" alt="tabulergm hex sticker logo"/>
 
 <!-- badges: start -->
 
@@ -30,7 +30,10 @@ frameworks.
 ## Installation
 
 ``` r
-# Install from GitHub
+# From CRAN
+install.packages("tabulergm")
+
+# Development version from GitHub
 # install.packages("remotes")
 remotes::install_github("gvegayon/tabulergm")
 ```

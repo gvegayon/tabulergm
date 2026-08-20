@@ -13,3 +13,5 @@ AGENTS\.md
 ^\.vscode$
 ^CODE_OF_CONDUCT\.md$
 logo\.svg$
+^cran-comments\.md$
+^tabulergm\.Rcheck$

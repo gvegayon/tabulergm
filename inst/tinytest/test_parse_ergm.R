@@ -53,6 +53,36 @@ result <- parse_ergm_formula(f)
 expect_equal(result$term, c("edges", "nodecov", "nodecov"))
 expect_equal(result$attribute, c(NA_character_, "wealth", "priorates"))
 
+# parse_ergm_formula unwraps redundant parentheses, which ergm accepts
+f <- y ~ (edges + triangle)
+result <- parse_ergm_formula(f)
+expect_equal(result$term, c("edges", "triangle"))
+
+f <- y ~ ((edges + nodematch("gender")) + triangle)
+result <- parse_ergm_formula(f)
+expect_equal(result$term, c("edges", "nodematch", "triangle"))
+expect_equal(result$attribute, c(NA_character_, "gender", NA_character_))
+
+# parse_ergm_formula strips namespace qualification from term names
+f <- y ~ ergm::edges + ergm::nodematch("gender")
+result <- parse_ergm_formula(f)
+expect_equal(result$term, c("edges", "nodematch"))
+expect_equal(result$attribute, c(NA_character_, "gender"))
+
+# ... including the :::-qualified form and offset() around it
+result <- tabulergm:::.parse_single_term(quote(ergm:::nodecov("wealth")))
+expect_equal(result$name, "nodecov")
+expect_equal(result$attributes, "wealth")
+result <- tabulergm:::.parse_single_term(quote(offset(ergm::edges)))
+expect_equal(result$name, "offset(edges)")
+
+# .parse_single_term names an exotic call head instead of erroring
+result <- tabulergm:::.parse_single_term(quote(obj$fn(1)))
+expect_equal(result$name, "obj$fn")
+
+# .collect_rhs_terms does not choke on a unary +
+expect_equal(length(tabulergm:::.collect_rhs_terms(quote(+edges))), 1L)
+
 # parse_ergm_formula errors on non-formula input
 expect_error(parse_ergm_formula("not a formula"))
 expect_error(parse_ergm_formula(42))

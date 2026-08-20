@@ -368,7 +368,9 @@ tabulergm_get_plotfun <- function() {
 #'   optionally `layout`.
 #' @param directed Logical. Whether the network is directed.
 #' @param outfile Character. Path for the output PNG file.
-#' @return Path to the PNG file, or `NA_character_` on failure.
+#' @return Path to the PNG file, or `NA_character_` when the finished figure
+#'   could not be moved into place. Errors raised by the plot function
+#'   propagate to the caller, and no partial figure is left in the cache.
 #' @noRd
 .draw_term_figure <- function(plot_data, directed, outfile) {
   plotfun <- tabulergm_get_plotfun()
@@ -383,8 +385,8 @@ tabulergm_get_plotfun <- function() {
     from_idx <- match(edges[i, "from"], nodes)
     to_idx   <- match(edges[i, "to"], nodes)
     network::add.edge(nw, from_idx, to_idx)
-    network::set.edge.attribute(nw, "weight", 1)
   }
+  network::set.edge.attribute(nw, "weight", 1)
 
   # Vertex colours
   vcolor <- plot_data$vcolor
@@ -472,8 +474,17 @@ tabulergm_get_plotfun <- function() {
 
   
 
-  grDevices::png(outfile, width = 400, height = 400, bg = "transparent")
-  on.exit(grDevices::dev.off(), add = TRUE)
+  # Draw into a temporary file and move it into place only once the plot
+  # function has returned. Drawing straight into `outfile` would leave a
+  # blank-but-valid PNG behind whenever the plot function errors or the user
+  # interrupts, and .get_cached_figure() would then serve that blank image
+  # for the rest of the session.
+  tmpfile <- tempfile(fileext = ".png")
+  on.exit(unlink(tmpfile), add = TRUE)
+
+  grDevices::png(tmpfile, width = 400, height = 400, bg = "transparent")
+  drawing <- TRUE
+  on.exit(if (drawing) grDevices::dev.off(), add = TRUE, after = FALSE)
   grid::grid.newpage()
 
   plotfun(
@@ -487,6 +498,15 @@ tabulergm_get_plotfun <- function() {
     vsize     = vsize,
     elinetype = elinetype
   )
+
+  grDevices::dev.off()
+  drawing <- FALSE
+
+  # file.rename() fails across file systems; fall back to copying.
+  if (!file.rename(tmpfile, outfile) &&
+        !file.copy(tmpfile, outfile, overwrite = TRUE)) {
+    return(NA_character_)
+  }
 
   outfile
 }

@@ -18,10 +18,10 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends:
-    R (>= 3.5.0)
+    R (>= 4.2)
 Imports:
     base64enc,
-    ergm,
+    ergm (>= 4.0),
     netplot (>= 0.4-0),
     network,
     yaml

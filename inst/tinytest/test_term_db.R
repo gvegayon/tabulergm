@@ -476,3 +476,31 @@ if (requireNamespace("ergm", quietly = TRUE)) {
   expect_false(is.na(result_d$math[result_d$term == "edges"]))
   expect_true(grepl("neq", result_d$math[result_d$term == "edges"]))
 }
+
+
+# ---- Figure cache is not poisoned by a failed draw --------------------------
+
+# A plot function that errors must not leave a blank PNG behind for the cache
+# to serve on every later call in the session.
+local({
+  previous <- tabulergm_get_plotfun()
+  on.exit(tabulergm_set_plotfun(previous), add = TRUE)
+
+  attempts <- 0L
+  tabulergm_set_plotfun(function(...) {
+    attempts <<- attempts + 1L
+    if (attempts == 1L) stop("simulated drawing failure")
+    previous(...)
+  })
+
+  # First attempt fails and must not cache anything.
+  expect_error(parse_ergm_formula(~ edges, directed = FALSE))
+
+  # Second attempt, same cache key, must redraw a figure with actual content.
+  figure <- parse_ergm_formula(~ edges, directed = FALSE)$figure
+  expect_false(is.na(figure))
+  expect_true(file.exists(figure))
+  # A redraw actually happened rather than the blank first attempt being
+  # served from the cache.
+  expect_equal(attempts, 2L)
+})

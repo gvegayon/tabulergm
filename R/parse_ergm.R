@@ -510,7 +510,7 @@ parse_ergm_formula <- function(
 #' @param directed Logical or `NULL`. Network directedness used for the
 #'   YAML term database lookup. `NULL` tries both undirected and directed.
 #' @param overrides A normalized override list, as returned by
-#'   [.normalize_overrides()].
+#'   `.normalize_overrides()`.
 #' @return The data frame with `title`, `description`, `math`, `figure`,
 #'   and `citation` columns appended, carrying a `"tabulergm_citations"`
 #'   attribute.

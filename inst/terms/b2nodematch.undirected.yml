@@ -5,7 +5,7 @@ description: >-
   discount parameters temper the count when nodes share many partners.
 citation:
   - key: bomiriya2014
-    text: "Bomiriya, R. P., Bansal, S., and Hunter, D. R. (2014). Modeling homophily in ERGMs for bipartite networks."
+    doi: 10.48550/arXiv.2312.05673
 plot:
   edgelist: "0->2, 0->1, 0->3"
   vcolor: [gray, orange, orange, gray]

@@ -238,8 +238,8 @@ second mode.*
 [doi:10.1111/j.1467-9531.2006.00176.x](https://doi.org/10.1111/j.1467-9531.2006.00176.x)*\
 *\[mcpherson2001\]
 [doi:10.1146/annurev.soc.27.1.415](https://doi.org/10.1146/annurev.soc.27.1.415)*\
-*\[bomiriya2014\] Bomiriya, R. P., Bansal, S., and Hunter, D. R. (2014).
-Modeling homophily in ERGMs for bipartite networks.*
+*\[bomiriya2014\]
+[doi:10.48550/arXiv.2312.05673](https://doi.org/10.48550/arXiv.2312.05673)*
 
 ## Code of Conduct
 

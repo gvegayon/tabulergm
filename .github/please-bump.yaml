@@ -1,0 +1,11 @@
+version: 1
+groups:
+  tabulergm:
+    paths:
+      - R/
+      - inst/
+      - man/
+      - data-raw/
+      - DESCRIPTION
+      - NAMESPACE
+    preset: r-package

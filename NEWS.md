@@ -1,5 +1,15 @@
 # tabulergm (development version)
 
+* Added composable table styles. Pipe a result through
+  `with_style_name_over_formula()` to stack curated titles over formulae and
+  place figures in a compact representation column, or use
+  `with_style_plain()` to restore the default layout. Styles work with data
+  frames, HTML/Markdown tables, saved Markdown/LaTeX snippets, and previews.
+  Compact Markdown uses raw HTML to support multi-line cells; compact LaTeX
+  snippets require `array`, `booktabs`, and `graphicx`.
+
+* Formula tables now honor `include_description = FALSE`.
+
 * Term YAML files under `inst/terms/` now accept optional `title`,
   `description`, and `citation` entries. All 35 shipped terms carry a
   curated title and description; previously the table showed the `ergm`

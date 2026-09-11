@@ -8,7 +8,9 @@
 #'   [formula][stats::formula].
 #' @param ... Additional arguments passed to methods.
 #' @return A `data.frame` (default), or a `knitr_kable` object when
-#'   `format` is `"html"` or `"markdown"`. When the term figures use
+#'   `format` is `"html"` or `"markdown"`; these additionally inherit from
+#'   internal `tabulergm_table` and `tabulergm_kable` classes so styles can be
+#'   safely applied after rendering. When the term figures use
 #'   drawing conventions (orange for focal attributes, orange/teal for
 #'   mixing, squares/circles for bipartite modes), an explanatory note is
 #'   appended below `"html"` and `"markdown"` tables. Terms carrying a
@@ -103,20 +105,16 @@ tabulergm_table.ergm <- function(
   result <- parsed[, cols, drop = FALSE]
   rownames(result) <- NULL
 
-  marked <- .apply_citation_markers(result, parsed)
-
-  .format_output(
-    marked[["df"]], format,
-    figures_dir = figures_dir,
-    citations = marked[["citations"]]
-  )
+  .render_table_spec(.new_table_spec(
+    result, parsed, format = format, figures_dir = figures_dir
+  ))
 }
 
 #' @describeIn tabulergm_table Method for formula objects.
 #'
 #' Calls [parse_ergm_formula()] and returns a table with columns
-#' `term`, `figure`, `math`, and `description`. Coefficient statistics
-#' are excluded because no fitted model is available.
+#' `term`, `figure`, `math`, and, by default, `description`. Coefficient
+#' statistics are excluded because no fitted model is available.
 #'
 #' @param directed Logical or `NULL`. Whether the network is directed.
 #'   Passed to [parse_ergm_formula()]; when `NULL` (the default),
@@ -133,6 +131,7 @@ tabulergm_table.formula <- function(
     figures_dir = NULL,
     directed = NULL,
     include_title = FALSE,
+    include_description = TRUE,
     override = NULL,
     override.title = NULL,
     override.desc = NULL,
@@ -157,19 +156,15 @@ tabulergm_table.formula <- function(
   # Formula-only columns (no coefficient statistics)
   cols <- c(
     "term", if (include_title) "title",
-    "figure", "math", "description"
+    "figure", "math", if (include_description) "description"
   )
 
   result <- parsed[, cols, drop = FALSE]
   rownames(result) <- NULL
 
-  marked <- .apply_citation_markers(result, parsed)
-
-  .format_output(
-    marked[["df"]], format,
-    figures_dir = figures_dir,
-    citations = marked[["citations"]]
-  )
+  .render_table_spec(.new_table_spec(
+    result, parsed, format = format, figures_dir = figures_dir
+  ))
 }
 
 
@@ -713,10 +708,12 @@ tabulergm_table.formula <- function(
 #'   object.
 #' @noRd
 .format_output <- function(df, format, figures_dir = NULL,
-                           citations = list()) {
+                           citations = list(), spec = NULL,
+                           display = NULL) {
   if (format == "data.frame") {
-    attr(df, "tabulergm_citations") <- citations
-    return(df)
+    return(.attach_table_spec(
+      df, spec, citations = citations, table_class = "tabulergm_table"
+    ))
   }
 
   if (!requireNamespace("knitr", quietly = TRUE)) {
@@ -727,6 +724,13 @@ tabulergm_table.formula <- function(
       ),
       call. = FALSE
     )
+  }
+
+  if (!is.null(spec) && identical(spec$style, "name_over_formula")) {
+    return(.format_name_over_formula(
+      display, requested_format = format, figures_dir = figures_dir,
+      citations = citations, spec = spec
+    ))
   }
 
   notes <- if ("term" %in% names(df)) {
@@ -747,7 +751,7 @@ tabulergm_table.formula <- function(
   out <- knitr::kable(df, format = knitr_format, row.names = FALSE,
     escape = FALSE
   )
-  .append_table_notes(out, notes, format, citation_notes)
+  .append_table_notes(out, notes, format, citation_notes, spec = spec)
 }
 
 
@@ -767,9 +771,9 @@ tabulergm_table.formula <- function(
 #' @return The `knitr_kable` object, with notes appended when present.
 #' @noRd
 .append_table_notes <- function(kable_obj, notes, format,
-                                citation_notes = character(0)) {
+                                citation_notes = character(0), spec = NULL) {
   if (length(notes) == 0L && length(citation_notes) == 0L) {
-    return(kable_obj)
+    return(.attach_table_spec(kable_obj, spec, table_class = "tabulergm_kable"))
   }
 
   lines <- as.character(kable_obj)
@@ -796,7 +800,8 @@ tabulergm_table.formula <- function(
     }
   }
 
-  structure(lines, format = attr(kable_obj, "format"), class = "knitr_kable")
+  out <- structure(lines, format = attr(kable_obj, "format"), class = "knitr_kable")
+  .attach_table_spec(out, spec, table_class = "tabulergm_kable")
 }
 
 #' Render note lines as a single italic Markdown block
@@ -824,8 +829,8 @@ tabulergm_table.formula <- function(
 #' (with MathJax for LaTeX math rendering) and opens it in the RStudio
 #' viewer pane when available, falling back to [utils::browseURL()].
 #'
-#' @param object A fitted [ergm][ergm::ergm] object or an ERGM
-#'   [formula][stats::formula].
+#' @param object A fitted [ergm][ergm::ergm] object, an ERGM
+#'   [formula][stats::formula], or a table returned by [tabulergm_table()].
 #' @param ... Additional arguments passed to [tabulergm_table()].
 #' @return Invisibly returns the path to the temporary HTML file.
 #' @export
@@ -853,6 +858,24 @@ tabulergm_view.ergm <- function(object, ...) {
 tabulergm_view.formula <- function(object, ...) {
   tbl <- tabulergm_table(object, format = "html", ...)
   .open_html_viewer(tbl)
+}
+
+#' @describeIn tabulergm_view Method for table data frames returned by
+#'   [tabulergm_table()].
+#' @export
+tabulergm_view.tabulergm_table <- function(object, ...) {
+  spec <- .table_spec_from(object)
+  spec$format <- "html"
+  .open_html_viewer(.render_table_spec(spec))
+}
+
+#' @describeIn tabulergm_view Method for formatted tables returned by
+#'   [tabulergm_table()].
+#' @export
+tabulergm_view.tabulergm_kable <- function(object, ...) {
+  spec <- .table_spec_from(object)
+  spec$format <- "html"
+  .open_html_viewer(.render_table_spec(spec))
 }
 
 

@@ -171,6 +171,43 @@ tabulergm_table(
 *\[frank1986\]
 [doi:10.1080/01621459.1986.10478342](https://doi.org/10.1080/01621459.1986.10478342)*
 
+## Table styles
+
+The default layout keeps one metadata component per column. For a
+compact term dictionary, `with_style_name_over_formula()` stacks each
+term title over its formula and moves the figure into a
+**Representation** column. It retains model estimates and any metadata
+columns you explicitly include:
+
+``` r
+tabulergm_table(
+  model,
+  include_description = FALSE,
+  format = "markdown"
+) |>
+  with_style_name_over_formula()
+```
+
+Styled Markdown uses an HTML table so multi-line name/formula cells
+render reliably in HTML-capable Markdown outputs. Use the plain style
+for a portable pipe table in non-HTML targets. `with_style_plain()`
+restores the original layout at any point in a pipeline.
+
+Styled tables can also be saved or previewed directly:
+
+``` r
+tabulergm_table(model, include_description = FALSE) |>
+  with_style_name_over_formula() |>
+  tabulergm_save("exports/compact-ergm")
+
+tabulergm_table(model, include_description = FALSE) |>
+  with_style_name_over_formula() |>
+  tabulergm_view()
+```
+
+The compact LaTeX export uses `array`, `booktabs`, and `graphicx` for
+its fixed-width, minipage-based table cells.
+
 ## The term dictionary
 
 We can also embed the table in quarto/Rmarkdown. The table below covers

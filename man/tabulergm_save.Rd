@@ -5,6 +5,7 @@
 \alias{tabulergm_save.ergm}
 \alias{tabulergm_save.formula}
 \alias{tabulergm_save.data.frame}
+\alias{tabulergm_save.tabulergm_kable}
 \title{Save a tabulergm Table and Figure Assets}
 \usage{
 tabulergm_save(object, path, ...)
@@ -41,11 +42,13 @@ tabulergm_save(object, path, ...)
   latex_image_width = "0.7in",
   ...
 )
+
+\method{tabulergm_save}{tabulergm_kable}(object, path, ...)
 }
 \arguments{
 \item{object}{A fitted \link[ergm:ergm]{ergm} object, an ERGM
-\link[stats:formula]{formula}, or a \code{data.frame} returned by
-\code{\link[=tabulergm_table]{tabulergm_table()}}.}
+\link[stats:formula]{formula}, or a table object returned by
+\code{\link[=tabulergm_table]{tabulergm_table()}} (including a styled \code{knitr_kable}).}
 
 \item{path}{Target directory. It is created recursively when needed.}
 
@@ -66,7 +69,8 @@ be stored. Use \code{"."} to place images directly in \code{path}.}
 Default \code{TRUE}.}
 
 \item{latex_image_width}{Character width passed to \verb{\\\\includegraphics} in
-LaTeX output. Default \code{"0.7in"}.}
+plain LaTeX output. Default \code{"0.7in"}; the compact name-over-formula
+style uses its fixed \verb{0.4\\\\linewidth} layout.}
 }
 \value{
 Invisibly returns a list with:
@@ -75,7 +79,7 @@ Invisibly returns a list with:
 \item{files}{Named character vector of written table code files.}
 \item{figures}{Named character vector of copied figure files, where names
 are the relative paths used in the table.}
-\item{table}{The data frame used for export, with \code{figure} paths rewritten
+\item{table}{The data frame used for export, with figure paths rewritten
 to the copied relative paths.}
 }
 }
@@ -92,6 +96,9 @@ the result easier to reuse in another document or project.
 \item \code{tabulergm_save(formula)}: Method for formula objects.
 
 \item \code{tabulergm_save(data.frame)}: Method for data frames returned by
+\code{tabulergm_table()}.
+
+\item \code{tabulergm_save(tabulergm_kable)}: Method for formatted tables returned by
 \code{tabulergm_table()}.
 
 }}

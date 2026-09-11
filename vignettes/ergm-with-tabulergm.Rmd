@@ -120,6 +120,43 @@ tabulergm_table(
 )
 ```
 
+## Reorganizing a table with styles
+
+The default table uses one column per metadata component. For a compact
+dictionary-style layout, pipe a table through `with_style_name_over_formula()`.
+It places the curated title over the formula in a **Name** cell and puts the
+term drawing in **Representation**, while retaining model statistics and any
+columns explicitly requested from `tabulergm_table()`.
+
+```{r compact-style, results = "asis"}
+tabulergm_table(
+  flomarriage ~ edges + nodematch("wealth") + triangle,
+  include_description = FALSE,
+  format = "markdown"
+) |>
+  with_style_name_over_formula()
+```
+
+Styled Markdown is emitted as a raw HTML table because pipe tables cannot
+reliably hold the multi-line name/formula cells. This layout is therefore for
+HTML-capable Markdown targets; use the default plain style for portable pipe
+tables. `with_style_plain()` restores the original layout.
+
+The same styled data frame can be saved or previewed through a pipe:
+
+```{r compact-style-save, eval = FALSE}
+tabulergm_table(model, include_description = FALSE) |>
+  with_style_name_over_formula() |>
+  tabulergm_save("compact-ergm")
+
+tabulergm_table(model, include_description = FALSE) |>
+  with_style_name_over_formula() |>
+  tabulergm_view()
+```
+
+The compact LaTeX snippet requires the `array`, `booktabs`, and `graphicx`
+packages for fixed-width minipage cells and figures.
+
 ## Inspecting a formula without a fitted model
 
 You can also pass a bare formula to inspect term metadata before fitting:

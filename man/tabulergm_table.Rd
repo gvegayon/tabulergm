@@ -31,6 +31,7 @@ tabulergm_table(object, ...)
   figures_dir = NULL,
   directed = NULL,
   include_title = FALSE,
+  include_description = TRUE,
   override = NULL,
   override.title = NULL,
   override.desc = NULL,
@@ -92,7 +93,9 @@ the formula when possible.}
 }
 \value{
 A \code{data.frame} (default), or a \code{knitr_kable} object when
-\code{format} is \code{"html"} or \code{"markdown"}. When the term figures use
+\code{format} is \code{"html"} or \code{"markdown"}; these additionally inherit from
+internal \code{tabulergm_table} and \code{tabulergm_kable} classes so styles can be
+safely applied after rendering. When the term figures use
 drawing conventions (orange for focal attributes, orange/teal for
 mixing, squares/circles for bipartite modes), an explanatory note is
 appended below \code{"html"} and \code{"markdown"} tables. Terms carrying a
@@ -117,8 +120,8 @@ placed immediately after \code{term}.
 \item \code{tabulergm_table(formula)}: Method for formula objects.
 
 Calls \code{\link[=parse_ergm_formula]{parse_ergm_formula()}} and returns a table with columns
-\code{term}, \code{figure}, \code{math}, and \code{description}. Coefficient statistics
-are excluded because no fitted model is available.
+\code{term}, \code{figure}, \code{math}, and, by default, \code{description}. Coefficient
+statistics are excluded because no fitted model is available.
 
 }}
 \examples{

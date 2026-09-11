@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+title: "tabulergm: Publication-Ready Tables and Summaries for Exponential-Family Random Graph Models"
+version: "0.1.0"
+doi: "10.32614/CRAN.package.tabulergm"
+authors:
+  - family-names: "Vega Yon"
+    given-names: "George"
+    orcid: "https://orcid.org/0000-0002-3171-0844"
+abstract: "Creates publication-ready tables documenting exponential-family random graph models."
+license: "MIT"
+repository-code: "https://github.com/gvegayon/tabulergm"
+url: "https://gvegayon.github.io/tabulergm/"
+keywords:
+  - "ERGMs"
+  - "networks"
+  - "R"

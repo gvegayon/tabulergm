@@ -81,6 +81,12 @@ if (requireNamespace("knitr", quietly = TRUE)) {
   expect_equal(attr(compact_markdown, "format"), "html")
   expect_true(grepl("<table", markdown_text, fixed = TRUE))
   expect_true(grepl("<img src=", markdown_text, fixed = TRUE))
+  expect_true(grepl("i\\lt{}j", markdown_text, fixed = TRUE),
+    info = "raw-HTML Markdown uses TeX-safe inequality operators"
+  )
+  expect_false(grepl("&lt;", markdown_text, fixed = TRUE),
+    info = "GitHub must not receive an HTML entity inside TeX"
+  )
   expect_true(file.exists(file.path(figures_dir, "edges.png")))
 
   # Styled data frames and kables can be exported and viewed through pipes.

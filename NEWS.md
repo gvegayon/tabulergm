@@ -1,5 +1,8 @@
 # tabulergm 0.2.0
 
+* Fixed equations in compact Markdown tables so GitHub and other renderers do
+  not receive double-escaped inequality operators inside TeX math.
+
 * Added composable table styles. Pipe a result through
   `with_style_name_over_formula()` to stack curated titles over formulae and
   place figures in a compact representation column, or use

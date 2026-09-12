@@ -205,10 +205,15 @@ with_style_name_over_formula <- function(x) {
 
   has_math <- nzchar(trimws(display$math))
   labels <- vapply(display$labels, .escape_html_text, character(1))
+  escape_math <- if (identical(requested_format, "markdown")) {
+    .escape_math_raw_html_markdown
+  } else {
+    .escape_math_html
+  }
   df[["Name"]] <- labels
   df[["Name"]][has_math] <- paste0(
     labels[has_math], "<br><span class=\"tabulergm-formula\">$$",
-    vapply(display$math[has_math], .escape_math_html, character(1)),
+    vapply(display$math[has_math], escape_math, character(1)),
     "$$</span>"
   )
 

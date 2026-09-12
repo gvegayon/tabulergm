@@ -213,7 +213,7 @@ data-quarto-table-cell-role="th">pvalue</th>
 <tbody>
 <tr>
 <td style="text-align: left;">Number of edges<br />
-<span class="tabulergm-formula">$$\sum_{i&lt;j} y_{ij}$$</span></td>
+<span class="tabulergm-formula">$$\sum_{i\lt{}j} y_{ij}$$</span></td>
 <td class="tabulergm-representation" style="text-align: center;"><img
 src="man/figures/README-edges.png" style="width:40%;max-width:100%;"
 alt="term figure" /></td>
@@ -223,7 +223,7 @@ alt="term figure" /></td>
 </tr>
 <tr>
 <td style="text-align: left;">Triangles (frank1986)<br />
-<span class="tabulergm-formula">$$\sum_{i&lt;j&lt;k} y_{ij} y_{jk}
+<span class="tabulergm-formula">$$\sum_{i\lt{}j\lt{}k} y_{ij} y_{jk}
 y_{ik}$$</span></td>
 <td class="tabulergm-representation" style="text-align: center;"><img
 src="man/figures/README-triangle.png" style="width:40%;max-width:100%;"

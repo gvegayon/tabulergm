@@ -321,6 +321,23 @@ tabulergm_table.formula <- function(
 }
 
 
+#' Make TeX safe inside raw-HTML Markdown
+#'
+#' GitHub parses math delimiters inside raw HTML, but HTML entities within the
+#' expression are escaped a second time before they reach its math renderer.
+#' Express angle brackets as TeX commands so the raw HTML remains valid and the
+#' math renderer receives TeX rather than `&lt;` or `&gt;`.
+#'
+#' @param x A TeX math string.
+#' @return A TeX string without literal HTML angle brackets.
+#' @noRd
+.escape_math_raw_html_markdown <- function(x) {
+  backslash <- intToUtf8(92L)
+  x <- gsub("<", paste0(backslash, "lt{}"), x, fixed = TRUE)
+  gsub(">", paste0(backslash, "gt{}"), x, fixed = TRUE)
+}
+
+
 #' Escape pipe-table delimiters inside TeX math strings
 #'
 #' `knitr::kable(format = "pipe")` converts literal vertical bars to the HTML

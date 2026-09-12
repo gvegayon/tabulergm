@@ -1,4 +1,4 @@
-# tabulergm (development version)
+# tabulergm 0.2.0
 
 * Added composable table styles. Pipe a result through
   `with_style_name_over_formula()` to stack curated titles over formulae and

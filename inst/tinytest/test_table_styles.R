@@ -14,6 +14,9 @@ expect_false("description" %in% names(without_description))
 
 compact <- with_style_name_over_formula(without_description)
 expect_equal(names(compact), c("Name", "Representation"))
+compact_spec <- attr(compact, "tabulergm_spec", exact = TRUE)
+expect_null(compact_spec$layout$column_widths)
+expect_null(compact_spec$layout$figure_height)
 expect_true(grepl("\n", compact$Name[[1L]], fixed = TRUE),
   info = "the data-frame Name cell has a title/formula line break")
 expect_true(grepl("\\sum_{i<j} y_{ij}", compact$Name[[1L]], fixed = TRUE),
@@ -29,6 +32,60 @@ restored <- with_style_plain(compact)
 expect_equal(names(restored), names(without_description))
 expect_equal(restored$term, without_description$term)
 expect_equal(restored$math, without_description$math)
+
+# Compact presentation settings persist through a plain-style detour.
+configured <- with_style_name_over_formula(
+  without_description,
+  column_widths = c(Name = .5, Representation = .2),
+  figure_height = .8
+)
+configured_spec <- attr(configured, "tabulergm_spec", exact = TRUE)
+expect_equal(configured_spec$layout$column_widths,
+  c(Name = .5, Representation = .2)
+)
+expect_equal(configured_spec$layout$figure_height, .8)
+configured_plain <- with_style_plain(configured)
+expect_equal(attr(configured_plain, "tabulergm_spec", exact = TRUE)$layout,
+  configured_spec$layout
+)
+configured_again <- with_style_name_over_formula(configured_plain)
+expect_equal(attr(configured_again, "tabulergm_spec", exact = TRUE)$layout,
+  configured_spec$layout
+)
+configured_reset <- with_style_name_over_formula(
+  configured,
+  column_widths = NULL,
+  figure_height = NULL
+)
+expect_null(attr(configured_reset, "tabulergm_spec", exact = TRUE)$layout$column_widths)
+expect_null(attr(configured_reset, "tabulergm_spec", exact = TRUE)$layout$figure_height)
+
+expect_error(
+  with_style_name_over_formula(without_description, column_widths = c(Name = 0)),
+  "column_widths"
+)
+expect_error(
+  with_style_name_over_formula(without_description,
+    column_widths = c(Name = .5, Name = .2)
+  ),
+  "unique names"
+)
+expect_error(
+  with_style_name_over_formula(without_description,
+    column_widths = c(Name = .8, Representation = .3)
+  ),
+  "total no more than one"
+)
+expect_error(
+  with_style_name_over_formula(without_description,
+    column_widths = c(Unknown = .2)
+  ),
+  "must match compact-table columns"
+)
+expect_error(
+  with_style_name_over_formula(without_description, figure_height = 0),
+  "figure_height"
+)
 
 # When retained, descriptions remain the citation target.
 compact_with_description <- with_style_name_over_formula(plain)
@@ -60,12 +117,31 @@ if (requireNamespace("knitr", quietly = TRUE)) {
   expect_true(grepl("tabulergm-style-name-over-formula", html_text,
     fixed = TRUE
   ))
+  expect_false(grepl("<colgroup>", html_text, fixed = TRUE),
+    info = "default compact HTML leaves column widths automatic"
+  )
   expect_true(grepl('width:40%;max-width:100%;', html_text, fixed = TRUE))
   expect_true(grepl("data:image/[^;]+;base64,", html_text))
   expect_true(grepl("i&lt;j", html_text, fixed = TRUE),
     info = "compact HTML preserves safely escaped TeX"
   )
   expect_true(grepl("frank1986", html_text, fixed = TRUE))
+
+  configured_html <- with_style_name_over_formula(
+    html,
+    column_widths = c(Name = .5, Representation = .2),
+    figure_height = .8
+  )
+  configured_html_text <- paste(as.character(configured_html), collapse = "\n")
+  expect_true(grepl('<col style="width:50%;">', configured_html_text,
+    fixed = TRUE
+  ))
+  expect_true(grepl('<col style="width:20%;">', configured_html_text,
+    fixed = TRUE
+  ))
+  expect_true(grepl('height:0.8in;width:auto;max-width:100%;',
+    configured_html_text, fixed = TRUE
+  ))
 
   # Styled Markdown intentionally uses raw HTML for its multi-line cells.
   figures_dir <- tempfile("tabulergm-style-markdown-")
@@ -102,7 +178,7 @@ if (requireNamespace("knitr", quietly = TRUE)) {
   expect_true(grepl("\\usepackage{array,booktabs,graphicx}", saved_tex,
     fixed = TRUE
   ))
-  expect_true(grepl("\\begin{minipage}{\\linewidth}", saved_tex,
+  expect_true(grepl("\\shortstack[l]{", saved_tex,
     fixed = TRUE
   ))
   expect_true(grepl("\\includegraphics[width=.4\\linewidth]", saved_tex,
@@ -110,12 +186,34 @@ if (requireNamespace("knitr", quietly = TRUE)) {
   ))
   expect_true(grepl("\\toprule", saved_tex, fixed = TRUE))
 
+  configured_saved <- tabulergm_save(configured, tempfile("tabulergm-layout-"))
+  configured_md <- paste(readLines(configured_saved$files[["markdown"]]), collapse = "\n")
+  configured_tex <- paste(readLines(configured_saved$files[["latex"]]), collapse = "\n")
+  expect_true(grepl('<col style="width:50%;">', configured_md, fixed = TRUE))
+  expect_true(grepl('height:0.8in;width:auto;max-width:100%;',
+    configured_md, fixed = TRUE
+  ))
+  expect_true(grepl("m{0.5\\linewidth}", configured_tex, fixed = TRUE))
+  expect_true(grepl("m{0.2\\linewidth}", configured_tex, fixed = TRUE))
+  expect_true(grepl("height=0.8in,keepaspectratio", configured_tex,
+    fixed = TRUE
+  ))
+
   view_path <- tabulergm_view(compact)
   expect_true(file.exists(view_path))
   view_html <- paste(readLines(view_path), collapse = "\n")
   expect_true(grepl("mathjax", tolower(view_html)))
   expect_true(grepl("tabulergm-style-name-over-formula", view_html,
     fixed = TRUE
+  ))
+
+  configured_view_path <- tabulergm_view(configured)
+  configured_view_html <- paste(readLines(configured_view_path), collapse = "\n")
+  expect_true(grepl('<col style="width:50%;">', configured_view_html,
+    fixed = TRUE
+  ))
+  expect_true(grepl('height:0.8in;width:auto;max-width:100%;',
+    configured_view_html, fixed = TRUE
   ))
 }
 

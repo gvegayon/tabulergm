@@ -4,11 +4,19 @@
 \alias{with_style_name_over_formula}
 \title{Stack Term Names over Mathematical Formulae}
 \usage{
-with_style_name_over_formula(x)
+with_style_name_over_formula(x, column_widths = NULL, figure_height = NULL)
 }
 \arguments{
 \item{x}{A data frame or \code{knitr_kable} object returned by
 \code{\link[=tabulergm_table]{tabulergm_table()}} or one of the \verb{with_style_*()} helpers.}
+
+\item{column_widths}{Optional named numeric vector of table-width fractions
+keyed by displayed compact-table column names (for example,
+\code{c(Name = .5, Representation = .2)}). Values must be in \verb{(0, 1]} and
+total no more than one. \code{NULL} uses automatic column widths.}
+
+\item{figure_height}{Optional positive numeric height, in inches, for term
+figures. \code{NULL} retains the default width-based figure sizing.}
 }
 \value{
 An object in the same requested output format as \code{x}; Markdown
@@ -26,10 +34,14 @@ columns.
 \details{
 HTML output uses a responsive HTML table. Markdown requests also use HTML,
 because pipe tables cannot reliably represent the multi-line cells needed
-by this style. The saved LaTeX snippet requires the \code{array}, \code{booktabs}, and
-\code{graphicx} packages.
+by this style. Width and figure-height settings are stored on the returned
+table object, so they also apply to previews and saved output. The saved
+LaTeX snippet requires the \code{array}, \code{booktabs}, and \code{graphicx} packages.
 }
 \examples{
 tabulergm_table(~ edges + triangle, include_description = FALSE) |>
-  with_style_name_over_formula()
+  with_style_name_over_formula(
+    column_widths = c(Name = .5, Representation = .2),
+    figure_height = .8
+  )
 }

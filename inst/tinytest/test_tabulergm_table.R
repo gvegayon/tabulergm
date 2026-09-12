@@ -114,6 +114,36 @@ if (requireNamespace("network", quietly = TRUE) &&
   expect_true(is.numeric(result$se))
   expect_true(is.numeric(result$pvalue))
 
+  parsed <- parse_ergm_model(fit)
+  result_spec <- attr(result, "tabulergm_spec", exact = TRUE)
+  expect_equal(result_spec$data$estimate, parsed$estimate,
+    info = "the table specification retains full-precision estimates"
+  )
+  expect_equal(result_spec$data$se, parsed$se,
+    info = "the table specification retains full-precision standard errors"
+  )
+  expect_equal(result$estimate, round(parsed$estimate, 2),
+    info = "default table estimates use two decimal places"
+  )
+  expect_equal(result$se, round(parsed$se, 2),
+    info = "default table standard errors use two decimal places"
+  )
+  expect_equal(result$pvalue, parsed$pvalue,
+    info = "table precision does not alter p-values"
+  )
+
+  result_zero <- tabulergm_table(fit, digits = 0)
+  expect_equal(result_zero$estimate, round(parsed$estimate, 0))
+  expect_equal(result_zero$se, round(parsed$se, 0))
+
+  result_full <- tabulergm_table(fit, digits = NULL)
+  expect_equal(result_full$estimate, parsed$estimate)
+  expect_equal(result_full$se, parsed$se)
+  expect_null(attr(result_full, "tabulergm_spec", exact = TRUE)$digits)
+
+  expect_error(tabulergm_table(fit, digits = -1), "digits")
+  expect_error(tabulergm_table(fit, digits = 1.5), "digits")
+
   # Optional columns included when requested
   result_desc <- tabulergm_table(fit, include_description = TRUE)
   expect_true("description" %in% names(result_desc))

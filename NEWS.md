@@ -1,3 +1,15 @@
+# tabulergm 0.3.0
+
+* Fitted-model tables now display estimates and standard errors rounded to two
+  decimal places by default. Use `digits` to choose another precision or
+  `digits = NULL` to retain full precision; the table specification always
+  retains the original values.
+
+* `with_style_name_over_formula()` now supports persistent `column_widths`
+  and `figure_height` settings. Compact columns are automatic by default;
+  configured fractions and inch-based figure heights are honored in HTML,
+  Markdown, previews, and saved LaTeX output.
+
 # tabulergm 0.2.0
 
 * Fixed equations in compact Markdown tables so GitHub and other renderers do

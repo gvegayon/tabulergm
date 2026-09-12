@@ -28,7 +28,9 @@ tabulergm_table <- function(object, ...) {
 #' `term`, `figure`, `estimate`, `se`, and `pvalue`.
 #' Optional columns (`title`, `description`, `math`, `attribute`) can be
 #' included via logical arguments. The `title` column, when included, is
-#' placed immediately after `term`.
+#' placed immediately after `term`. Estimates and standard errors are rounded
+#' for display according to `digits`, while the attached table specification
+#' retains their full-precision values.
 #'
 #' @param include_description Logical. Include the term description column?
 #'   Default `FALSE`.
@@ -38,6 +40,9 @@ tabulergm_table <- function(object, ...) {
 #'   `FALSE`.
 #' @param include_title Logical. Include the short term-title column?
 #'   Default `FALSE`.
+#' @param digits Non-negative whole number of decimal places used to display
+#'   fitted-model estimates and standard errors. Default `2`. Use `NULL` to
+#'   retain full precision. Parsed model data always retain full precision.
 #' @param format Character. Output format: `"data.frame"` (default),
 #'   `"html"`, or `"markdown"`. HTML and Markdown output require the
 #'   \pkg{knitr} package.
@@ -69,6 +74,7 @@ tabulergm_table.ergm <- function(
     include_math = FALSE,
     include_attribute = FALSE,
     include_title = FALSE,
+    digits = 2L,
     format = c("data.frame", "html", "markdown"),
     figures_dir = NULL,
     override = NULL,
@@ -106,7 +112,7 @@ tabulergm_table.ergm <- function(
   rownames(result) <- NULL
 
   .render_table_spec(.new_table_spec(
-    result, parsed, format = format, figures_dir = figures_dir
+    result, parsed, format = format, figures_dir = figures_dir, digits = digits
   ))
 }
 

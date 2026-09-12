@@ -31,20 +31,49 @@ with_style_plain <- function(x) {
 #'
 #' HTML output uses a responsive HTML table. Markdown requests also use HTML,
 #' because pipe tables cannot reliably represent the multi-line cells needed
-#' by this style. The saved LaTeX snippet requires the `array`, `booktabs`, and
-#' `graphicx` packages.
+#' by this style. Width and figure-height settings are stored on the returned
+#' table object, so they also apply to previews and saved output. The saved
+#' LaTeX snippet requires the `array`, `booktabs`, and `graphicx` packages.
 #'
 #' @param x A data frame or `knitr_kable` object returned by
 #'   [tabulergm_table()] or one of the `with_style_*()` helpers.
+#' @param column_widths Optional named numeric vector of table-width fractions
+#'   keyed by displayed compact-table column names (for example,
+#'   `c(Name = .5, Representation = .2)`). Values must be in `(0, 1]` and
+#'   total no more than one. `NULL` uses automatic column widths.
+#' @param figure_height Optional positive numeric height, in inches, for term
+#'   figures. `NULL` retains the default width-based figure sizing.
 #' @return An object in the same requested output format as `x`; Markdown
 #'   requests return HTML table markup suitable for HTML-capable Markdown
 #'   renderers.
 #' @export
 #' @examples
 #' tabulergm_table(~ edges + triangle, include_description = FALSE) |>
-#'   with_style_name_over_formula()
-with_style_name_over_formula <- function(x) {
+#'   with_style_name_over_formula(
+#'     column_widths = c(Name = .5, Representation = .2),
+#'     figure_height = .8
+#'   )
+with_style_name_over_formula <- function(
+    x,
+    column_widths = NULL,
+    figure_height = NULL) {
   spec <- .table_spec_from(x)
+  if (missing(column_widths)) {
+    column_widths <- spec$layout$column_widths
+  } else {
+    column_widths <- .validate_column_widths(
+      column_widths,
+      .name_over_formula_column_names(spec)
+    )
+  }
+  if (missing(figure_height)) {
+    figure_height <- spec$layout$figure_height
+  } else {
+    figure_height <- .validate_figure_height(figure_height)
+  }
+
+  spec$layout$column_widths <- column_widths
+  spec$layout$figure_height <- figure_height
   spec$style <- "name_over_formula"
   .render_table_spec(spec)
 }
@@ -52,13 +81,16 @@ with_style_name_over_formula <- function(x) {
 
 # ---- Internal table specification ------------------------------------------
 
-.new_table_spec <- function(data, parsed, format, figures_dir = NULL) {
+.new_table_spec <- function(data, parsed, format, figures_dir = NULL,
+                            digits = 2L) {
   list(
     data = data,
     parsed = parsed,
     format = format,
     figures_dir = figures_dir,
-    style = "plain"
+    style = "plain",
+    digits = .validate_table_digits(digits),
+    layout = list(column_widths = NULL, figure_height = NULL)
   )
 }
 
@@ -70,6 +102,16 @@ with_style_name_over_formula <- function(x) {
       "'x' must be a table returned by tabulergm_table() or with_style_*().",
       call. = FALSE
     )
+  }
+  if (!"digits" %in% names(spec)) spec$digits <- 2L
+  if (!"layout" %in% names(spec) || !is.list(spec$layout)) {
+    spec$layout <- list()
+  }
+  if (!"column_widths" %in% names(spec$layout)) {
+    spec$layout$column_widths <- NULL
+  }
+  if (!"figure_height" %in% names(spec$layout)) {
+    spec$layout$figure_height <- NULL
   }
   spec
 }
@@ -98,7 +140,9 @@ with_style_name_over_formula <- function(x) {
 .materialize_table_spec <- function(spec) {
   switch(spec$style,
     plain = {
-      marked <- .apply_citation_markers(spec$data, spec$parsed)
+      marked <- .apply_citation_markers(
+        .apply_table_digits(spec$data, spec$digits), spec$parsed
+      )
       list(
         df = marked$df,
         labels = NULL,
@@ -114,7 +158,7 @@ with_style_name_over_formula <- function(x) {
 }
 
 .materialize_name_over_formula <- function(spec) {
-  data <- spec$data
+  data <- .apply_table_digits(spec$data, spec$digits)
   parsed <- spec$parsed
   labels <- as.character(parsed[["title"]])
   terms <- as.character(parsed[["term"]])
@@ -175,6 +219,72 @@ with_style_name_over_formula <- function(x) {
   )
 }
 
+.apply_table_digits <- function(data, digits) {
+  if (is.null(digits)) return(data)
+
+  for (column in intersect(c("estimate", "se"), names(data))) {
+    if (is.numeric(data[[column]])) data[[column]] <- round(data[[column]], digits)
+  }
+  data
+}
+
+.validate_table_digits <- function(digits) {
+  if (is.null(digits)) return(NULL)
+  if (!is.numeric(digits) || length(digits) != 1L || is.na(digits) ||
+      !is.finite(digits) || digits < 0 || digits != floor(digits)) {
+    stop("'digits' must be NULL or a non-negative whole number.", call. = FALSE)
+  }
+  as.integer(digits)
+}
+
+.name_over_formula_column_names <- function(spec) {
+  c(
+    "Name", "Representation",
+    setdiff(names(spec$data), c("term", "title", "math", "figure"))
+  )
+}
+
+.validate_column_widths <- function(column_widths, columns) {
+  if (is.null(column_widths)) return(NULL)
+  if (!is.numeric(column_widths) || length(column_widths) == 0L ||
+      is.null(names(column_widths)) || any(!nzchar(names(column_widths))) ||
+      anyDuplicated(names(column_widths))) {
+    stop(
+      "'column_widths' must be a non-empty named numeric vector with unique names.",
+      call. = FALSE
+    )
+  }
+  if (any(!is.finite(column_widths)) || any(column_widths <= 0) ||
+      any(column_widths > 1) || sum(column_widths) > 1) {
+    stop(
+      "'column_widths' values must be finite fractions in (0, 1] that total no more than one.",
+      call. = FALSE
+    )
+  }
+  unknown <- setdiff(names(column_widths), columns)
+  if (length(unknown) > 0L) {
+    stop(
+      "'column_widths' names must match compact-table columns: ",
+      paste(columns, collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  column_widths
+}
+
+.validate_figure_height <- function(figure_height) {
+  if (is.null(figure_height)) return(NULL)
+  if (!is.numeric(figure_height) || length(figure_height) != 1L ||
+      is.na(figure_height) || !is.finite(figure_height) || figure_height <= 0) {
+    stop("'figure_height' must be NULL or one positive number in inches.", call. = FALSE)
+  }
+  as.numeric(figure_height)
+}
+
+.format_inches <- function(x) {
+  paste0(format(x, trim = TRUE, scientific = FALSE), "in")
+}
+
 
 # ---- Compact HTML renderer --------------------------------------------------
 
@@ -198,9 +308,17 @@ with_style_name_over_formula <- function(x) {
 
   has_figure <- nzchar(sources)
   df[["Representation"]] <- ""
+  figure_style <- if (is.null(spec$layout$figure_height)) {
+    "width:40%;max-width:100%;"
+  } else {
+    paste0(
+      "height:", .format_inches(spec$layout$figure_height),
+      ";width:auto;max-width:100%;"
+    )
+  }
   df[["Representation"]][has_figure] <- sprintf(
-    '<img src="%s" style="width:40%%;max-width:100%%;" alt="term figure">',
-    sources[has_figure]
+    '<img src="%s" style="%s" alt="term figure">',
+    sources[has_figure], figure_style
   )
 
   has_math <- nzchar(trimws(display$math))
@@ -219,21 +337,13 @@ with_style_name_over_formula <- function(x) {
 
   out <- knitr::kable(df, format = "html", row.names = FALSE, escape = FALSE)
   lines <- as.character(out)
+  colgroup <- .compact_html_colgroup(names(df), spec$layout$column_widths)
   lines <- sub(
     "<table>",
-    '<table class="tabulergm-table tabulergm-style-name-over-formula">',
-    lines,
-    fixed = TRUE
-  )
-  lines <- sub(
-    "<th style=\"text-align:left;\"> Name </th>",
-    '<th style="text-align:left;width:50%;"> Name </th>',
-    lines,
-    fixed = TRUE
-  )
-  lines <- sub(
-    "<th style=\"text-align:left;\"> Representation </th>",
-    '<th style="text-align:center;width:20%;"> Representation </th>',
+    paste0(
+      '<table class="tabulergm-table tabulergm-style-name-over-formula">',
+      colgroup
+    ),
     lines,
     fixed = TRUE
   )
@@ -250,6 +360,23 @@ with_style_name_over_formula <- function(x) {
     citation_notes = .render_citation_notes(citations, "html"),
     spec = spec
   )
+}
+
+.compact_html_colgroup <- function(columns, column_widths) {
+  if (is.null(column_widths)) return("")
+
+  cols <- vapply(columns, function(column) {
+    width <- column_widths[column]
+    if (length(width) == 0L || is.na(width)) {
+      "<col>"
+    } else {
+      paste0(
+        '<col style="width:', format(100 * width, trim = TRUE,
+          scientific = FALSE), '%;">'
+      )
+    }
+  }, character(1))
+  paste0("<colgroup>", paste0(cols, collapse = ""), "</colgroup>")
 }
 
 .escape_html_text <- function(x) {

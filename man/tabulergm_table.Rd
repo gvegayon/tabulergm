@@ -14,6 +14,7 @@ tabulergm_table(object, ...)
   include_math = FALSE,
   include_attribute = FALSE,
   include_title = FALSE,
+  digits = 2L,
   format = c("data.frame", "html", "markdown"),
   figures_dir = NULL,
   override = NULL,
@@ -58,6 +59,10 @@ Default \code{FALSE}.}
 
 \item{include_title}{Logical. Include the short term-title column?
 Default \code{FALSE}.}
+
+\item{digits}{Non-negative whole number of decimal places used to display
+fitted-model estimates and standard errors. Default \code{2}. Use \code{NULL} to
+retain full precision. Parsed model data always retain full precision.}
 
 \item{format}{Character. Output format: \code{"data.frame"} (default),
 \code{"html"}, or \code{"markdown"}. HTML and Markdown output require the
@@ -115,7 +120,9 @@ Calls \code{\link[=parse_ergm_model]{parse_ergm_model()}} and returns a table wi
 \code{term}, \code{figure}, \code{estimate}, \code{se}, and \code{pvalue}.
 Optional columns (\code{title}, \code{description}, \code{math}, \code{attribute}) can be
 included via logical arguments. The \code{title} column, when included, is
-placed immediately after \code{term}.
+placed immediately after \code{term}. Estimates and standard errors are rounded
+for display according to \code{digits}, while the attached table specification
+retains their full-precision values.
 
 \item \code{tabulergm_table(formula)}: Method for formula objects.
 

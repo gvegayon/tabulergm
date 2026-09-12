@@ -199,10 +199,9 @@ data-quarto-postprocess="true">
 </colgroup>
 <thead>
 <tr>
-<th data-quarto-table-cell-role="th"
-style="text-align: left; width: 50%;">Name</th>
-<th data-quarto-table-cell-role="th"
-style="text-align: center; width: 20%;">Representation</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Name</th>
+<th style="text-align: left;"
+data-quarto-table-cell-role="th">Representation</th>
 <th style="text-align: right;"
 data-quarto-table-cell-role="th">estimate</th>
 <th style="text-align: right;" data-quarto-table-cell-role="th">se</th>
@@ -217,8 +216,8 @@ data-quarto-table-cell-role="th">pvalue</th>
 <td class="tabulergm-representation" style="text-align: center;"><img
 src="man/figures/README-edges.png" style="width:40%;max-width:100%;"
 alt="term figure" /></td>
-<td style="text-align: right;">-1.6507266</td>
-<td style="text-align: right;">0.3179320</td>
+<td style="text-align: right;">-1.65</td>
+<td style="text-align: right;">0.32</td>
 <td style="text-align: right;">0.0000002</td>
 </tr>
 <tr>
@@ -228,8 +227,8 @@ y_{ik}$$</span></td>
 <td class="tabulergm-representation" style="text-align: center;"><img
 src="man/figures/README-triangle.png" style="width:40%;max-width:100%;"
 alt="term figure" /></td>
-<td style="text-align: right;">0.1082377</td>
-<td style="text-align: right;">0.5183562</td>
+<td style="text-align: right;">0.11</td>
+<td style="text-align: right;">0.52</td>
 <td style="text-align: right;">0.8345969</td>
 </tr>
 </tbody>
@@ -255,7 +254,31 @@ tabulergm_table(model, include_description = FALSE) |>
 ```
 
 The compact LaTeX export uses `array`, `booktabs`, and `graphicx` for
-its fixed-width, minipage-based table cells.
+its multiline cells and figures.
+
+Fitted-model tables round estimates and standard errors to two decimal
+places by default while retaining full-precision values in the attached
+table specification. Set `digits = NULL` to display full precision, or
+choose a different number of decimal places:
+
+``` r
+tabulergm_table(model, digits = 3)
+```
+
+Compact-style presentation settings are also retained by the table
+object, so they survive previews and exports. Column widths are
+fractions of the table width and figure height is measured in inches;
+omit either setting for automatic columns and the default width-based
+figure size:
+
+``` r
+tabulergm_table(model, include_description = FALSE) |>
+  with_style_name_over_formula(
+    column_widths = c(Name = .5, Representation = .2),
+    figure_height = .8
+  ) |>
+  tabulergm_save("exports/compact-ergm")
+```
 
 ## The term dictionary
 

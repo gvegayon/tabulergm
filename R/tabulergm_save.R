@@ -530,31 +530,31 @@ tabulergm_save.default <- function(object, path, ...) {
   has_math <- nzchar(trimws(math))
   rendered[["Name"]] <- .escape_latex_text(labels)
   rendered[["Name"]][has_math] <- paste0(
-    "\\begin{minipage}{\\linewidth}",
+    "\\shortstack[l]{",
     .escape_latex_text(labels[has_math]),
-    "\\\\$", trimws(math[has_math]), "$\\end{minipage}"
+    "\\\\$", trimws(math[has_math]), "$}"
   )
 
   has_figure <- !is.na(figures) & nzchar(figures)
   rendered[["Representation"]] <- ""
+  figure_options <- if (is.null(spec$layout$figure_height)) {
+    "width=.4\\linewidth"
+  } else {
+    paste0(
+      "height=", .format_inches(spec$layout$figure_height),
+      ",keepaspectratio"
+    )
+  }
   rendered[["Representation"]][has_figure] <- sprintf(
-    "\\includegraphics[width=.4\\linewidth]{%s}",
-    .forward_slash_path(figures[has_figure])
+    "\\includegraphics[%s]{%s}",
+    figure_options, .forward_slash_path(figures[has_figure])
   )
 
   text_cols <- vapply(rendered, is.character, logical(1))
   text_cols[names(text_cols) %in% c("Name", "Representation")] <- FALSE
   rendered[text_cols] <- lapply(rendered[text_cols], .escape_latex_text)
 
-  extra_names <- names(rendered)[-(1:2)]
-  extra_align <- vapply(rendered[extra_names], function(x) {
-    if (is.numeric(x)) "r" else "l"
-  }, character(1))
-  align <- c(
-    ">{\\raggedright\\arraybackslash}m{.5\\linewidth}",
-    ">{\\centering\\arraybackslash}m{.2\\linewidth}",
-    extra_align
-  )
+  align <- .compact_latex_align(rendered, spec$layout$column_widths)
   code <- c(
     "% Requires: \\usepackage{array,booktabs,graphicx}",
     as.character(knitr::kable(
@@ -580,6 +580,27 @@ tabulergm_save.default <- function(object, path, ...) {
     )
   }
   code
+}
+
+.compact_latex_align <- function(rendered, column_widths) {
+  vapply(names(rendered), function(column) {
+    width <- if (is.null(column_widths)) numeric(0) else column_widths[column]
+    if (length(width) > 0L && !is.na(width)) {
+      align <- if (identical(column, "Representation")) {
+        "\\centering"
+      } else if (is.numeric(rendered[[column]])) {
+        "\\raggedleft"
+      } else {
+        "\\raggedright"
+      }
+      return(paste0(
+        ">{", align, "\\arraybackslash}m{",
+        format(width, trim = TRUE, scientific = FALSE), "\\linewidth}"
+      ))
+    }
+
+    if (identical(column, "Representation")) "c" else if (is.numeric(rendered[[column]])) "r" else "l"
+  }, character(1))
 }
 
 .save_table_notes <- function(df) {

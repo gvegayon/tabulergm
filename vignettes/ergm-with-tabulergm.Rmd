@@ -155,7 +155,22 @@ tabulergm_table(model, include_description = FALSE) |>
 ```
 
 The compact LaTeX snippet requires the `array`, `booktabs`, and `graphicx`
-packages for fixed-width minipage cells and figures.
+packages for multiline cells and figures. Fitted-model estimates and standard
+errors display two decimal places by default; use `digits = NULL` to retain
+full precision or set another number of decimal places.
+
+Compact-style presentation settings are carried by the table object, so the
+same layout is used for previews and saved output. `column_widths` takes named
+fractions of the table width and `figure_height` is measured in inches:
+
+```{r compact-style-layout, eval = FALSE}
+tabulergm_table(model, include_description = FALSE) |>
+  with_style_name_over_formula(
+    column_widths = c(Name = .5, Representation = .2),
+    figure_height = .8
+  ) |>
+  tabulergm_save("compact-ergm")
+```
 
 ## Inspecting a formula without a fitted model
 

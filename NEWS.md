@@ -1,4 +1,4 @@
-# tabulergm 0.3.0
+# tabulergm 0.1.9000
 
 * Fitted-model tables now display estimates and standard errors rounded to two
   decimal places by default. Use `digits` to choose another precision or
@@ -9,8 +9,6 @@
   and `figure_height` settings. Compact columns are automatic by default;
   configured fractions and inch-based figure heights are honored in HTML,
   Markdown, previews, and saved LaTeX output.
-
-# tabulergm 0.2.0
 
 * Fixed equations in compact Markdown tables so GitHub and other renderers do
   not receive double-escaped inequality operators inside TeX math.

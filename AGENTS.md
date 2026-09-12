@@ -6,6 +6,18 @@ Agents should commit completed changes in most cases unless the user asks them
 not to. When an agent commits changes, the commit message must include a
 `Co-authored-by:` trailer identifying that agent.
 
+## Versioning
+
+Use semantic versioning (`MAJOR.MINOR.PATCH`) for every package version bump:
+
+- Increment `MAJOR` for backwards-incompatible public API changes.
+- Increment `MINOR` for backwards-compatible functionality additions.
+- Increment `PATCH` for backwards-compatible bug fixes.
+
+Before committing a versioned change, update `Version` in `DESCRIPTION` and
+add a user-facing release section for that exact version at the top of
+`NEWS.md`.
+
 ## Adding or Editing ERGM Term Definitions
 
 Before touching the YAML term database (`inst/terms/`), read the standards

@@ -4,6 +4,8 @@
 \alias{tabulergm_view}
 \alias{tabulergm_view.ergm}
 \alias{tabulergm_view.formula}
+\alias{tabulergm_view.tabulergm_table}
+\alias{tabulergm_view.tabulergm_kable}
 \title{View an ERGM Table in the RStudio Viewer or System Browser}
 \usage{
 tabulergm_view(object, ...)
@@ -11,10 +13,14 @@ tabulergm_view(object, ...)
 \method{tabulergm_view}{ergm}(object, ...)
 
 \method{tabulergm_view}{formula}(object, ...)
+
+\method{tabulergm_view}{tabulergm_table}(object, ...)
+
+\method{tabulergm_view}{tabulergm_kable}(object, ...)
 }
 \arguments{
-\item{object}{A fitted \link[ergm:ergm]{ergm} object or an ERGM
-\link[stats:formula]{formula}.}
+\item{object}{A fitted \link[ergm:ergm]{ergm} object, an ERGM
+\link[stats:formula]{formula}, or a table returned by \code{\link[=tabulergm_table]{tabulergm_table()}}.}
 
 \item{...}{Additional arguments passed to \code{\link[=tabulergm_table]{tabulergm_table()}}.}
 }
@@ -31,6 +37,12 @@ viewer pane when available, falling back to \code{\link[utils:browseURL]{utils::
 \item \code{tabulergm_view(ergm)}: Method for fitted ergm objects.
 
 \item \code{tabulergm_view(formula)}: Method for formula objects.
+
+\item \code{tabulergm_view(tabulergm_table)}: Method for table data frames returned by
+\code{\link[=tabulergm_table]{tabulergm_table()}}.
+
+\item \code{tabulergm_view(tabulergm_kable)}: Method for formatted tables returned by
+\code{\link[=tabulergm_table]{tabulergm_table()}}.
 
 }}
 \examples{

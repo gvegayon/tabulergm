@@ -6,8 +6,8 @@
 #' the result easier to reuse in another document or project.
 #'
 #' @param object A fitted [ergm][ergm::ergm] object, an ERGM
-#'   [formula][stats::formula], or a `data.frame` returned by
-#'   [tabulergm_table()].
+#'   [formula][stats::formula], or a table object returned by
+#'   [tabulergm_table()] (including a styled `knitr_kable`).
 #' @param path Target directory. It is created recursively when needed.
 #' @param format Character vector of output formats to write. Supported values
 #'   are `"markdown"` and `"latex"`. By default both are written.
@@ -18,7 +18,8 @@
 #' @param overwrite Logical. Overwrite existing table code and image files?
 #'   Default `TRUE`.
 #' @param latex_image_width Character width passed to `\\includegraphics` in
-#'   LaTeX output. Default `"0.7in"`.
+#'   plain LaTeX output. Default `"0.7in"`; the compact name-over-formula
+#'   style uses its fixed `0.4\\linewidth` layout.
 #' @param ... For `ergm` and `formula` methods, additional arguments passed to
 #'   [tabulergm_table()]. For the `data.frame` method, additional arguments are
 #'   ignored.
@@ -29,7 +30,7 @@
 #'   \item{files}{Named character vector of written table code files.}
 #'   \item{figures}{Named character vector of copied figure files, where names
 #'     are the relative paths used in the table.}
-#'   \item{table}{The data frame used for export, with `figure` paths rewritten
+#'   \item{table}{The data frame used for export, with figure paths rewritten
 #'     to the copied relative paths.}
 #' }
 #'
@@ -124,12 +125,22 @@ tabulergm_save.data.frame <- function(
     "latex_image_width"
   )
 
-  saved <- .copy_save_figures(
-    object,
-    path = path,
-    images_dir = images_dir,
-    overwrite = overwrite
-  )
+  spec <- attr(object, "tabulergm_spec", exact = TRUE)
+  saved <- if (is.null(spec)) {
+    .copy_save_figures(
+      object,
+      path = path,
+      images_dir = images_dir,
+      overwrite = overwrite
+    )
+  } else {
+    .copy_save_table_spec(
+      spec,
+      path = path,
+      images_dir = images_dir,
+      overwrite = overwrite
+    )
+  }
 
   files <- .write_save_tables(
     saved$table,
@@ -148,10 +159,18 @@ tabulergm_save.data.frame <- function(
   ))
 }
 
+#' @describeIn tabulergm_save Method for formatted tables returned by
+#'   `tabulergm_table()`.
+#' @export
+tabulergm_save.tabulergm_kable <- function(object, path, ...) {
+  spec <- .table_spec_from(object)
+  tabulergm_save.data.frame(.render_table_spec_data(spec), path = path, ...)
+}
+
 #' @export
 tabulergm_save.default <- function(object, path, ...) {
   stop(
-    "'object' must be an ergm object, a formula, or a data frame returned by ",
+    "'object' must be an ergm object, a formula, or a table returned by ",
     "tabulergm_table().",
     call. = FALSE
   )
@@ -301,6 +320,38 @@ tabulergm_save.default <- function(object, path, ...) {
   list(table = df, figures = saved_figures)
 }
 
+# Copy figures from a table specification before materializing its active
+# presentation style. Canonical term names remain available for stable file
+# names even when a style has replaced the visible `term` column.
+.copy_save_table_spec <- function(spec, path, images_dir, overwrite) {
+  figures <- data.frame(
+    term = as.character(spec$parsed[["term"]]),
+    figure = as.character(spec$parsed[["figure"]]),
+    stringsAsFactors = FALSE
+  )
+  copied <- .copy_save_figures(figures, path, images_dir, overwrite)
+
+  spec$parsed[["figure"]] <- copied$table[["figure"]]
+  if ("figure" %in% names(spec$data)) {
+    spec$data[["figure"]] <- copied$table[["figure"]]
+  }
+
+  list(
+    table = .render_table_spec_data(spec),
+    figures = copied$figures
+  )
+}
+
+.render_table_spec_data <- function(spec) {
+  display <- .materialize_table_spec(spec)
+  .attach_table_spec(
+    display$df,
+    spec,
+    citations = display$citations,
+    table_class = "tabulergm_table"
+  )
+}
+
 .build_figure_destinations <- function(sources, df, figures, path, images_dir) {
   used_stems <- character(0)
   absolute <- character(length(sources))
@@ -408,6 +459,11 @@ tabulergm_save.default <- function(object, path, ...) {
 }
 
 .render_save_markdown <- function(df) {
+  spec <- attr(df, "tabulergm_spec", exact = TRUE)
+  if (!is.null(spec) && identical(spec$style, "name_over_formula")) {
+    return(.render_save_name_over_formula_markdown(df, spec))
+  }
+
   notes <- .save_table_notes(df)
   citation_notes <- .save_citation_notes(df, "markdown")
   df <- .preprocess_columns(df, "markdown", copy_figures = FALSE)
@@ -424,6 +480,11 @@ tabulergm_save.default <- function(object, path, ...) {
 }
 
 .render_save_latex <- function(df, latex_image_width) {
+  spec <- attr(df, "tabulergm_spec", exact = TRUE)
+  if (!is.null(spec) && identical(spec$style, "name_over_formula")) {
+    return(.render_save_name_over_formula_latex(df, spec))
+  }
+
   notes <- .save_table_notes(df)
   citation_notes <- .save_citation_notes(df, "latex")
   df <- .preprocess_latex_columns(df, latex_image_width = latex_image_width)
@@ -436,6 +497,80 @@ tabulergm_save.default <- function(object, path, ...) {
       "",
       sprintf("\\emph{Note: %s}", paste(notes, collapse = " "))
     )
+  }
+  if (length(citation_notes) > 0L) {
+    code <- c(
+      code,
+      "",
+      paste(sprintf("\\emph{%s}", citation_notes), collapse = " \\\\\n")
+    )
+  }
+  code
+}
+
+.render_save_name_over_formula_markdown <- function(df, spec) {
+  display <- .materialize_table_spec(spec)
+  rendered <- .format_name_over_formula(
+    display,
+    requested_format = "markdown",
+    figures_dir = NULL,
+    citations = display$citations,
+    spec = spec
+  )
+  as.character(rendered)
+}
+
+.render_save_name_over_formula_latex <- function(df, spec) {
+  display <- .materialize_table_spec(spec)
+  rendered <- display$df
+  labels <- display$labels
+  math <- display$math
+  figures <- as.character(rendered[["Representation"]])
+
+  has_math <- nzchar(trimws(math))
+  rendered[["Name"]] <- .escape_latex_text(labels)
+  rendered[["Name"]][has_math] <- paste0(
+    "\\begin{minipage}{\\linewidth}",
+    .escape_latex_text(labels[has_math]),
+    "\\\\$", trimws(math[has_math]), "$\\end{minipage}"
+  )
+
+  has_figure <- !is.na(figures) & nzchar(figures)
+  rendered[["Representation"]] <- ""
+  rendered[["Representation"]][has_figure] <- sprintf(
+    "\\includegraphics[width=.4\\linewidth]{%s}",
+    .forward_slash_path(figures[has_figure])
+  )
+
+  text_cols <- vapply(rendered, is.character, logical(1))
+  text_cols[names(text_cols) %in% c("Name", "Representation")] <- FALSE
+  rendered[text_cols] <- lapply(rendered[text_cols], .escape_latex_text)
+
+  extra_names <- names(rendered)[-(1:2)]
+  extra_align <- vapply(rendered[extra_names], function(x) {
+    if (is.numeric(x)) "r" else "l"
+  }, character(1))
+  align <- c(
+    ">{\\raggedright\\arraybackslash}m{.5\\linewidth}",
+    ">{\\centering\\arraybackslash}m{.2\\linewidth}",
+    extra_align
+  )
+  code <- c(
+    "% Requires: \\usepackage{array,booktabs,graphicx}",
+    as.character(knitr::kable(
+      rendered,
+      format = "latex",
+      row.names = FALSE,
+      escape = FALSE,
+      booktabs = TRUE,
+      align = align
+    ))
+  )
+
+  notes <- .term_drawing_notes(display$terms)
+  citation_notes <- .render_citation_notes(display$citations, "latex")
+  if (length(notes) > 0L) {
+    code <- c(code, "", sprintf("\\emph{Note: %s}", paste(notes, collapse = " ")))
   }
   if (length(citation_notes) > 0L) {
     code <- c(

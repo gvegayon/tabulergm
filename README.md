@@ -188,6 +188,55 @@ tabulergm_table(
   with_style_name_over_formula()
 ```
 
+<table class="tabulergm-table tabulergm-style-name-over-formula"
+data-quarto-postprocess="true">
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th data-quarto-table-cell-role="th"
+style="text-align: left; width: 50%;">Name</th>
+<th data-quarto-table-cell-role="th"
+style="text-align: center; width: 20%;">Representation</th>
+<th style="text-align: right;"
+data-quarto-table-cell-role="th">estimate</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">se</th>
+<th style="text-align: right;"
+data-quarto-table-cell-role="th">pvalue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Number of edges<br />
+<span class="tabulergm-formula">$$\sum_{i&lt;j} y_{ij}$$</span></td>
+<td class="tabulergm-representation" style="text-align: center;"><img
+src="man/figures/README-edges.png" style="width:40%;max-width:100%;"
+alt="term figure" /></td>
+<td style="text-align: right;">-1.6507266</td>
+<td style="text-align: right;">0.3179320</td>
+<td style="text-align: right;">0.0000002</td>
+</tr>
+<tr>
+<td style="text-align: left;">Triangles (frank1986)<br />
+<span class="tabulergm-formula">$$\sum_{i&lt;j&lt;k} y_{ij} y_{jk}
+y_{ik}$$</span></td>
+<td class="tabulergm-representation" style="text-align: center;"><img
+src="man/figures/README-triangle.png" style="width:40%;max-width:100%;"
+alt="term figure" /></td>
+<td style="text-align: right;">0.1082377</td>
+<td style="text-align: right;">0.5183562</td>
+<td style="text-align: right;">0.8345969</td>
+</tr>
+</tbody>
+</table>
+
+<p class="tabulergm-citations"><em>[frank1986] <a href="https://doi.org/10.1080/01621459.1986.10478342">doi:10.1080/01621459.1986.10478342</a></em></p>
+
 Styled Markdown uses an HTML table so multi-line name/formula cells
 render reliably in HTML-capable Markdown outputs. Use the plain style
 for a portable pipe table in non-HTML targets. `with_style_plain()`

@@ -1,6 +1,8 @@
 on:
   push:
     branches: [main, master]
+  pull_request:
+    branches: [main, master]
   release:
     types: [published]
   workflow_dispatch:
@@ -11,6 +13,8 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  pull-requests: write
+  actions: read
 
 concurrency:
   group: pages
@@ -44,12 +48,29 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = TRUE)
         shell: Rscript {0}
 
-      - name: Upload artifact
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v4
         with:
           path: docs
 
+      - name: Upload PR artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: pkgdown-site
+          path: docs
+
+      - name: Post artifact link to PR
+        if: github.event_name == 'pull_request'
+        uses: CDCgov/cfa-actions/post-artifact@v1.2.0
+        with:
+          artifact-name: pkgdown-site
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
+          message: 'Thank you for your contribution @${{ github.actor }} :rocket:! The pkgdown site preview is ready for review :point_right: [Download here]({ artifact-url }) :point_left:!'
+
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
 

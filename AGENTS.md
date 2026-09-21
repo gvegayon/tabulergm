@@ -8,15 +8,22 @@ not to. When an agent commits changes, the commit message must include a
 
 ## Versioning
 
-Use semantic versioning (`MAJOR.MINOR.PATCH`) for every package version bump:
+Use semantic versioning (`MAJOR.MINOR.PATCH`) for every package release:
 
 - Increment `MAJOR` for backwards-incompatible public API changes.
 - Increment `MINOR` for backwards-compatible functionality additions.
 - Increment `PATCH` for backwards-compatible bug fixes.
 
-Before committing a versioned change, update `Version` in `DESCRIPTION` and
-add a user-facing release section for that exact version at the top of
-`NEWS.md`.
+Between releases, `DESCRIPTION` carries a development version (`X.Y.9000`).
+Every PR appends its bullets to that *same* section at the top of
+`NEWS.md` instead of bumping `Version` or opening a new section; only bump
+`Version` (and start a fresh `NEWS.md` section) when actually cutting a
+release.
+
+Keep NEWS entries short — one sentence per bullet in most cases. Link the
+PR or issue (`(#NN)`) for anything that needs more context rather than
+spelling it out inline. Group bullets under `## User-facing changes` and
+`## Internal changes`; omit a subsection that has no entries.
 
 ## Testing
 

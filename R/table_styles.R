@@ -87,7 +87,9 @@ with_style_name_over_formula <- function(
     data = data,
     parsed = parsed,
     format = format,
-    figures_dir = figures_dir,
+    # Normalized once so the plain route (.preprocess_columns()) and the
+    # styled route (.format_name_over_formula()) resolve the same directory.
+    figures_dir = .validate_figures_dir(figures_dir),
     style = "plain",
     digits = .validate_table_digits(digits),
     layout = list(column_widths = NULL, figure_height = NULL)

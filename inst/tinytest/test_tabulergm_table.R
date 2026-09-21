@@ -263,6 +263,13 @@ if (requireNamespace("network", quietly = TRUE) &&
       ), info = "manual figures_dir rewrites markdown figure path")
     })
 
+    # An invalid figures_dir is reported when the table is built (#35), not
+    # deferred until something renders Markdown.
+    expect_error(
+      tabulergm_table(~ edges, directed = FALSE, figures_dir = 42),
+      "figures_dir"
+    )
+
     # ---- markdown figures use the active knitr figure path ----------------
 
     local({

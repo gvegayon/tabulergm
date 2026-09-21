@@ -18,6 +18,23 @@ Before committing a versioned change, update `Version` in `DESCRIPTION` and
 add a user-facing release section for that exact version at the top of
 `NEWS.md`.
 
+## Testing
+
+Prefer integration tests over unit tests. Drive the exported API
+(`tabulergm_table()`, `with_style_*()`, `parse_ergm_model()`,
+`tabulergm_save()`) and assert on what a user can observe — the returned
+table, the emitted markup, the files written to disk — rather than reaching
+into internal helpers with `:::`. One test that reproduces the real scenario
+is worth more than several that pin an internal's contract, and it keeps
+refactoring cheap.
+
+Platform-specific behavior can be left to CI. The `R CMD check` matrix in
+`.github/workflows/R-CMD-check.yaml` covers Windows, macOS, and Ubuntu
+(release and devel), so a Windows-only code path does not need a synthetic
+local stand-in.
+
+Tests live in `inst/tinytest/` and run through `tests/tinytest.R`.
+
 ## Adding or Editing ERGM Term Definitions
 
 Before touching the YAML term database (`inst/terms/`), read the standards

@@ -424,6 +424,12 @@ tabulergm_table.formula <- function(
 #' @return A copy of `df` with `figure` paths rewritten when files are copied.
 #' @noRd
 .copy_markdown_figures <- function(df, figures_dir = NULL) {
+  # Normalized here as well as at specification time: this is the funnel
+  # every figure-copying route passes through, and an unnormalized Windows
+  # path reaching .manual_markdown_figure_target() resolves against the
+  # working directory (#35).
+  figures_dir <- .validate_figures_dir(figures_dir)
+
   figures <- as.character(df[["figure"]])
   has_figure <- !is.na(figures) & nzchar(figures) & file.exists(figures)
 
@@ -703,11 +709,15 @@ tabulergm_table.formula <- function(
 
 #' Test whether a path is absolute
 #'
+#' Windows paths may use either separator, so the path is normalized to
+#' forward slashes first. This also makes UNC paths (`\\server\share`)
+#' register as absolute.
+#'
 #' @param path Character path.
 #' @return Logical scalar.
 #' @noRd
 .is_absolute_path <- function(path) {
-  grepl("^(/|[A-Za-z]:/)", path)
+  grepl("^(/|[A-Za-z]:/)", .forward_slash_path(path))
 }
 
 

@@ -211,6 +211,27 @@ if (requireNamespace("network", quietly = TRUE) &&
   nm_row <- result2[result2$term == "nodematch", ]
   expect_equal(nm_row$attribute[1], "group")
 
+  # Coefficient statistics are computed directly from coef()/vcov() rather
+  # than summary(), so ergm's per-minor-release compatibility warning does
+  # not fire for fits made with an older ergm (#35). Parity against
+  # summary() guards the computation against future ergm changes.
+  summary_coefs <- suppressWarnings(summary(fit2))[["coefficients"]]
+  expect_equal(unname(result2$estimate), unname(summary_coefs[, "Estimate"]))
+  expect_equal(unname(result2$se), unname(summary_coefs[, "Std. Error"]))
+  expect_equal(unname(result2$pvalue), unname(summary_coefs[, "Pr(>|z|)"]))
+  expect_equal(result2$coef_name, rownames(summary_coefs))
+
+  # Parsing a shipped fit is quiet. On CI, where ergm is newer than the one
+  # that produced inst/fits/, this is what catches the warning.
+  expect_silent(parse_ergm_model(fit))
+
+  # The same for a fit from a much older ergm, so the check also bites on a
+  # machine whose ergm predates the warning.
+  stale_fit <- fit
+  stale_fit[["ergm_version"]] <- as.package_version("3.9.4")
+  expect_silent(parse_ergm_model(stale_fit))
+  expect_equal(parse_ergm_model(stale_fit)$estimate, result$estimate)
+
   # parse_ergm_model works with nodematch diff=TRUE (multiple coefficients)
   result3 <- parse_ergm_model(fit3)
   # With diff=TRUE, nodematch expands to one coef per level

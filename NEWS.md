@@ -1,3 +1,24 @@
+# tabulergm 0.1.9001
+
+* Fixed `figures_dir` handling on Windows. `tempfile()` returns backslash
+  paths there, and a styled Markdown table re-rendered with
+  `with_style_name_over_formula()` treated such a path as relative, pasting
+  it onto the working directory and failing with "Could not create figure
+  directory". Figure directories are now normalized once, when the table
+  specification is built, so the plain and styled render routes always
+  resolve the same location. Backslash and UNC paths are recognized as
+  absolute.
+
+* `figures_dir` is now validated when the table is built rather than when it
+  is first rendered, so an invalid value is reported by `tabulergm_table()`
+  instead of by a later `with_style_*()` call.
+
+* Fitted-model tables no longer emit `ergm`'s "This object was fit with
+  'ergm' version ... or earlier" warning. `parse_ergm_model()` computes
+  estimates, standard errors, and p-values directly from `coef()` and
+  `vcov()` instead of `summary()`, reproducing the same coefficient table
+  without the per-release compatibility warning.
+
 # tabulergm 0.1.9000
 
 * Fitted-model tables now display estimates and standard errors rounded to two

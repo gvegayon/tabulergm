@@ -8,15 +8,39 @@ not to. When an agent commits changes, the commit message must include a
 
 ## Versioning
 
-Use semantic versioning (`MAJOR.MINOR.PATCH`) for every package version bump:
+Use semantic versioning (`MAJOR.MINOR.PATCH`) for every package release:
 
 - Increment `MAJOR` for backwards-incompatible public API changes.
 - Increment `MINOR` for backwards-compatible functionality additions.
 - Increment `PATCH` for backwards-compatible bug fixes.
 
-Before committing a versioned change, update `Version` in `DESCRIPTION` and
-add a user-facing release section for that exact version at the top of
-`NEWS.md`.
+Between releases, `DESCRIPTION` carries a development version (`X.Y.9000`).
+Every PR appends its bullets to that *same* section at the top of
+`NEWS.md` instead of bumping `Version` or opening a new section; only bump
+`Version` (and start a fresh `NEWS.md` section) when actually cutting a
+release.
+
+Keep NEWS entries short — one sentence per bullet in most cases. Link the
+PR or issue (`(#NN)`) for anything that needs more context rather than
+spelling it out inline. Group bullets under `## User-facing changes` and
+`## Internal changes`; omit a subsection that has no entries.
+
+## Testing
+
+Prefer integration tests over unit tests. Drive the exported API
+(`tabulergm_table()`, `with_style_*()`, `parse_ergm_model()`,
+`tabulergm_save()`) and assert on what a user can observe — the returned
+table, the emitted markup, the files written to disk — rather than reaching
+into internal helpers with `:::`. One test that reproduces the real scenario
+is worth more than several that pin an internal's contract, and it keeps
+refactoring cheap.
+
+Platform-specific behavior can be left to CI. The `R CMD check` matrix in
+`.github/workflows/R-CMD-check.yaml` covers Windows, macOS, and Ubuntu
+(release and devel), so a Windows-only code path does not need a synthetic
+local stand-in.
+
+Tests live in `inst/tinytest/` and run through `tests/tinytest.R`.
 
 ## Adding or Editing ERGM Term Definitions
 

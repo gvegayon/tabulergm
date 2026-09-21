@@ -165,6 +165,35 @@ if (requireNamespace("knitr", quietly = TRUE)) {
   )
   expect_true(file.exists(file.path(figures_dir, "edges.png")))
 
+  # Regression (#35): the styled Markdown re-render must resolve figures_dir
+  # exactly like the plain render. On Windows a backslash path was judged
+  # relative and pasted onto getwd(), failing with "Could not create figure
+  # directory"; on POSIX a backslash is a legal filename character, so
+  # instead of erroring the styled render silently created a *second*,
+  # literally-named directory.
+  local({
+    out_dir <- tempfile("tabulergm-style-winpath-")
+    dir.create(out_dir, recursive = TRUE)
+    old_wd <- setwd(out_dir)
+    on.exit(setwd(old_wd), add = TRUE)
+
+    md <- tabulergm_table(
+      ~ edges,
+      directed = FALSE,
+      include_description = FALSE,
+      format = "markdown",
+      figures_dir = "assets\\figs"
+    )
+    styled <- with_style_name_over_formula(md)
+    styled_text <- paste(as.character(styled), collapse = "\n")
+
+    expect_true(grepl('src="assets/figs/edges.png"', styled_text, fixed = TRUE))
+    expect_true(file.exists(file.path(out_dir, "assets", "figs", "edges.png")))
+    expect_equal(list.files(out_dir), "assets",
+      info = "the styled re-render must not create a second figure directory"
+    )
+  })
+
   # Styled data frames and kables can be exported and viewed through pipes.
   out_dir <- tempfile("tabulergm-style-save-")
   saved <- tabulergm_save(compact, out_dir)

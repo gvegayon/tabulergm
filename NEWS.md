@@ -1,55 +1,47 @@
 # tabulergm 0.1.9000
 
-* Fitted-model tables now display estimates and standard errors rounded to two
-  decimal places by default. Use `digits` to choose another precision or
-  `digits = NULL` to retain full precision; the table specification always
-  retains the original values.
+## User-facing changes
 
-* `with_style_name_over_formula()` now supports persistent `column_widths`
-  and `figure_height` settings. Compact columns are automatic by default;
-  configured fractions and inch-based figure heights are honored in HTML,
-  Markdown, previews, and saved LaTeX output.
+* Fixed a crash rendering a styled Markdown table (`with_style_name_over_formula()`)
+  with a Windows-style `figures_dir`; `figures_dir` is now also validated when
+  the table is built rather than when it is first rendered (#35).
 
-* Fixed equations in compact Markdown tables so GitHub and other renderers do
-  not receive double-escaped inequality operators inside TeX math.
+* Fixed spurious `ergm` version-compatibility warnings when tabulating a
+  fitted model (#35).
 
-* Added composable table styles. Pipe a result through
-  `with_style_name_over_formula()` to stack curated titles over formulae and
-  place figures in a compact representation column, or use
-  `with_style_plain()` to restore the default layout. Styles work with data
-  frames, HTML/Markdown tables, saved Markdown/LaTeX snippets, and previews.
-  Compact Markdown uses raw HTML to support multi-line cells; compact LaTeX
-  snippets require `array`, `booktabs`, and `graphicx`.
+* Fitted-model tables round estimates and standard errors to 2 decimal
+  places by default; control this with `digits` (#34).
 
-* Formula tables now honor `include_description = FALSE`.
+* `with_style_name_over_formula()` gained persistent `column_widths` and
+  `figure_height` settings, honored across HTML, Markdown, previews, and
+  saved LaTeX (#34).
 
-* Term YAML files under `inst/terms/` now accept optional `title`,
-  `description`, and `citation` entries. All 35 shipped terms carry a
-  curated title and description; previously the table showed the `ergm`
-  database's `title` in the `description` column.
+* Fixed equations in compact Markdown tables so GitHub and other renderers
+  do not receive double-escaped inequality operators inside TeX math (#30).
 
-* Tables gained a `title` column, shown with
-  `tabulergm_table(include_title = TRUE)`. The `description` column now
-  holds prose describing the term rather than the short `ergm` title.
+* Added composable table styles: `with_style_name_over_formula()` stacks
+  curated titles over formulae with figures in a compact column;
+  `with_style_plain()` restores the default layout (#30).
 
-* Any metadata field can be replaced per table with the new `override`
-  arguments of `tabulergm_table()`, `parse_ergm_model()`, and
-  `parse_ergm_formula()`: `override.title`, `override.desc`,
-  `override.math`, `override.figure`, and `override.citation` take named
-  vectors keyed by term, and `override` takes a list for editing several
-  fields at once. Override names also match coefficient names, so a single
-  expanded coefficient can be targeted.
+* Formula tables now honor `include_description = FALSE` (#30).
 
-* Terms with a `citation` now show a `(key)` marker next to their
-  description, with the matching `[key] identifier` line appended below
-  HTML, Markdown, and LaTeX tables. Citations record a DOI, arXiv id,
-  PubMed id, or URL so readers can import the reference into their own
-  bibliography. `gwesp`, `gwdsp`, `gwdegree`, `altkstar`, `triangle`,
-  `mutual`, `nodematch`, `b1nodematch`, and `b2nodematch` ship with
-  citations.
+* Term YAML files gained optional `title`, `description`, and `citation`
+  fields; all 35 shipped terms now carry curated text instead of falling
+  back to the `ergm` database's (#24).
+
+* Tables gained a `title` column (`include_title = TRUE`); `description`
+  now holds prose instead of the short `ergm` title (#24).
+
+* Added `override`/`override.*` arguments to `tabulergm_table()`,
+  `parse_ergm_model()`, and `parse_ergm_formula()` for replacing any
+  metadata field per term or per coefficient (#24).
+
+* Cited terms now show a `(key)` marker with the matching reference listed
+  below the table; nine shipped terms carry a citation (#24).
 
 * Fixed an incorrect arXiv identifier in `?"tabulergm-notation"`: 1412.1151
-  was cited for Bomiriya et al. (2014) but belongs to an unrelated paper.
+  was cited for Bomiriya et al. (2014) but belongs to an unrelated paper
+  (#24).
 
 # tabulergm 0.1.0
 

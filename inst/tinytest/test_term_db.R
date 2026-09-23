@@ -182,43 +182,19 @@ expect_equal(length(notes), 0L)
 
 # ---- Caching mechanism -------------------------------------------------------
 
-# .get_cached_figure draws and caches a figure
-yml_path <- tabulergm:::.find_term_yml("edges", directed = FALSE)
-# Use bool handlers to prevent YAML 1.1 coercion of 'y' key to TRUE
-yml_data <- yaml::read_yaml(yml_path, handlers = list(
-  "bool#yes" = function(x) x,
-  "bool#no"  = function(x) x
-))
-result <- tabulergm:::.get_cached_figure(
-  yml_path, yml_data$plot, directed = FALSE
-)
-expect_true(!is.na(result))
+# Figures are drawn once and cached; directedness is part of the cache key
+edges_fig <- function(directed = FALSE) {
+  parse_ergm_formula(y ~ edges, directed = directed)$figure
+}
+result <- edges_fig()
 expect_true(file.exists(result))
-
-# Calling again returns the cached path (same file)
-result2 <- tabulergm:::.get_cached_figure(
-  yml_path, yml_data$plot, directed = FALSE
-)
-expect_equal(result, result2)
-
-# Directedness is part of the cache key, even for the same YAML file
-result_directed <- tabulergm:::.get_cached_figure(
-  yml_path, yml_data$plot, directed = TRUE
-)
-expect_false(identical(result, result_directed))
+expect_equal(edges_fig(), result)
+expect_false(identical(edges_fig(directed = TRUE), result))
 
 # Changing the plot function invalidates the cache: rendering the same
 # term with a custom plotfun must invoke it and produce a new cache entry
 local({
-  yml_path <- tabulergm:::.find_term_yml("edges", directed = FALSE)
-  yml_data <- yaml::read_yaml(yml_path, handlers = list(
-    "bool#yes" = function(x) x,
-    "bool#no"  = function(x) x
-  ))
-
-  default_fig <- tabulergm:::.get_cached_figure(
-    yml_path, yml_data$plot, directed = FALSE
-  )
+  default_fig <- edges_fig()
 
   called <- new.env(parent = emptyenv())
   called$n <- 0L
@@ -229,25 +205,18 @@ local({
   old <- tabulergm_set_plotfun(custom)
   on.exit(tabulergm_set_plotfun(old), add = TRUE)
 
-  custom_fig <- tabulergm:::.get_cached_figure(
-    yml_path, yml_data$plot, directed = FALSE
-  )
+  custom_fig <- edges_fig()
   expect_equal(called$n, 1L)
   expect_false(identical(default_fig, custom_fig))
 
   # Re-rendering with the same custom function hits its own cache
-  custom_fig2 <- tabulergm:::.get_cached_figure(
-    yml_path, yml_data$plot, directed = FALSE
-  )
+  expect_equal(edges_fig(), custom_fig)
   expect_equal(called$n, 1L)
-  expect_equal(custom_fig, custom_fig2)
 
   # Restoring the previous function starts a fresh cache generation,
   # so the figure is redrawn rather than served from the custom entry
   tabulergm_set_plotfun(old)
-  restored_fig <- tabulergm:::.get_cached_figure(
-    yml_path, yml_data$plot, directed = FALSE
-  )
+  restored_fig <- edges_fig()
   expect_false(identical(restored_fig, custom_fig))
   expect_true(file.exists(restored_fig))
 })
@@ -430,8 +399,8 @@ expect_equal(unique(tab$title), c(
   "Geometrically weighted in-degree distribution",
   "Geometrically weighted out-degree distribution",
   "Attribute popularity", "Attribute sociality", "In-stars", "Out-stars",
-  "Geometrically weighted edgewise shared partners (typed)",
-  "Geometrically weighted dyadwise shared partners (typed)",
+  "Geometrically weighted edgewise shared partners",
+  "Geometrically weighted dyadwise shared partners",
   "k-stars", "Isolates", "Degree count"
 ))
 expect_true(all(c("gwidegree (hunter2007)", "dgwesp (hunter2007)",
@@ -443,8 +412,20 @@ res <- parse_ergm_formula(
   y ~ gwb1degree(0.5, fixed = TRUE) + gwb2degree(0.5, fixed = TRUE) +
     concurrent
 )
-expect_equal(res$citation, c("hunter2007", "hunter2007", "morris1997"))
+expect_equal(res$citation, c("hunter2007", "hunter2007", NA))
+expect_true(grepl("D^{B_1}_i(y)", res$math[1], fixed = TRUE))
+expect_true(grepl("D^{B_2}_i(y)", res$math[2], fixed = TRUE))
 expect_true(all(file.exists(res$figure)))
+# `alias:` entries reuse another term's YAML: dgwesp/dgwdsp are gwesp/gwdsp
+aliased <- parse_ergm_formula(
+  y ~ gwesp(0.5, fixed = TRUE) + dgwesp(0.5, fixed = TRUE) +
+    gwdsp(0.5, fixed = TRUE) + dgwdsp(0.5, fixed = TRUE),
+  directed = TRUE
+)
+fields <- c("title", "description", "math", "figure", "citation")
+expect_equal(aliased[2, fields], aliased[1, fields], check.attributes = FALSE)
+expect_equal(aliased[4, fields], aliased[3, fields], check.attributes = FALSE)
+
 iso <- parse_ergm_formula(y ~ isolates, directed = TRUE)
 expect_true(grepl("y_{ji}", iso$math, fixed = TRUE))
 expect_true(file.exists(iso$figure))

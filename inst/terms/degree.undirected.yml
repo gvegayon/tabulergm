@@ -5,7 +5,7 @@ description: >-
   explicitly.
 plot:
   edgelist: "0->1, 0->2"
-  vcolor: [black, black, black]
+  vcolor: [black, gray, gray]
   vsize: [1.0, .5, .5]
   ecolor: black
   layout:

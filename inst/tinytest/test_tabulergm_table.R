@@ -112,7 +112,7 @@ if (requireNamespace("network", quietly = TRUE) &&
   expect_equal(result$term, "edges")
   expect_true(is.numeric(result$estimate))
   expect_true(is.numeric(result$se))
-  expect_true(is.numeric(result$pvalue))
+  expect_true(is.character(result$pvalue))
 
   parsed <- parse_ergm_model(fit)
   result_spec <- attr(result, "tabulergm_spec", exact = TRUE)
@@ -128,7 +128,7 @@ if (requireNamespace("network", quietly = TRUE) &&
   expect_equal(result$se, round(parsed$se, 2),
     info = "default table standard errors use two decimal places"
   )
-  expect_equal(result$pvalue, round(parsed$pvalue, 2),
+  expect_equal(result$pvalue, sprintf("%.2f", parsed$pvalue),
     info = "default table p-values use two decimal places"
   )
 
@@ -141,6 +141,23 @@ if (requireNamespace("network", quietly = TRUE) &&
   expect_equal(result_full$se, parsed$se)
   expect_equal(result_full$pvalue, parsed$pvalue)
   expect_null(attr(result_full, "tabulergm_spec", exact = TRUE)$digits)
+
+  # p-values below the display precision show as a bound, never as zero, in
+  # the returned table and in the rendered Markdown and LaTeX
+  fit_small_p <- readRDS(
+    system.file("fits", "fit_nodemix.rds", package = "tabulergm")
+  )
+  expect_true(parse_ergm_model(fit_small_p)$pvalue[1] < 0.001)
+  expect_equal(tabulergm_table(fit_small_p)$pvalue,
+    c("<0.01", "0.67", "0.11", "0.15"))
+  expect_equal(tabulergm_table(fit_small_p, digits = 3)$pvalue[1], "<0.001")
+  md <- paste(tabulergm_table(fit_small_p, format = "markdown"),
+    collapse = "\n")
+  expect_true(grepl("| &lt;0.01|", md, fixed = TRUE))
+  saved_p <- tabulergm_save(fit_small_p, tempfile("tabulergm-pvalue-"),
+    format = "latex")
+  tex <- paste(readLines(saved_p$files[["latex"]]), collapse = "\n")
+  expect_true(grepl("\\textless{}0.01", tex, fixed = TRUE))
 
   expect_error(tabulergm_table(fit, digits = -1), "digits")
   expect_error(tabulergm_table(fit, digits = 1.5), "digits")

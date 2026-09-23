@@ -7,6 +7,13 @@
   `istar`, `ostar`, `isolates`, `degree`, `concurrent`, `dgwesp`, and
   `dgwdsp` (#37).
 
+* The `gwdegree` and `altkstar` drawings now follow the color and size
+  legend (#37).
+
+* Term YAML files can reuse another term's entry with `alias: <term>`,
+  overriding individual fields as needed; `dgwesp` and `dgwdsp` are now
+  aliases of `gwesp` and `gwdsp` (#37).
+
 * Term drawings can include isolated nodes: a lone node id in the YAML
   `edgelist` (e.g. `"1->2, 0"`) adds a node with no ties (#37).
 
@@ -17,9 +24,9 @@
 * Fixed spurious `ergm` version-compatibility warnings when tabulating a
   fitted model (#35).
 
-* Fitted-model tables round all numeric columns (estimates, standard errors,
-  and p-values) to 2 decimal places by default; control this with `digits`
-  (#34).
+* Fitted-model tables round estimates and standard errors to 2 decimal
+  places by default and format p-values to match, showing values below the
+  display precision as `<0.01`; control this with `digits` (#34, #37).
 
 * `with_style_name_over_formula()` gained persistent `column_widths` and
   `figure_height` settings, honored across HTML, Markdown, previews, and

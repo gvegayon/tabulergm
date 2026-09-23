@@ -195,7 +195,8 @@ tabulergm_get_plotfun <- function() {
 #' corresponding element is `NA` (or an empty list for citations), and the
 #' caller falls back to the `ergm` term database. The figure is drawn using
 #' the active plot function (see [tabulergm_get_plotfun()]) and cached based
-#' on the YAML file's MD5 hash, the active plot function, and directedness.
+#' on the resolved plot specification, the active plot function, and
+#' directedness.
 #'
 #' @param term_name A single term name (character).
 #' @param directed Logical or `NULL`.
@@ -217,12 +218,7 @@ tabulergm_get_plotfun <- function() {
     return(empty)
   }
 
-  # YAML 1.1 treats bare 'y', 'n', 'yes', 'no' as booleans.  Identity
-  # handlers keep them as literal strings so 'y' layout keys parse correctly.
-  yml_data <- yaml::read_yaml(yml_path, handlers = list(
-    "bool#yes" = function(x) x,
-    "bool#no"  = function(x) x
-  ))
+  yml_data <- .read_term_yml(yml_path)
 
   out <- empty
   out$title       <- .yml_text(yml_data$title)
@@ -249,9 +245,54 @@ tabulergm_get_plotfun <- function() {
 
   if (!is.null(yml_data$plot)) {
     is_directed <- grepl("\\.directed\\.yml$", yml_path)
-    out$figure <- .get_cached_figure(yml_path, yml_data$plot, is_directed)
+    out$figure <- .get_cached_figure(yml_data$plot, is_directed)
   }
 
+  out
+}
+
+#' Read a term YAML file, resolving aliases
+#'
+#' A file with an `alias: <term>` entry reuses `<term>`'s YAML file of the
+#' same directedness. Every other entry in the alias file overrides the
+#' target's: `plot` is merged field by field, and any other entry replaces
+#' the target's entry of the same name. Aliases may chain.
+#'
+#' @param yml_path Path to the YAML file.
+#' @param seen Paths already visited, used to detect alias cycles.
+#' @return The parsed (and resolved) YAML data as a list.
+#' @noRd
+.read_term_yml <- function(yml_path, seen = character(0)) {
+  # YAML 1.1 treats bare 'y', 'n', 'yes', 'no' as booleans.  Identity
+  # handlers keep them as literal strings so 'y' layout keys parse correctly.
+  yml_data <- yaml::read_yaml(yml_path, handlers = list(
+    "bool#yes" = function(x) x,
+    "bool#no"  = function(x) x
+  ))
+
+  alias <- yml_data$alias
+  if (is.null(alias)) return(yml_data)
+
+  seen <- c(seen, normalizePath(yml_path))
+  dir_str <- if (grepl("\\.directed\\.yml$", yml_path)) "directed" else "undirected"
+  target <- file.path(dirname(yml_path), paste0(alias, ".", dir_str, ".yml"))
+  if (!file.exists(target)) {
+    stop(sprintf("%s is an alias of '%s', but %s does not exist.",
+      basename(yml_path), alias, basename(target)), call. = FALSE)
+  }
+  if (normalizePath(target) %in% seen) {
+    stop(sprintf("Alias cycle detected at %s.", basename(yml_path)),
+      call. = FALSE)
+  }
+
+  out <- .read_term_yml(target, seen)
+  for (key in setdiff(names(yml_data), "alias")) {
+    if (identical(key, "plot") && is.list(out$plot)) {
+      out$plot[names(yml_data$plot)] <- yml_data$plot
+    } else {
+      out[[key]] <- yml_data[[key]]
+    }
+  }
   out
 }
 
@@ -294,11 +335,7 @@ tabulergm_get_plotfun <- function() {
     yml_path <- .find_term_yml(tn, directed = NULL)
     if (is.null(yml_path)) next
 
-    yml_data <- yaml::read_yaml(yml_path, handlers = list(
-      "bool#yes" = function(x) x,
-      "bool#no"  = function(x) x
-    ))
-    plot_data <- yml_data$plot
+    plot_data <- .read_term_yml(yml_path)$plot
     if (is.null(plot_data)) next
 
     vcolor <- tolower(as.character(plot_data$vcolor))
@@ -360,15 +397,14 @@ tabulergm_get_plotfun <- function() {
 #' figures for closures whose source is identical but whose captured
 #' data differ.
 #'
-#' @param yml_path Path to the YAML file.
 #' @param plot_data List with plot specifications (`edgelist`, `vcolor`,
 #'   `ecolor`, `layout`).
 #' @param directed Logical. Whether the network is directed.
 #' @return Path to the cached PNG file, or `NA_character_` on failure.
 #' @noRd
-.get_cached_figure <- function(yml_path, plot_data, directed) {
+.get_cached_figure <- function(plot_data, directed) {
   key <- paste(
-    unname(tools::md5sum(yml_path)),
+    .object_hash(plot_data),
     .plotfun_hash(tabulergm_get_plotfun()),
     .tabulergm_env$plotfun_generation,
     if (directed) "directed" else "undirected",
@@ -394,10 +430,12 @@ tabulergm_get_plotfun <- function() {
 #' @param plotfun A function.
 #' @return A 32-character MD5 string.
 #' @noRd
-.plotfun_hash <- function(plotfun) {
+.plotfun_hash <- function(plotfun) .object_hash(plotfun)
+
+.object_hash <- function(x) {
   tf <- tempfile()
   on.exit(unlink(tf), add = TRUE)
-  writeLines(deparse(plotfun), tf)
+  writeLines(deparse(x), tf)
   unname(tools::md5sum(tf))
 }
 

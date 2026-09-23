@@ -22,6 +22,28 @@ expression). No parser changes are needed for new terms: files are
 looked up by term name.
 }
 
+\section{Aliases}{
+
+When two \code{ergm} term names share an implementation (e.g. \code{dgwesp} and
+\code{gwesp}), the second file can reuse the first with an \code{alias} entry
+instead of copying it. The target is the file of the same directedness,
+so \code{dgwesp.directed.yml} below reuses \code{gwesp.directed.yml}:
+
+\preformatted{alias: gwesp
+}
+
+Any other entry in an alias file overrides the target's. \code{plot} is
+merged field by field (so an alias can, say, recolor one vertex without
+repeating the whole drawing); every other entry replaces the target's
+entry of the same name:
+
+\preformatted{alias: gwesp
+title: Typed geometrically weighted edgewise shared partners
+plot:
+  ecolor: gray
+}
+}
+
 \section{Titles, descriptions, and citations}{
 
 \code{title} is a short label, capitalized like a heading and without a
@@ -75,8 +97,10 @@ parameterization, e.g.
 \eqn{\exp(\tau) \sum_i [1 - (1 - e^{-\tau})^i] EP_i(y)}, where the
 exponent is the summation index and \eqn{EP_i}, \eqn{DP_i}, and
 \eqn{D_i} are the edgewise shared partner, dyadwise shared partner,
-and degree counts; directed degree counts carry a superscript,
-\eqn{D^{\mathrm{in}}_i} and \eqn{D^{\mathrm{out}}_i}.
+and degree counts; directed and bipartite degree counts carry a
+superscript naming what is counted, \eqn{D^{\mathrm{in}}_i},
+\eqn{D^{\mathrm{out}}_i}, \eqn{D^{B_1}_i}, and \eqn{D^{B_2}_i}
+(e.g. the number of first-mode nodes with degree \eqn{i}).
 \item Degree-based terms write node degree as a sum of ties, e.g.
 \eqn{\sum_{j \neq i} y_{ij}} (undirected) or
 \eqn{\sum_{j \neq i} y_{ji}} (in-degree), and k-star counts as

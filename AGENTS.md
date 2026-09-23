@@ -81,6 +81,11 @@ documented in `R/notation.R` (help topic `?"tabulergm-notation"`). In short:
   guessing one.
 - **Wiring**: no parser changes needed — files are looked up by term name
   as `inst/terms/<term>.<directed|undirected>.yml`.
+- **Aliases**: when two term names share an implementation in `ergm`
+  (e.g. `dgwesp`/`gwesp`), write `alias: <term>` instead of copying the
+  file; any other entry in the alias file overrides the target's (`plot`
+  merges field by field). Confirm the shared implementation in the
+  `ergm` source first.
 - **Coverage**: add the new terms to an end-to-end test in
   `inst/tinytest/test_term_db.R` (see [Testing](#testing)), and
   add the term to the dictionary tables in `README.qmd` and

@@ -117,16 +117,16 @@ expect_true(is.na(data$title))
 expect_true(is.na(data$description))
 expect_equal(length(data$citation), 0L)
 
-# Every shipped term file defines a title and a description
-for (f in list.files(system.file("terms", package = "tabulergm"),
-                     full.names = TRUE)) {
-  yml <- yaml::read_yaml(f, handlers = list(
-    "bool#yes" = function(x) x, "bool#no" = function(x) x
-  ))
-  expect_true(is.character(yml$title) && nzchar(yml$title),
-    info = sprintf("title present in %s", basename(f)))
-  expect_true(is.character(yml$description) && nzchar(yml$description),
-    info = sprintf("description present in %s", basename(f)))
+# Every shipped term file (aliases included) yields a curated title and
+# description
+for (f in list.files(system.file("terms", package = "tabulergm"))) {
+  term <- sub("\\.(un)?directed\\.yml$", "", f)
+  res <- parse_ergm_formula(stats::as.formula(paste("y ~", term)),
+    directed = grepl("\\.directed\\.yml$", f))
+  expect_true(!is.na(res$title) && nzchar(res$title),
+    info = sprintf("title present for %s", f))
+  expect_true(!is.na(res$description) && nzchar(res$description),
+    info = sprintf("description present for %s", f))
 }
 
 

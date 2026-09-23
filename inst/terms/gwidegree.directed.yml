@@ -8,7 +8,7 @@ citation:
     doi: 10.1016/j.socnet.2006.08.005
 plot:
   edgelist: "1->0, 2->0, 3->0"
-  vcolor: [black, black, black, black]
+  vcolor: [gray, gray, gray, black]
   vsize: [.5, .5, .5, 1.0]
   ecolor: black
   layout:

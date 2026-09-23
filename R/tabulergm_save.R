@@ -468,7 +468,7 @@ tabulergm_save.default <- function(object, path, ...) {
   citation_notes <- .save_citation_notes(df, "markdown")
   df <- .preprocess_columns(df, "markdown", copy_figures = FALSE)
   code <- as.character(knitr::kable(df, format = "pipe", row.names = FALSE,
-    escape = FALSE
+    escape = FALSE, align = .kable_align(df)
   ))
   if (length(notes) > 0L) {
     code <- c(code, "", paste0("*Note: ", paste(notes, collapse = " "), "*"))
@@ -489,7 +489,7 @@ tabulergm_save.default <- function(object, path, ...) {
   citation_notes <- .save_citation_notes(df, "latex")
   df <- .preprocess_latex_columns(df, latex_image_width = latex_image_width)
   code <- as.character(knitr::kable(df, format = "latex", row.names = FALSE,
-    escape = FALSE
+    escape = FALSE, align = .kable_align(df)
   ))
   if (length(notes) > 0L) {
     code <- c(
@@ -588,7 +588,7 @@ tabulergm_save.default <- function(object, path, ...) {
     if (length(width) > 0L && !is.na(width)) {
       align <- if (identical(column, "Representation")) {
         "\\centering"
-      } else if (is.numeric(rendered[[column]])) {
+      } else if (.is_numeric_display_column(rendered, column)) {
         "\\raggedleft"
       } else {
         "\\raggedright"
@@ -599,7 +599,13 @@ tabulergm_save.default <- function(object, path, ...) {
       ))
     }
 
-    if (identical(column, "Representation")) "c" else if (is.numeric(rendered[[column]])) "r" else "l"
+    if (identical(column, "Representation")) {
+      "c"
+    } else if (.is_numeric_display_column(rendered, column)) {
+      "r"
+    } else {
+      "l"
+    }
   }, character(1))
 }
 
@@ -655,7 +661,9 @@ tabulergm_save.default <- function(object, path, ...) {
     "{"  = "\\{",
     "}"  = "\\}",
     "~"  = "\\textasciitilde{}",
-    "^"  = "\\textasciicircum{}"
+    "^"  = "\\textasciicircum{}",
+    "<"  = "\\textless{}",
+    ">"  = "\\textgreater{}"
   )
 
   x <- vapply(x, function(value) {

@@ -9,7 +9,7 @@ citation:
     doi: 10.1016/j.socnet.2006.08.005
 plot:
   edgelist: "0->3, 1->3, 2->3"
-  vcolor: [black, black, black, black]
+  vcolor: [gray, gray, gray, black]
   vshape: [square, square, square, circle]
   vsize: [.5, .5, .5, 1.0]
   ecolor: black
@@ -17,4 +17,4 @@ plot:
     x: [0, 0, 0, 1]
     y: [.5, 0, -.5, 0]
 math: |
-  \exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D_i(y)
+  \exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{B_2}_i(y)

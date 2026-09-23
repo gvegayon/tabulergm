@@ -27,13 +27,19 @@ spelling it out inline. Group bullets under `## User-facing changes` and
 
 ## Testing
 
-Prefer integration tests over unit tests. Drive the exported API
-(`tabulergm_table()`, `with_style_*()`, `parse_ergm_model()`,
-`tabulergm_save()`) and assert on what a user can observe — the returned
-table, the emitted markup, the files written to disk — rather than reaching
-into internal helpers with `:::`. One test that reproduces the real scenario
-is worth more than several that pin an internal's contract, and it keeps
-refactoring cheap.
+Write end-to-end tests, not unit tests, and keep the suite lean. Drive the
+exported API (`tabulergm_table()`, `with_style_*()`, `parse_ergm_model()`,
+`parse_ergm_formula()`, `tabulergm_save()`) the way a user would — ideally
+from a fitted model or a formula — and assert on what a user can observe:
+the returned table, the emitted markup, the files written to disk. Do not
+add tests that call internal helpers with `:::`. One test that reproduces
+the real scenario is worth more than several that pin an internal's
+contract, and it keeps refactoring cheap.
+
+Lean means: cover a new feature with one or two end-to-end tests that
+exercise it together, not one test per function, argument, or file. For
+example, a batch of new terms goes into a single fitted-model (or formula)
+table and is checked in one pass, not term by term.
 
 Platform-specific behavior can be left to CI. The `R CMD check` matrix in
 `.github/workflows/R-CMD-check.yaml` covers Windows, macOS, and Ubuntu
@@ -75,7 +81,13 @@ documented in `R/notation.R` (help topic `?"tabulergm-notation"`). In short:
   guessing one.
 - **Wiring**: no parser changes needed — files are looked up by term name
   as `inst/terms/<term>.<directed|undirected>.yml`.
-- **Coverage**: add tinytest cases in `inst/tinytest/test_term_db.R`, and
+- **Aliases**: when two term names share an implementation in `ergm`
+  (e.g. `dgwesp`/`gwesp`), write `alias: <term>` instead of copying the
+  file; any other entry in the alias file overrides the target's (`plot`
+  merges field by field). Confirm the shared implementation in the
+  `ergm` source first.
+- **Coverage**: add the new terms to an end-to-end test in
+  `inst/tinytest/test_term_db.R` (see [Testing](#testing)), and
   add the term to the dictionary tables in `README.qmd` and
   `vignettes/ergm-with-tabulergm.Rmd` (hidden coverage-check chunks fail
   the render if a term is missing).

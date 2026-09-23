@@ -6,7 +6,14 @@
 
 <!-- badges: start -->
 
+[![CRAN
+status](https://www.r-pkg.org/badges/version/tabulergm)](https://CRAN.R-project.org/package=tabulergm)
 [![R-CMD-check](https://github.com/gvegayon/tabulergm/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gvegayon/tabulergm/actions/workflows/R-CMD-check.yaml)
+[![CRANlogs
+downloads](https://cranlogs.r-pkg.org/badges/grand-total/tabulergm)](https://cran.r-project.org/package=tabulergm)
+[![License:
+MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/gvegayon/tabulergm/blob/main/LICENSE.md)
+[![status](https://tinyverse.netlify.app/badge/tabulergm)](https://CRAN.R-project.org/package=tabulergm)
 <!-- badges: end -->
 
 The `tabulergm` package provides an easy way to generate
@@ -218,7 +225,7 @@ src="man/figures/README-edges.png" style="width:40%;max-width:100%;"
 alt="term figure" /></td>
 <td style="text-align: right;">-1.65</td>
 <td style="text-align: right;">0.32</td>
-<td style="text-align: right;">0.0000002</td>
+<td style="text-align: right;">&lt;0.01</td>
 </tr>
 <tr>
 <td style="text-align: left;">Triangles (frank1986)<br />
@@ -229,7 +236,7 @@ src="man/figures/README-triangle.png" style="width:40%;max-width:100%;"
 alt="term figure" /></td>
 <td style="text-align: right;">0.11</td>
 <td style="text-align: right;">0.52</td>
-<td style="text-align: right;">0.8345969</td>
+<td style="text-align: right;">0.83</td>
 </tr>
 </tbody>
 </table>
@@ -256,10 +263,11 @@ tabulergm_table(model, include_description = FALSE) |>
 The compact LaTeX export uses `array`, `booktabs`, and `graphicx` for
 its multiline cells and figures.
 
-Fitted-model tables round estimates and standard errors to two decimal
-places by default while retaining full-precision values in the attached
-table specification. Set `digits = NULL` to display full precision, or
-choose a different number of decimal places:
+Fitted-model tables round every numeric column (estimates, standard
+errors, and p-values) to two decimal places by default while retaining
+full-precision values in the attached table specification. Set
+`digits = NULL` to display full precision, or choose a different number
+of decimal places:
 
 ``` r
 tabulergm_table(model, digits = 3)
@@ -285,7 +293,7 @@ tabulergm_table(model, include_description = FALSE) |>
 We can also embed the table in quarto/Rmarkdown. The table below covers
 every term currently included in `tabulergm`’s term dictionary; terms
 with both directed and undirected definitions (`edges`, `gwesp`,
-`gwdsp`) display the undirected version:
+`gwdsp`, `isolates`) display the undirected version:
 
 ``` r
 dictionary_terms <- network ~
@@ -296,7 +304,13 @@ dictionary_terms <- network ~
   nodecov("attr") + absdiff("attr") + edgecov("cov") +
   transitiveties + cyclicalties +
   nodeicov("attr") + nodeocov("attr") +
+  gwidegree(0.5, fixed = TRUE) + gwodegree(0.5, fixed = TRUE) +
+  nodeifactor("attr") + nodeofactor("attr") +
+  kstar(2) + istar(2) + ostar(2) +
+  isolates + degree(1) + concurrent +
+  dgwesp(0.5, fixed = TRUE) + dgwdsp(0.5, fixed = TRUE) +
   gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+  gwb1degree(0.5, fixed = TRUE) + gwb2degree(0.5, fixed = TRUE) +
   b1factor("type") + b2factor("group") +
   b1nodematch("type") + b2nodematch("group") +
   b1starmix(2, "type") + b2starmix(2, "group")
@@ -323,8 +337,22 @@ tabulergm_table(dictionary_terms, format = "markdown")
 | cyclicalties | <img src="man/figures/README-cyclicalties.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}\left(\exists k : y_{jk} y_{ki} = 1\right)$ | Counts the ties that take part in at least one cycle, capturing generalized exchange rather than hierarchy. |
 | nodeicov | <img src="man/figures/README-nodeicov.png" width="80" /> | $\sum_{i \neq j} y_{ij} x_j$ | Sums the receiving node’s attribute value over all ties, measuring how a quantitative attribute drives incoming ties (popularity). |
 | nodeocov | <img src="man/figures/README-nodeocov.png" width="80" /> | $\sum_{i \neq j} y_{ij} x_i$ | Sums the sending node’s attribute value over all ties, measuring how a quantitative attribute drives outgoing ties (activity). |
+| gwidegree | <img src="man/figures/README-gwidegree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{\mathrm{in}}_i(y)$ | Summarizes the in-degree distribution with geometrically decreasing weights. Captures whether incoming ties concentrate on a few popular nodes or spread evenly across receivers. (hunter2007) |
+| gwodegree | <img src="man/figures/README-gwodegree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{\mathrm{out}}_i(y)$ | Summarizes the out-degree distribution with geometrically decreasing weights. Captures whether outgoing ties concentrate on a few highly active nodes or spread evenly across senders. (hunter2007) |
+| nodeifactor | <img src="man/figures/README-nodeicov.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}(x_j = k)$ | Counts the incoming ties received by nodes at each level of a categorical attribute, measuring how popular nodes with that value are as receivers. |
+| nodeofactor | <img src="man/figures/README-nodeocov.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}(x_i = k)$ | Counts the outgoing ties sent by nodes at each level of a categorical attribute, measuring how active nodes with that value are as senders. |
+| kstar | <img src="man/figures/README-kstar.png" width="80" /> | $\sum_{i} \binom{\sum_{j \neq i} y_{ij}}{k}$ | Counts the sets of k ties that share a common node, a Markov dependence measure of degree heterogeneity. Pass several values of k to include one statistic per star size. (frank1986) |
+| istar | <img src="man/figures/README-istar.png" width="80" /> | $\sum_{j} \binom{\sum_{i \neq j} y_{ij}}{k}$ | Counts the sets of k incoming ties that share a common receiver, capturing the spread of in-degrees (popularity). Pass several values of k to include one statistic per star size. |
+| ostar | <img src="man/figures/README-ostar.png" width="80" /> | $\sum_{i} \binom{\sum_{j \neq i} y_{ij}}{k}$ | Counts the sets of k outgoing ties that share a common sender, capturing the spread of out-degrees (activity). Pass several values of k to include one statistic per star size. |
+| isolates | <img src="man/figures/README-isolates.png" width="80" /> | $\sum_{i} \mathbf{1}\left(\sum_{j \neq i} y_{ij} = 0\right)$ | Counts the nodes with no ties, capturing an excess (or shortage) of isolated nodes relative to the rest of the degree distribution. |
+| degree | <img src="man/figures/README-degree.png" width="80" /> | $\sum_{i} \mathbf{1}\left(\sum_{j \neq i} y_{ij} = d\right)$ | Counts the nodes with exactly d ties. Pass several values of d to include one statistic per degree, e.g. to model low-degree nodes explicitly. |
+| concurrent | <img src="man/figures/README-gwdegree.png" width="80" /> | $\sum_{i} \mathbf{1}\left(\sum_{j \neq i} y_{ij} \geq 2\right)$ | Counts the nodes with two or more ties, the number of actors holding concurrent partnerships. Common in models of sexual networks and disease transmission. |
+| dgwesp | <img src="man/figures/README-dgwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP^{\mathrm{OTP}}_i(y)$ | Directed counterpart of the edgewise shared partner statistic, measuring transitive closure with geometrically decreasing weights. Outgoing two-paths are counted by default; the term’s type argument selects a different two-path orientation. (hunter2007) |
+| dgwdsp | <img src="man/figures/README-dgwdsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP^{\mathrm{OTP}}_i(y)$ | Directed counterpart of the dyadwise shared partner statistic, computed over every ordered dyad. Outgoing two-paths are counted by default; the term’s type argument selects a different two-path orientation. (hunter2007) |
 | gwb1dsp | <img src="man/figures/README-gwb1dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_2}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes how many second-mode nodes each pair of first-mode nodes has in common, weighting additional shared partners geometrically less. |
 | gwb2dsp | <img src="man/figures/README-gwb2dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes how many first-mode nodes each pair of second-mode nodes has in common, weighting additional shared partners geometrically less. |
+| gwb1degree | <img src="man/figures/README-gwb1degree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_2}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{B_1}_i(y)$ | Summarizes the degree distribution of first-mode nodes with geometrically decreasing weights. Captures whether ties to the second mode concentrate on a few highly active first-mode nodes or spread evenly across them. (hunter2007) |
+| gwb2degree | <img src="man/figures/README-gwb2degree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{B_2}_i(y)$ | Summarizes the degree distribution of second-mode nodes with geometrically decreasing weights. Captures whether ties from the first mode concentrate on a few popular second-mode nodes or spread evenly across them. (hunter2007) |
 | b1factor | <img src="man/figures/README-b1factor.png" width="80" /> | $\sum_{i \in B_1} \sum_{j \in B_2} y_{ij} \mathbf{1}(x_i = k)$ | Counts the ties incident on first-mode nodes at each level of a categorical attribute, measuring how active those nodes are. |
 | b2factor | <img src="man/figures/README-b2factor.png" width="80" /> | $\sum_{i \in B_1} \sum_{j \in B_2} y_{ij} \mathbf{1}(x_j = k)$ | Counts the ties incident on second-mode nodes at each level of a categorical attribute, measuring how active those nodes are. |
 | b1nodematch | <img src="man/figures/README-b1nodematch.png" width="80" /> | $\sum_{k\in B_2} \sum_{i<j \in B_1} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Counts the pairs of first-mode nodes that share an attribute value and are both tied to the same second-mode node. The alpha and beta discount parameters temper the count when nodes share many partners. (bomiriya2014) |

@@ -1,0 +1,14 @@
+title: Attribute sociality
+description: >-
+  Counts the outgoing ties sent by nodes at each level of a categorical
+  attribute, measuring how active nodes with that value are as senders.
+plot:
+  edgelist: "0->1, 0->2, 0->3"
+  vcolor: [orange, gray, gray, gray]
+  vsize: [1.0, .5, .5, .5]
+  ecolor: black
+  layout:
+    x: [0, 1, 1, 1]
+    y: [0, .5, 0, -.5]
+math: |
+  \sum_{i \neq j} y_{ij} \mathbf{1}(x_i = k)

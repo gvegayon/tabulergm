@@ -1,6 +1,21 @@
-# tabulergm 0.1.9000
+# tabulergm 0.2.0
 
 ## User-facing changes
+
+* Added 14 terms to the term dictionary: `gwidegree`, `gwodegree`,
+  `gwb1degree`, `gwb2degree`, `nodeifactor`, `nodeofactor`, `kstar`,
+  `istar`, `ostar`, `isolates`, `degree`, `concurrent`, `dgwesp`, and
+  `dgwdsp` (#37).
+
+* The `gwdegree` and `altkstar` drawings now follow the color and size
+  legend (#37).
+
+* Term YAML files can reuse another term's entry with `alias: <term>`,
+  overriding individual fields as needed; `dgwesp` and `dgwdsp` are now
+  aliases of `gwesp` and `gwdsp` (#37).
+
+* Term drawings can include isolated nodes: a lone node id in the YAML
+  `edgelist` (e.g. `"1->2, 0"`) adds a node with no ties (#37).
 
 * Fixed a crash rendering a styled Markdown table (`with_style_name_over_formula()`)
   with a Windows-style `figures_dir`; `figures_dir` is now also validated when
@@ -10,7 +25,8 @@
   fitted model (#35).
 
 * Fitted-model tables round estimates and standard errors to 2 decimal
-  places by default; control this with `digits` (#34).
+  places by default and format p-values to match, showing values below the
+  display precision as `<0.01`; control this with `digits` (#34, #37).
 
 * `with_style_name_over_formula()` gained persistent `column_widths` and
   `figure_height` settings, honored across HTML, Markdown, previews, and
@@ -26,7 +42,7 @@
 * Formula tables now honor `include_description = FALSE` (#30).
 
 * Term YAML files gained optional `title`, `description`, and `citation`
-  fields; all 35 shipped terms now carry curated text instead of falling
+  fields; all shipped terms now carry curated text instead of falling
   back to the `ergm` database's (#24).
 
 * Tables gained a `title` column (`include_title = TRUE`); `description`
@@ -37,11 +53,18 @@
   metadata field per term or per coefficient (#24).
 
 * Cited terms now show a `(key)` marker with the matching reference listed
-  below the table; nine shipped terms carry a citation (#24).
+  below the table (#24).
 
 * Fixed an incorrect arXiv identifier in `?"tabulergm-notation"`: 1412.1151
   was cited for Bomiriya et al. (2014) but belongs to an unrelated paper
   (#24).
+
+## Internal changes
+
+* Added CRAN, download, license, and dependency badges to the README.
+
+* The please-bump check now also verifies that `NEWS.md` matches
+  `DESCRIPTION`.
 
 # tabulergm 0.1.0
 

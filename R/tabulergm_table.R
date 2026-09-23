@@ -29,8 +29,10 @@ tabulergm_table <- function(object, ...) {
 #' Optional columns (`title`, `description`, `math`, `attribute`) can be
 #' included via logical arguments. The `title` column, when included, is
 #' placed immediately after `term`. Estimates and standard errors are rounded
-#' for display according to `digits`, while the attached table specification
-#' retains their full-precision values.
+#' for display according to `digits`, and p-values are formatted as strings
+#' with the same number of decimal places, showing values below the display
+#' precision as an upper bound (e.g. `"<0.01"`). The attached table
+#' specification retains the full-precision values.
 #'
 #' @param include_description Logical. Include the term description column?
 #'   Default `FALSE`.
@@ -41,7 +43,9 @@ tabulergm_table <- function(object, ...) {
 #' @param include_title Logical. Include the short term-title column?
 #'   Default `FALSE`.
 #' @param digits Non-negative whole number of decimal places used to display
-#'   fitted-model estimates and standard errors. Default `2`. Use `NULL` to
+#'   every numeric column of a fitted-model table (estimates, standard
+#'   errors, and p-values; p-values below `10^-digits` display as
+#'   `"<0.01"`-style bounds). Default `2`. Use `NULL` to
 #'   retain full precision. Parsed model data always retain full precision.
 #' @param format Character. Output format: `"data.frame"` (default),
 #'   `"html"`, or `"markdown"`. HTML and Markdown output require the
@@ -258,6 +262,7 @@ tabulergm_table.formula <- function(
   if (format == "data.frame") return(df)
 
   figures_dir <- .validate_figures_dir(figures_dir)
+  df <- .escape_pvalue_html(df)
 
   # Math column: wrap non-NA values in display-math delimiters
   if ("math" %in% names(df)) {
@@ -782,7 +787,7 @@ tabulergm_table.formula <- function(
   )
 
   out <- knitr::kable(df, format = knitr_format, row.names = FALSE,
-    escape = FALSE
+    escape = FALSE, align = .kable_align(df)
   )
   .append_table_notes(out, notes, format, citation_notes, spec = spec)
 }

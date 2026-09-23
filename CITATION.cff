@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata from this file."
 type: software
 title: "tabulergm: Publication-Ready Tables and Summaries for Exponential-Family Random Graph Models"
-version: "0.1.0"
+version: "0.2.0"
 doi: "10.32614/CRAN.package.tabulergm"
 authors:
   - family-names: "Vega Yon"

@@ -1,0 +1,15 @@
+title: Degree count
+description: >-
+  Counts the nodes with exactly d ties. Pass several values of d to
+  include one statistic per degree, e.g. to model low-degree nodes
+  explicitly.
+plot:
+  edgelist: "0->1, 0->2"
+  vcolor: [black, gray, gray]
+  vsize: [1.0, .5, .5]
+  ecolor: black
+  layout:
+    x: [0, 1, 1]
+    y: [0, .5, -.5]
+math: |
+  \sum_{i} \mathbf{1}\left(\sum_{j \neq i} y_{ij} = d\right)

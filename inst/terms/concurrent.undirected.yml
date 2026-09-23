@@ -1,0 +1,15 @@
+title: Concurrency
+description: >-
+  Counts the nodes with two or more ties, the number of actors holding
+  concurrent partnerships. Common in models of sexual networks and
+  disease transmission.
+plot:
+  edgelist: "0->1, 0->2, 0->3"
+  vcolor: [black, gray, gray, gray]
+  vsize: [1.0, .5, .5, .5]
+  ecolor: black
+  layout:
+    x: [0, 1, 1, 1]
+    y: [0, .5, 0, -.5]
+math: |
+  \sum_{i} \mathbf{1}\left(\sum_{j \neq i} y_{ij} \geq 2\right)

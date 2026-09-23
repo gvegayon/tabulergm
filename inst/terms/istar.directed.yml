@@ -1,0 +1,15 @@
+title: In-stars
+description: >-
+  Counts the sets of k incoming ties that share a common receiver,
+  capturing the spread of in-degrees (popularity). Pass several values
+  of k to include one statistic per star size.
+plot:
+  edgelist: "1->0, 2->0, 3->0"
+  vcolor: [black, black, black, black]
+  vsize: [1.0, 1.0, 1.0, 1.0]
+  ecolor: black
+  layout:
+    x: [0, 0, 0, 1]
+    y: [.5, 0, -.5, 0]
+math: |
+  \sum_{j} \binom{\sum_{i \neq j} y_{ij}}{k}

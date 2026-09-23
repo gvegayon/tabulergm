@@ -224,10 +224,47 @@ with_style_name_over_formula <- function(
 .apply_table_digits <- function(data, digits) {
   if (is.null(digits)) return(data)
 
-  for (column in intersect(c("estimate", "se"), names(data))) {
-    if (is.numeric(data[[column]])) data[[column]] <- round(data[[column]], digits)
+  for (column in names(data)) {
+    if (!is.numeric(data[[column]])) next
+    data[[column]] <- if (identical(column, "pvalue")) {
+      .format_pvalues(data[[column]], digits)
+    } else {
+      round(data[[column]], digits)
+    }
   }
   data
+}
+
+# Formats p-values as fixed-decimal strings. Values that would round to zero
+# are shown as an upper bound instead (e.g. "<0.01" for two digits) so a
+# small p-value never reads as exactly zero.
+.format_pvalues <- function(p, digits) {
+  out <- formatC(p, format = "f", digits = digits)
+  threshold <- 10^(-digits)
+  small <- !is.na(p) & p < threshold
+  out[small] <- paste0("<", formatC(threshold, format = "f", digits = digits))
+  out[is.na(p)] <- NA_character_
+  out
+}
+
+# p-values are formatted as strings but are still numbers to the reader, so
+# they keep numeric (right) alignment.
+.is_numeric_display_column <- function(df, column) {
+  is.numeric(df[[column]]) || identical(column, "pvalue")
+}
+
+.kable_align <- function(df) {
+  vapply(names(df), function(column) {
+    if (.is_numeric_display_column(df, column)) "r" else "l"
+  }, character(1), USE.NAMES = FALSE)
+}
+
+# "<0.01" is passed to HTML and Markdown with escape = FALSE.
+.escape_pvalue_html <- function(df) {
+  if ("pvalue" %in% names(df) && is.character(df[["pvalue"]])) {
+    df[["pvalue"]] <- gsub("<", "&lt;", df[["pvalue"]], fixed = TRUE)
+  }
+  df
 }
 
 .validate_table_digits <- function(digits) {
@@ -337,7 +374,10 @@ with_style_name_over_formula <- function(
     "$$</span>"
   )
 
-  out <- knitr::kable(df, format = "html", row.names = FALSE, escape = FALSE)
+  df <- .escape_pvalue_html(df)
+  out <- knitr::kable(df, format = "html", row.names = FALSE, escape = FALSE,
+    align = .kable_align(df)
+  )
   lines <- as.character(out)
   colgroup <- .compact_html_colgroup(names(df), spec$layout$column_widths)
   lines <- sub(

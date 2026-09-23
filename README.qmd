@@ -1,6 +1,7 @@
 ---
 format: gfm
 embed-resources: true
+default-image-extension: ""
 ---
 
 <!-- README.md is generated from README.qmd. Please edit that file -->
@@ -19,7 +20,11 @@ devtools::load_all(".", quiet = TRUE)
 ## tabulergm <img src="man/figures/logo.png" align="right" height="200" alt="tabulergm hex sticker logo"/>
 
 <!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/tabulergm)](https://CRAN.R-project.org/package=tabulergm)
 [![R-CMD-check](https://github.com/gvegayon/tabulergm/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gvegayon/tabulergm/actions/workflows/R-CMD-check.yaml)
+[![CRANlogs downloads](https://cranlogs.r-pkg.org/badges/grand-total/tabulergm)](https://cran.r-project.org/package=tabulergm)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/gvegayon/tabulergm/blob/main/LICENSE.md)
+[![status](https://tinyverse.netlify.app/badge/tabulergm)](https://CRAN.R-project.org/package=tabulergm)
 <!-- badges: end -->
 
 The `tabulergm` package provides an easy way to generate publication-ready tables and explanatory summaries for Exponential-Random Graph Family Models [ERGMs]. Users can generate tables either directly from fitted models or by parsing a formula to inspect the available terms and their metadata. Generated tables can be incorporated into Quarto or RMarkdown documents, and can also be exported as Markdown or LaTeX snippets for use in other projects.
@@ -186,8 +191,8 @@ tabulergm_table(model, include_description = FALSE) |>
 The compact LaTeX export uses `array`, `booktabs`, and `graphicx` for its
 multiline cells and figures.
 
-Fitted-model tables round estimates and standard errors to two decimal places
-by default while retaining full-precision values in the attached table
+Fitted-model tables round every numeric column (estimates, standard errors,
+and p-values) to two decimal places by default while retaining full-precision values in the attached table
 specification. Set `digits = NULL` to display full precision, or choose a
 different number of decimal places:
 
@@ -213,8 +218,8 @@ tabulergm_table(model, include_description = FALSE) |>
 
 We can also embed the table in quarto/Rmarkdown. The table below covers every
 term currently included in `tabulergm`'s term dictionary; terms with both
-directed and undirected definitions (`edges`, `gwesp`, `gwdsp`) display the
-undirected version:
+directed and undirected definitions (`edges`, `gwesp`, `gwdsp`, `isolates`)
+display the undirected version:
 
 ```{r}
 #| label: term-dictionary
@@ -227,7 +232,13 @@ dictionary_terms <- network ~
   nodecov("attr") + absdiff("attr") + edgecov("cov") +
   transitiveties + cyclicalties +
   nodeicov("attr") + nodeocov("attr") +
+  gwidegree(0.5, fixed = TRUE) + gwodegree(0.5, fixed = TRUE) +
+  nodeifactor("attr") + nodeofactor("attr") +
+  kstar(2) + istar(2) + ostar(2) +
+  isolates + degree(1) + concurrent +
+  dgwesp(0.5, fixed = TRUE) + dgwdsp(0.5, fixed = TRUE) +
   gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+  gwb1degree(0.5, fixed = TRUE) + gwb2degree(0.5, fixed = TRUE) +
   b1factor("type") + b2factor("group") +
   b1nodematch("type") + b2nodematch("group") +
   b1starmix(2, "type") + b2starmix(2, "group")

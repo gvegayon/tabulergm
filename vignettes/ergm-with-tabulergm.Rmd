@@ -155,8 +155,8 @@ tabulergm_table(model, include_description = FALSE) |>
 ```
 
 The compact LaTeX snippet requires the `array`, `booktabs`, and `graphicx`
-packages for multiline cells and figures. Fitted-model estimates and standard
-errors display two decimal places by default; use `digits = NULL` to retain
+packages for multiline cells and figures. Fitted-model estimates, standard
+errors, and p-values display two decimal places by default; use `digits = NULL` to retain
 full precision or set another number of decimal places.
 
 Compact-style presentation settings are carried by the table object, so the
@@ -190,7 +190,7 @@ including directed variants and mode-specific bipartite terms (`b1*` terms
 summarize the first mode, and `b2*` terms summarize the second mode).
 The table below covers every term currently included in the dictionary;
 terms with both directed and undirected definitions (`edges`, `gwesp`,
-`gwdsp`) display the undirected version:
+`gwdsp`, `isolates`) display the undirected version:
 
 ```{r term-dictionary, results = "asis"}
 dictionary_terms <- network ~
@@ -201,7 +201,13 @@ dictionary_terms <- network ~
   nodecov("attr") + absdiff("attr") + edgecov("cov") +
   transitiveties + cyclicalties +
   nodeicov("attr") + nodeocov("attr") +
+  gwidegree(0.5, fixed = TRUE) + gwodegree(0.5, fixed = TRUE) +
+  nodeifactor("attr") + nodeofactor("attr") +
+  kstar(2) + istar(2) + ostar(2) +
+  isolates + degree(1) + concurrent +
+  dgwesp(0.5, fixed = TRUE) + dgwdsp(0.5, fixed = TRUE) +
   gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+  gwb1degree(0.5, fixed = TRUE) + gwb2degree(0.5, fixed = TRUE) +
   b1factor("type") + b2factor("group") +
   b1nodematch("type") + b2nodematch("group") +
   b1starmix(2, "type") + b2starmix(2, "group")

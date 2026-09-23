@@ -16,3 +16,4 @@ logo\.svg$
 ^cran-comments\.md$
 ^tabulergm\.Rcheck$
 ^CITATION\.cff$
+^\.claude$

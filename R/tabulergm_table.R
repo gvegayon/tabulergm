@@ -28,9 +28,9 @@ tabulergm_table <- function(object, ...) {
 #' `term`, `figure`, `estimate`, `se`, and `pvalue`.
 #' Optional columns (`title`, `description`, `math`, `attribute`) can be
 #' included via logical arguments. The `title` column, when included, is
-#' placed immediately after `term`. Estimates and standard errors are rounded
-#' for display according to `digits`, while the attached table specification
-#' retains their full-precision values.
+#' placed immediately after `term`. Numeric columns (estimates, standard
+#' errors, and p-values) are rounded for display according to `digits`, while
+#' the attached table specification retains their full-precision values.
 #'
 #' @param include_description Logical. Include the term description column?
 #'   Default `FALSE`.
@@ -41,7 +41,8 @@ tabulergm_table <- function(object, ...) {
 #' @param include_title Logical. Include the short term-title column?
 #'   Default `FALSE`.
 #' @param digits Non-negative whole number of decimal places used to display
-#'   fitted-model estimates and standard errors. Default `2`. Use `NULL` to
+#'   every numeric column of a fitted-model table (estimates, standard
+#'   errors, and p-values). Default `2`. Use `NULL` to
 #'   retain full precision. Parsed model data always retain full precision.
 #' @param format Character. Output format: `"data.frame"` (default),
 #'   `"html"`, or `"markdown"`. HTML and Markdown output require the

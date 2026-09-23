@@ -1,4 +1,4 @@
-# tabulergm 0.1.9000
+# tabulergm 0.2.0
 
 ## User-facing changes
 
@@ -9,8 +9,9 @@
 * Fixed spurious `ergm` version-compatibility warnings when tabulating a
   fitted model (#35).
 
-* Fitted-model tables round estimates and standard errors to 2 decimal
-  places by default; control this with `digits` (#34).
+* Fitted-model tables round all numeric columns (estimates, standard errors,
+  and p-values) to 2 decimal places by default; control this with `digits`
+  (#34).
 
 * `with_style_name_over_formula()` gained persistent `column_widths` and
   `figure_height` settings, honored across HTML, Markdown, previews, and
@@ -42,6 +43,13 @@
 * Fixed an incorrect arXiv identifier in `?"tabulergm-notation"`: 1412.1151
   was cited for Bomiriya et al. (2014) but belongs to an unrelated paper
   (#24).
+
+## Internal changes
+
+* Added CRAN, download, license, and dependency badges to the README.
+
+* The please-bump check now also verifies that `NEWS.md` matches
+  `DESCRIPTION`.
 
 # tabulergm 0.1.0
 

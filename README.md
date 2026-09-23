@@ -6,7 +6,14 @@
 
 <!-- badges: start -->
 
+[![CRAN
+status](https://www.r-pkg.org/badges/version/tabulergm)](https://CRAN.R-project.org/package=tabulergm)
 [![R-CMD-check](https://github.com/gvegayon/tabulergm/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/gvegayon/tabulergm/actions/workflows/R-CMD-check.yaml)
+[![CRANlogs
+downloads](https://cranlogs.r-pkg.org/badges/grand-total/tabulergm)](https://cran.r-project.org/package=tabulergm)
+[![License:
+MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/gvegayon/tabulergm/blob/main/LICENSE.md)
+[![status](https://tinyverse.netlify.app/badge/tabulergm)](https://CRAN.R-project.org/package=tabulergm)
 <!-- badges: end -->
 
 The `tabulergm` package provides an easy way to generate
@@ -218,7 +225,7 @@ src="man/figures/README-edges.png" style="width:40%;max-width:100%;"
 alt="term figure" /></td>
 <td style="text-align: right;">-1.65</td>
 <td style="text-align: right;">0.32</td>
-<td style="text-align: right;">0.0000002</td>
+<td style="text-align: right;">0.00</td>
 </tr>
 <tr>
 <td style="text-align: left;">Triangles (frank1986)<br />
@@ -229,7 +236,7 @@ src="man/figures/README-triangle.png" style="width:40%;max-width:100%;"
 alt="term figure" /></td>
 <td style="text-align: right;">0.11</td>
 <td style="text-align: right;">0.52</td>
-<td style="text-align: right;">0.8345969</td>
+<td style="text-align: right;">0.83</td>
 </tr>
 </tbody>
 </table>
@@ -256,10 +263,11 @@ tabulergm_table(model, include_description = FALSE) |>
 The compact LaTeX export uses `array`, `booktabs`, and `graphicx` for
 its multiline cells and figures.
 
-Fitted-model tables round estimates and standard errors to two decimal
-places by default while retaining full-precision values in the attached
-table specification. Set `digits = NULL` to display full precision, or
-choose a different number of decimal places:
+Fitted-model tables round every numeric column (estimates, standard
+errors, and p-values) to two decimal places by default while retaining
+full-precision values in the attached table specification. Set
+`digits = NULL` to display full precision, or choose a different number
+of decimal places:
 
 ``` r
 tabulergm_table(model, digits = 3)

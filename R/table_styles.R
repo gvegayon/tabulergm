@@ -224,7 +224,7 @@ with_style_name_over_formula <- function(
 .apply_table_digits <- function(data, digits) {
   if (is.null(digits)) return(data)
 
-  for (column in intersect(c("estimate", "se"), names(data))) {
+  for (column in names(data)) {
     if (is.numeric(data[[column]])) data[[column]] <- round(data[[column]], digits)
   }
   data

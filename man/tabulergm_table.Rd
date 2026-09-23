@@ -61,7 +61,8 @@ Default \code{FALSE}.}
 Default \code{FALSE}.}
 
 \item{digits}{Non-negative whole number of decimal places used to display
-fitted-model estimates and standard errors. Default \code{2}. Use \code{NULL} to
+every numeric column of a fitted-model table (estimates, standard
+errors, and p-values). Default \code{2}. Use \code{NULL} to
 retain full precision. Parsed model data always retain full precision.}
 
 \item{format}{Character. Output format: \code{"data.frame"} (default),
@@ -120,9 +121,9 @@ Calls \code{\link[=parse_ergm_model]{parse_ergm_model()}} and returns a table wi
 \code{term}, \code{figure}, \code{estimate}, \code{se}, and \code{pvalue}.
 Optional columns (\code{title}, \code{description}, \code{math}, \code{attribute}) can be
 included via logical arguments. The \code{title} column, when included, is
-placed immediately after \code{term}. Estimates and standard errors are rounded
-for display according to \code{digits}, while the attached table specification
-retains their full-precision values.
+placed immediately after \code{term}. Numeric columns (estimates, standard
+errors, and p-values) are rounded for display according to \code{digits}, while
+the attached table specification retains their full-precision values.
 
 \item \code{tabulergm_table(formula)}: Method for formula objects.
 

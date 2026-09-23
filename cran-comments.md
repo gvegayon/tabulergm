@@ -1,14 +1,14 @@
 ## Test environments
 
-* local macOS 15.0.1 (aarch64), R 4.5.1
+* local macOS 15.0 (aarch64), R 4.5.1
 * GitHub Actions: ubuntu-latest (devel, release, oldrel-1),
   macOS-latest (release), windows-latest (release)
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
+0 errors | 0 warnings | 0 notes
 
-* This is a new release.
+* This is a minor release (0.1.0 -> 0.2.0); see NEWS.md for changes.
 
 ## Notes
 

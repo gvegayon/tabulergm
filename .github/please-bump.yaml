@@ -8,4 +8,7 @@ groups:
       - data-raw/
       - DESCRIPTION
       - NAMESPACE
-    preset: r-package
+      - NEWS.md
+    rules:
+      - preset: r-package
+      - preset: r-news-titled

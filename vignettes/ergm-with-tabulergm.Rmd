@@ -155,8 +155,8 @@ tabulergm_table(model, include_description = FALSE) |>
 ```
 
 The compact LaTeX snippet requires the `array`, `booktabs`, and `graphicx`
-packages for multiline cells and figures. Fitted-model estimates and standard
-errors display two decimal places by default; use `digits = NULL` to retain
+packages for multiline cells and figures. Fitted-model estimates, standard
+errors, and p-values display two decimal places by default; use `digits = NULL` to retain
 full precision or set another number of decimal places.
 
 Compact-style presentation settings are carried by the table object, so the

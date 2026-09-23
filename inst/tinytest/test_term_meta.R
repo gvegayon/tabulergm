@@ -139,7 +139,7 @@ expect_equal(res$description[1L], yml$description)
 
 # Terms without a YAML file fall back to the ergm database, which supplies
 # a title and a (longer) description
-res <- parse_ergm_formula(~ kstar(2), directed = FALSE)
+res <- parse_ergm_formula(~ twopath, directed = FALSE)
 expect_false(is.na(res$title[1L]))
 expect_false(is.na(res$description[1L]))
 expect_true(is.na(res$citation[1L]))

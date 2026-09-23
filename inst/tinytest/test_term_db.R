@@ -46,8 +46,6 @@ yml_test_cases <- list(
   list(term = "triangle", directed = FALSE, pattern = "triangle\\.undirected\\.yml$"),
   list(term = "gwb1dsp", directed = FALSE, pattern = "gwb1dsp\\.undirected\\.yml$"),
   list(term = "gwb2dsp", directed = FALSE, pattern = "gwb2dsp\\.undirected\\.yml$"),
-  list(term = "gwb1degree", directed = FALSE, pattern = "gwb1degree\\.undirected\\.yml$"),
-  list(term = "gwb2degree", directed = FALSE, pattern = "gwb2degree\\.undirected\\.yml$"),
   list(term = "b1factor", directed = FALSE, pattern = "b1factor\\.undirected\\.yml$"),
   list(term = "b2factor", directed = FALSE, pattern = "b2factor\\.undirected\\.yml$"),
   list(term = "b1nodematch", directed = FALSE, pattern = "b1nodematch\\.undirected\\.yml$"),
@@ -121,8 +119,7 @@ data <- tabulergm:::.get_term_yml_data("triangle", directed = FALSE)
 expect_false(is.na(data$math))
 
 # .get_term_yml_data reads bipartite term math
-for (term in c("gwb1dsp", "gwb2dsp", "gwb1degree", "gwb2degree",
-               "b1factor", "b2factor",
+for (term in c("gwb1dsp", "gwb2dsp", "b1factor", "b2factor",
                "b1nodematch", "b2nodematch", "b1starmix", "b2starmix")) {
   data <- tabulergm:::.get_term_yml_data(term, directed = FALSE)
   expect_false(is.na(data$math),
@@ -391,11 +388,11 @@ expect_false(is.na(result3$math[result3$term == "edges"]))
 expect_false(is.na(result3$math[result3$term == "gwesp"]))
 
 # Unknown terms still have NA math
-f3b <- y ~ edges + kstar(2)
+f3b <- y ~ edges + twopath
 result3b <- parse_ergm_formula(f3b)
 expect_false(is.na(result3b$math[result3b$term == "edges"]))
-# kstar has no YAML file, so math stays NA
-expect_true(is.na(result3b$math[result3b$term == "kstar"]))
+# twopath has no YAML file, so math stays NA
+expect_true(is.na(result3b$math[result3b$term == "twopath"]))
 
 # Bipartite terms have YAML data
 f4 <- y ~ gwb1dsp(0.5, fixed = TRUE) + b1factor("type") + b2nodematch("group") +
@@ -407,25 +404,50 @@ expect_false(is.na(result4$math[result4$term == "b2nodematch"]))
 expect_false(is.na(result4$math[result4$term == "b1starmix"]))
 expect_false(is.na(result4$math[result4$term == "b2starmix"]))
 
-# Geometrically weighted bipartite degree terms are tabulated from a formula
-# with their curated title, math, figure, and citation
-f4b <- y ~ gwb1degree(0.5, fixed = TRUE) + gwb2degree(0.5, fixed = TRUE)
-result4b <- parse_ergm_formula(f4b)
-for (term in c("gwb1degree", "gwb2degree")) {
-  row <- result4b[result4b$term == term, ]
-  expect_equal(nrow(row), 1L, info = sprintf("one row for %s", term))
-  expect_true(grepl("^Geometrically weighted degree distribution", row$title),
-    info = sprintf("curated title for %s", term))
-  expect_true(grepl("D_i(y)", row$math, fixed = TRUE),
-    info = sprintf("math found for %s", term))
-  expect_false(is.na(row$figure), info = sprintf("figure found for %s", term))
-  expect_equal(row$citation, "hunter2007",
-    info = sprintf("citation found for %s", term))
-}
-expect_true(grepl("n_{B_2}", result4b$math[result4b$term == "gwb1degree"],
-  fixed = TRUE))
-expect_true(grepl("n_{B_1}", result4b$math[result4b$term == "gwb2degree"],
-  fixed = TRUE))
+# ---- Terms added in #37 ------------------------------------------------------
+
+# Fitted models: every new term's coefficients get the curated title and a
+# rendered figure, and cited terms carry their citation marker
+data(sampson, package = "ergm")
+data(florentine, package = "ergm")
+fit_new <- function(f) suppressMessages(suppressWarnings(
+  ergm::ergm(f, estimate = "MPLE")
+))
+tab_dir <- tabulergm_table(fit_new(
+  samplike ~ edges + gwidegree(0.5, fixed = TRUE) +
+    gwodegree(0.5, fixed = TRUE) + nodeifactor("group") +
+    nodeofactor("group") + istar(2) + ostar(2) +
+    dgwesp(0.5, fixed = TRUE, type = "OTP") +
+    dgwdsp(0.5, fixed = TRUE, type = "ITP")
+), include_title = TRUE)
+tab_und <- tabulergm_table(fit_new(
+  flomarriage ~ edges + kstar(2) + isolates + degree(1)
+), include_title = TRUE)
+tab <- rbind(tab_dir, tab_und)
+expect_true(all(file.exists(tab$figure)))
+expect_equal(unique(tab$title), c(
+  "Number of edges",
+  "Geometrically weighted in-degree distribution",
+  "Geometrically weighted out-degree distribution",
+  "Attribute popularity", "Attribute sociality", "In-stars", "Out-stars",
+  "Geometrically weighted edgewise shared partners (typed)",
+  "Geometrically weighted dyadwise shared partners (typed)",
+  "k-stars", "Isolates", "Degree count"
+))
+expect_true(all(c("gwidegree (hunter2007)", "dgwesp (hunter2007)",
+                  "kstar (frank1986)") %in% tab$term))
+
+# Formula-only terms: bipartite degree, concurrency, and the directed
+# isolates definition (whose drawing contains an isolated node)
+res <- parse_ergm_formula(
+  y ~ gwb1degree(0.5, fixed = TRUE) + gwb2degree(0.5, fixed = TRUE) +
+    concurrent
+)
+expect_equal(res$citation, c("hunter2007", "hunter2007", "morris1997"))
+expect_true(all(file.exists(res$figure)))
+iso <- parse_ergm_formula(y ~ isolates, directed = TRUE)
+expect_true(grepl("y_{ji}", iso$math, fixed = TRUE))
+expect_true(file.exists(iso$figure))
 
 # Key covariate and structural terms have YAML data
 f5 <- y ~ gwdsp(0.5, fixed = TRUE) + gwdegree(0.5, fixed = TRUE) +

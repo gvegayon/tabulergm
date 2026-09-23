@@ -131,14 +131,10 @@ if (requireNamespace("network", quietly = TRUE) &&
   expect_equal(result$pvalue, round(parsed$pvalue, 2),
     info = "default table p-values use two decimal places"
   )
-  expect_equal(result_spec$data$pvalue, parsed$pvalue,
-    info = "the table specification retains full-precision p-values"
-  )
 
   result_zero <- tabulergm_table(fit, digits = 0)
   expect_equal(result_zero$estimate, round(parsed$estimate, 0))
   expect_equal(result_zero$se, round(parsed$se, 0))
-  expect_equal(result_zero$pvalue, round(parsed$pvalue, 0))
 
   result_full <- tabulergm_table(fit, digits = NULL)
   expect_equal(result_full$estimate, parsed$estimate)

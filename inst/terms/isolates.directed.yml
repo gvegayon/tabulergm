@@ -1,0 +1,14 @@
+title: Isolates
+description: >-
+  Counts the nodes that neither send nor receive any tie, capturing an
+  excess (or shortage) of isolated nodes.
+plot:
+  edgelist: "1->2->3, 0"
+  vcolor: [gray, gray, gray, black]
+  vsize: [.5, .5, .5, 1.0]
+  ecolor: gray
+  layout:
+    x: [.6, 1, .6, 0]
+    y: [.5, 0, -.5, 0]
+math: |
+  \sum_{i} \mathbf{1}\left(\sum_{j \neq i} (y_{ij} + y_{ji}) = 0\right)

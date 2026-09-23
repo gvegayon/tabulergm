@@ -2,8 +2,13 @@
 
 ## User-facing changes
 
-* Added the bipartite terms `gwb1degree` and `gwb2degree` to the term
-  dictionary (#37).
+* Added 14 terms to the term dictionary: `gwidegree`, `gwodegree`,
+  `gwb1degree`, `gwb2degree`, `nodeifactor`, `nodeofactor`, `kstar`,
+  `istar`, `ostar`, `isolates`, `degree`, `concurrent`, `dgwesp`, and
+  `dgwdsp` (#37).
+
+* Term drawings can include isolated nodes: a lone node id in the YAML
+  `edgelist` (e.g. `"1->2, 0"`) adds a node with no ties (#37).
 
 * Fixed a crash rendering a styled Markdown table (`with_style_name_over_formula()`)
   with a Windows-style `figures_dir`; `figures_dir` is now also validated when

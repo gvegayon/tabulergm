@@ -73,7 +73,12 @@
 #'     \eqn{\exp(\tau) \sum_i [1 - (1 - e^{-\tau})^i] EP_i(y)}, where the
 #'     exponent is the summation index and \eqn{EP_i}, \eqn{DP_i}, and
 #'     \eqn{D_i} are the edgewise shared partner, dyadwise shared partner,
-#'     and degree counts.
+#'     and degree counts; directed degree counts carry a superscript,
+#'     \eqn{D^{\mathrm{in}}_i} and \eqn{D^{\mathrm{out}}_i}.
+#'   \item Degree-based terms write node degree as a sum of ties, e.g.
+#'     \eqn{\sum_{j \neq i} y_{ij}} (undirected) or
+#'     \eqn{\sum_{j \neq i} y_{ji}} (in-degree), and k-star counts as
+#'     binomial coefficients, \eqn{\binom{\cdot}{k}}.
 #'   \item Directed shared-partner terms carry the two-path type as a
 #'     superscript, e.g. \eqn{EP^{\mathrm{OTP}}_i}, because `ergm` counts
 #'     outgoing two-paths (\code{OTP}) by default and `gwesp`/`gwdsp` take a
@@ -88,9 +93,10 @@
 #' The `plot` entry supports `edgelist`, `vcolor`, `vshape`, `vsize`,
 #' `ecolor`, `elinetype`, and `layout` (with `x` and `y` coordinates).
 #' Edgelists are chains like `"0->1->2, 0->3"`: each consecutive pair is
-#' one edge. Per-vertex vectors follow the node order obtained from the
-#' parsed edgelist (unique node ids, all tail nodes first, then head
-#' nodes); render the figure to double-check the mapping.
+#' one edge; a lone node id (e.g. `"1->2, 0"`) adds an isolated node.
+#' Per-vertex vectors follow the node order obtained from the parsed
+#' edgelist (unique node ids, all tail nodes first, then head nodes, then
+#' isolated nodes); render the figure to double-check the mapping.
 #' \itemize{
 #'   \item \strong{Vertex color}: `black` marks the focal structure of a
 #'     term; `gray` marks non-focal context, both attribute-irrelevant

@@ -422,7 +422,7 @@ tabulergm_get_plotfun <- function() {
   plotfun <- tabulergm_get_plotfun()
 
   edges   <- .parse_plot_edgelist(plot_data$edgelist)
-  nodes   <- unique(c(edges[, "from"], edges[, "to"]))
+  nodes   <- unique(c(edges[, "from"], edges[, "to"], attr(edges, "isolates")))
   n_nodes <- length(nodes)
   n_edges <- nrow(edges)
 
@@ -602,11 +602,14 @@ tabulergm_get_plotfun <- function() {
 #' Converts a string like `"0->1->2->0"` into a two-column character
 #' matrix of edges: each consecutive pair of nodes connected by `"->"`
 #' becomes one row. Comma-separated segments are also supported, e.g.
-#' `"0->1, 2->1"`.
+#' `"0->1, 2->1"`. A segment holding a single node id (e.g. `"1->2, 0"`)
+#' declares an isolated node.
 #'
 #' @param edgelist_str A character string with nodes separated by `"->"`.
 #'   Multiple edge chains can be separated by commas.
-#' @return A two-column character matrix with columns `from` and `to`.
+#' @return A two-column character matrix with columns `from` and `to`. Node
+#'   ids declared as isolates (and not used by any edge) are stored in its
+#'   `"isolates"` attribute.
 #' @noRd
 .parse_plot_edgelist <- function(edgelist_str) {
   # Split on comma to support "0->1, 2->1" format
@@ -614,15 +617,21 @@ tabulergm_get_plotfun <- function() {
   segments <- trimws(segments)
 
   all_edges <- list()
+  isolates  <- character(0)
   for (seg in segments) {
     nodes <- strsplit(seg, "->", fixed = TRUE)[[1L]]
     nodes <- trimws(nodes)
     n <- length(nodes)
 
-    if (n < 2L) {
+    if (n == 1L && nzchar(nodes)) {
+      isolates <- c(isolates, nodes)
+      next
+    }
+
+    if (n < 2L || any(!nzchar(nodes))) {
       stop(
-        "Each edgelist segment must contain at least two nodes ",
-        "separated by '->'.",
+        "Each edgelist segment must be a single node id or a chain of ",
+        "nodes separated by '->'.",
         call. = FALSE
       )
     }
@@ -633,7 +642,14 @@ tabulergm_get_plotfun <- function() {
     all_edges[[length(all_edges) + 1L]] <- cbind(from = from, to = to)
   }
 
-  do.call(rbind, all_edges)
+  if (length(all_edges) == 0L) {
+    stop("The edgelist must contain at least one edge.", call. = FALSE)
+  }
+
+  edges <- do.call(rbind, all_edges)
+  isolates <- setdiff(unique(isolates), c(edges[, "from"], edges[, "to"]))
+  if (length(isolates)) attr(edges, "isolates") <- isolates
+  edges
 }
 
 

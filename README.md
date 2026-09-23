@@ -305,6 +305,7 @@ dictionary_terms <- network ~
   transitiveties + cyclicalties +
   nodeicov("attr") + nodeocov("attr") +
   gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+  gwb1degree(0.5, fixed = TRUE) + gwb2degree(0.5, fixed = TRUE) +
   b1factor("type") + b2factor("group") +
   b1nodematch("type") + b2nodematch("group") +
   b1starmix(2, "type") + b2starmix(2, "group")
@@ -333,6 +334,8 @@ tabulergm_table(dictionary_terms, format = "markdown")
 | nodeocov | <img src="man/figures/README-nodeocov.png" width="80" /> | $\sum_{i \neq j} y_{ij} x_i$ | Sums the sending node’s attribute value over all ties, measuring how a quantitative attribute drives outgoing ties (activity). |
 | gwb1dsp | <img src="man/figures/README-gwb1dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_2}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes how many second-mode nodes each pair of first-mode nodes has in common, weighting additional shared partners geometrically less. |
 | gwb2dsp | <img src="man/figures/README-gwb2dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes how many first-mode nodes each pair of second-mode nodes has in common, weighting additional shared partners geometrically less. |
+| gwb1degree | <img src="man/figures/README-gwb1degree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_2}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D_i(y)$ | Summarizes the degree distribution of first-mode nodes with geometrically decreasing weights. Captures whether ties to the second mode concentrate on a few highly active first-mode nodes or spread evenly across them. (hunter2007) |
+| gwb2degree | <img src="man/figures/README-gwb2degree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D_i(y)$ | Summarizes the degree distribution of second-mode nodes with geometrically decreasing weights. Captures whether ties from the first mode concentrate on a few popular second-mode nodes or spread evenly across them. (hunter2007) |
 | b1factor | <img src="man/figures/README-b1factor.png" width="80" /> | $\sum_{i \in B_1} \sum_{j \in B_2} y_{ij} \mathbf{1}(x_i = k)$ | Counts the ties incident on first-mode nodes at each level of a categorical attribute, measuring how active those nodes are. |
 | b2factor | <img src="man/figures/README-b2factor.png" width="80" /> | $\sum_{i \in B_1} \sum_{j \in B_2} y_{ij} \mathbf{1}(x_j = k)$ | Counts the ties incident on second-mode nodes at each level of a categorical attribute, measuring how active those nodes are. |
 | b1nodematch | <img src="man/figures/README-b1nodematch.png" width="80" /> | $\sum_{k\in B_2} \sum_{i<j \in B_1} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Counts the pairs of first-mode nodes that share an attribute value and are both tied to the same second-mode node. The alpha and beta discount parameters temper the count when nodes share many partners. (bomiriya2014) |

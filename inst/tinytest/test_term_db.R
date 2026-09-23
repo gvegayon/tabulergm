@@ -46,6 +46,8 @@ yml_test_cases <- list(
   list(term = "triangle", directed = FALSE, pattern = "triangle\\.undirected\\.yml$"),
   list(term = "gwb1dsp", directed = FALSE, pattern = "gwb1dsp\\.undirected\\.yml$"),
   list(term = "gwb2dsp", directed = FALSE, pattern = "gwb2dsp\\.undirected\\.yml$"),
+  list(term = "gwb1degree", directed = FALSE, pattern = "gwb1degree\\.undirected\\.yml$"),
+  list(term = "gwb2degree", directed = FALSE, pattern = "gwb2degree\\.undirected\\.yml$"),
   list(term = "b1factor", directed = FALSE, pattern = "b1factor\\.undirected\\.yml$"),
   list(term = "b2factor", directed = FALSE, pattern = "b2factor\\.undirected\\.yml$"),
   list(term = "b1nodematch", directed = FALSE, pattern = "b1nodematch\\.undirected\\.yml$"),
@@ -119,7 +121,8 @@ data <- tabulergm:::.get_term_yml_data("triangle", directed = FALSE)
 expect_false(is.na(data$math))
 
 # .get_term_yml_data reads bipartite term math
-for (term in c("gwb1dsp", "gwb2dsp", "b1factor", "b2factor",
+for (term in c("gwb1dsp", "gwb2dsp", "gwb1degree", "gwb2degree",
+               "b1factor", "b2factor",
                "b1nodematch", "b2nodematch", "b1starmix", "b2starmix")) {
   data <- tabulergm:::.get_term_yml_data(term, directed = FALSE)
   expect_false(is.na(data$math),
@@ -403,6 +406,26 @@ expect_false(is.na(result4$math[result4$term == "b1factor"]))
 expect_false(is.na(result4$math[result4$term == "b2nodematch"]))
 expect_false(is.na(result4$math[result4$term == "b1starmix"]))
 expect_false(is.na(result4$math[result4$term == "b2starmix"]))
+
+# Geometrically weighted bipartite degree terms are tabulated from a formula
+# with their curated title, math, figure, and citation
+f4b <- y ~ gwb1degree(0.5, fixed = TRUE) + gwb2degree(0.5, fixed = TRUE)
+result4b <- parse_ergm_formula(f4b)
+for (term in c("gwb1degree", "gwb2degree")) {
+  row <- result4b[result4b$term == term, ]
+  expect_equal(nrow(row), 1L, info = sprintf("one row for %s", term))
+  expect_true(grepl("^Geometrically weighted degree distribution", row$title),
+    info = sprintf("curated title for %s", term))
+  expect_true(grepl("D_i(y)", row$math, fixed = TRUE),
+    info = sprintf("math found for %s", term))
+  expect_false(is.na(row$figure), info = sprintf("figure found for %s", term))
+  expect_equal(row$citation, "hunter2007",
+    info = sprintf("citation found for %s", term))
+}
+expect_true(grepl("n_{B_2}", result4b$math[result4b$term == "gwb1degree"],
+  fixed = TRUE))
+expect_true(grepl("n_{B_1}", result4b$math[result4b$term == "gwb2degree"],
+  fixed = TRUE))
 
 # Key covariate and structural terms have YAML data
 f5 <- y ~ gwdsp(0.5, fixed = TRUE) + gwdegree(0.5, fixed = TRUE) +

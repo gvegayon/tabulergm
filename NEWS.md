@@ -2,6 +2,9 @@
 
 ## User-facing changes
 
+* Added the bipartite terms `gwb1degree` and `gwb2degree` to the term
+  dictionary (#37).
+
 * Fixed a crash rendering a styled Markdown table (`with_style_name_over_formula()`)
   with a Windows-style `figures_dir`; `figures_dir` is now also validated when
   the table is built rather than when it is first rendered (#35).
@@ -27,7 +30,7 @@
 * Formula tables now honor `include_description = FALSE` (#30).
 
 * Term YAML files gained optional `title`, `description`, and `citation`
-  fields; all 35 shipped terms now carry curated text instead of falling
+  fields; all shipped terms now carry curated text instead of falling
   back to the `ergm` database's (#24).
 
 * Tables gained a `title` column (`include_title = TRUE`); `description`
@@ -38,7 +41,7 @@
   metadata field per term or per coefficient (#24).
 
 * Cited terms now show a `(key)` marker with the matching reference listed
-  below the table; nine shipped terms carry a citation (#24).
+  below the table (#24).
 
 * Fixed an incorrect arXiv identifier in `?"tabulergm-notation"`: 1412.1151
   was cited for Bomiriya et al. (2014) but belongs to an unrelated paper

@@ -202,6 +202,7 @@ dictionary_terms <- network ~
   transitiveties + cyclicalties +
   nodeicov("attr") + nodeocov("attr") +
   gwb1dsp(0.5, fixed = TRUE) + gwb2dsp(0.5, fixed = TRUE) +
+  gwb1degree(0.5, fixed = TRUE) + gwb2degree(0.5, fixed = TRUE) +
   b1factor("type") + b2factor("group") +
   b1nodematch("type") + b2nodematch("group") +
   b1starmix(2, "type") + b2starmix(2, "group")

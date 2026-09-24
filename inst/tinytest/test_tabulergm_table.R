@@ -63,11 +63,20 @@ if (requireNamespace("knitr", quietly = TRUE)) {
   expect_false(grepl("Square nodes", md_str, fixed = TRUE),
     info = "no bipartite note for one-mode tables")
 
-  # Mixing terms add the orange/teal note
-  md <- tabulergm_table(y ~ edges + nodemix("g"), format = "markdown")
+  # Mixing terms add the orange/teal note, alongside the orange note when an
+  # attribute term is also present; terms without a drawing add nothing
+  md <- tabulergm_table(y ~ edges + nodemix("g") + twopath,
+    format = "markdown")
   md_str <- paste(as.character(md), collapse = "\n")
   expect_true(grepl("Orange and teal nodes", md_str, fixed = TRUE),
     info = "orange/teal note for mixing terms")
+  expect_false(grepl("*Note: Orange nodes", md_str, fixed = TRUE),
+    info = "no plain orange note for mixing-only tables")
+  md <- tabulergm_table(y ~ nodematch("g") + nodemix("g"), format = "markdown")
+  md_str <- paste(as.character(md), collapse = "\n")
+  expect_true(grepl("Orange nodes", md_str, fixed = TRUE) &&
+    grepl("Orange and teal nodes", md_str, fixed = TRUE),
+    info = "attribute and mixing terms get both color notes")
 
   # Bipartite terms add the square/circle note
   md <- tabulergm_table(y ~ edges + b1factor("g"), format = "markdown")
@@ -253,44 +262,24 @@ if (requireNamespace("network", quietly = TRUE) &&
 
     # ---- markdown figures can be copied to a user folder ------------------
 
+    # A relative figures_dir resolves against the working directory, and the
+    # copied files are named after the bare term, even when the term column
+    # carries a citation marker (no description column shown)
     local({
-      src <- tempfile(fileext = ".png")
-      writeLines("fake image content", src)
       out_dir <- tempfile("tabulergm-figures-")
       dir.create(out_dir)
-
       old_wd <- setwd(out_dir)
       on.exit(setwd(old_wd), add = TRUE)
 
-      df <- data.frame(
-        term = "Custom Term",
-        figure = src,
-        stringsAsFactors = FALSE
-      )
-      processed <- tabulergm:::.preprocess_columns(
-        df,
-        "markdown",
-        figures_dir = "assets"
-      )
-
-      expect_true(file.exists(file.path(out_dir, "assets", "custom-term.png")),
-        info = "manual figures_dir copies markdown figures")
-      expect_true(grepl('![](assets/custom-term.png){width=80px}',
-        processed$figure,
-        fixed = TRUE
-      ), info = "manual figures_dir rewrites markdown figure path")
-    })
-
-    # Copied figures are named after the bare term, even when the term
-    # column carries a citation marker (no description column shown)
-    local({
-      out_dir <- tempfile("tabulergm-cited-figures-")
-      md <- as.character(tabulergm_table(
+      md <- paste(as.character(tabulergm_table(
         ~ edges + triangle, directed = FALSE, include_description = FALSE,
-        format = "markdown", figures_dir = out_dir
-      ))
-      expect_true(any(grepl("triangle (frank1986)", md, fixed = TRUE)))
-      expect_equal(sort(list.files(out_dir)), c("edges.png", "triangle.png"))
+        format = "markdown", figures_dir = "assets"
+      )), collapse = "\n")
+      expect_true(grepl("triangle (frank1986)", md, fixed = TRUE))
+      expect_equal(sort(list.files("assets")), c("edges.png", "triangle.png"),
+        info = "manual figures_dir copies markdown figures")
+      expect_true(grepl("![](assets/edges.png){width=80px}", md, fixed = TRUE),
+        info = "manual figures_dir rewrites markdown figure path")
     })
 
     # An invalid figures_dir is reported when the table is built (#35), not
@@ -308,8 +297,6 @@ if (requireNamespace("network", quietly = TRUE) &&
       on.exit(knitr::opts_knit$set(old_knit), add = TRUE)
       on.exit(knitr::opts_current$set(old_current), add = TRUE)
 
-      src <- tempfile(fileext = ".png")
-      writeLines("fake image content", src)
       out_dir <- tempfile("tabulergm-knitr-figures-")
       dir.create(out_dir)
 
@@ -317,41 +304,31 @@ if (requireNamespace("network", quietly = TRUE) &&
         output.dir = out_dir,
         rmarkdown.pandoc.to = "gfm"
       )
+
+      # A fig.path prefix is prepended to the file name ...
       knitr::opts_current$set(fig.path = "man/figures/README-")
-
-      df <- data.frame(
-        term = "Edges",
-        figure = src,
-        stringsAsFactors = FALSE
-      )
-      processed <- tabulergm:::.preprocess_columns(df, "markdown")
-
+      md <- paste(as.character(
+        tabulergm_table(~ edges, directed = FALSE, format = "markdown")
+      ), collapse = "\n")
       expect_true(file.exists(file.path(out_dir, "man", "figures",
         "README-edges.png"
       )), info = "knitr fig.path prefix receives markdown figures")
-      expect_true(grepl('![](man/figures/README-edges.png){width=80px}',
-        processed$figure,
-        fixed = TRUE
+      expect_true(grepl("![](man/figures/README-edges.png){width=80px}",
+        md, fixed = TRUE
       ), info = "knitr fig.path prefix rewrites markdown figure path")
 
+      # ... and a fig.path directory holds it, without a doubled slash
       knitr::opts_current$set(fig.path = "README_files/figure-gfm/")
-      src_dir <- tempfile(fileext = ".png")
-      writeLines("fake image content", src_dir)
-      df_dir <- data.frame(
-        term = "Triangle",
-        figure = src_dir,
-        stringsAsFactors = FALSE
-      )
-      processed_dir <- tabulergm:::.preprocess_columns(df_dir, "markdown")
-
+      md <- paste(as.character(
+        tabulergm_table(~ triangle, directed = FALSE, format = "markdown")
+      ), collapse = "\n")
       expect_true(file.exists(file.path(out_dir, "README_files",
         "figure-gfm", "triangle.png"
       )), info = "knitr fig.path directory receives markdown figures")
-      expect_true(grepl('![](README_files/figure-gfm/triangle.png){width=80px}',
-        processed_dir$figure,
-        fixed = TRUE
+      expect_true(grepl("![](README_files/figure-gfm/triangle.png){width=80px}",
+        md, fixed = TRUE
       ), info = "knitr fig.path directory rewrites markdown figure path")
-      expect_false(grepl("//", processed_dir$figure, fixed = TRUE),
+      expect_false(grepl("figure-gfm//", md, fixed = TRUE),
         info = "knitr fig.path directory does not emit a double slash")
     })
 

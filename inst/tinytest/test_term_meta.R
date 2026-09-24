@@ -96,15 +96,15 @@ expect_equal(length(tabulergm:::.render_citation_notes(NULL, "markdown")), 0L)
 # ---- YAML metadata reading --------------------------------------------------
 
 # Shipped terms carry a curated title and description
-data <- tabulergm:::.get_term_yml_data("edges", directed = FALSE)
+data <- tabulergm:::.get_term_yml_data("concurrent", directed = FALSE)
 expect_false(is.na(data$title))
 expect_false(is.na(data$description))
 expect_equal(length(data$citation), 0L)
 
 # Terms with a known source carry a citation
-data <- tabulergm:::.get_term_yml_data("gwesp", directed = FALSE)
+data <- tabulergm:::.get_term_yml_data("triangle", directed = FALSE)
 expect_equal(length(data$citation), 1L)
-expect_equal(data$citation[[1L]]$key, "hunter2007")
+expect_equal(data$citation[[1L]]$key, "frank1986")
 
 # Terms with two sources carry both, in file order
 data <- tabulergm:::.get_term_yml_data("gwdegree", directed = FALSE)
@@ -211,8 +211,8 @@ expect_equal(attr(res, "tabulergm_citations")[[1L]]$key, "mine2026")
 
 # A citation can be added to a term that has none
 res <- parse_ergm_formula(
-  ~ edges, directed = FALSE,
-  override.citation = list(edges = "doi:10.1/y")
+  ~ isolates, directed = FALSE,
+  override.citation = list(isolates = "doi:10.1/y")
 )
 expect_equal(res$citation[1L], "10.1/y")
 
@@ -263,11 +263,14 @@ if (requireNamespace("ergm", quietly = TRUE)) {
   )
   tbl <- tabulergm_table(fit)
   expect_false("description" %in% names(tbl))
-  expect_true(grepl("(mcpherson2001)", tbl$term[tbl$term != "edges"][1L],
-    fixed = TRUE))
+  expect_true(grepl("(wasserman1996; mcpherson2001)",
+    tbl$term[startsWith(tbl$term, "nodematch")][1L], fixed = TRUE))
 
   # The bibliography rides along on data.frame output for tabulergm_save()
-  expect_equal(length(attr(tbl, "tabulergm_citations")), 1L)
+  expect_equal(
+    vapply(attr(tbl, "tabulergm_citations"), `[[`, "", "key"),
+    c("holland1981", "wasserman1996", "mcpherson2001")
+  )
 
   # include_title places the title immediately after term
   tbl <- tabulergm_table(fit, include_title = TRUE)
@@ -281,12 +284,12 @@ expect_true(grepl("(snijders2006; hunter2007)", tbl$description[1L],
 
 # Only the citations actually used are listed
 md <- as.character(
-  tabulergm_table(~ edges, directed = FALSE, format = "markdown")
+  tabulergm_table(~ isolates, directed = FALSE, format = "markdown")
 )
 expect_false(any(grepl("frank1986", md, fixed = TRUE)))
 
 # Terms with no citation get no marker
-tbl <- tabulergm_table(~ edges, directed = FALSE)
+tbl <- tabulergm_table(~ concurrent, directed = FALSE)
 expect_false(grepl("(", tbl$description[1L], fixed = TRUE))
 
 # HTML output carries linked identifiers below the table

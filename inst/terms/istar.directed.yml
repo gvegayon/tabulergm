@@ -3,6 +3,9 @@ description: >-
   Counts the sets of k incoming ties that share a common receiver,
   capturing the spread of in-degrees (popularity). Pass several values
   of k to include one statistic per star size.
+citation:
+  - key: wasserman1996
+    doi: 10.1007/BF02294547
 plot:
   edgelist: "1->0, 2->0, 3->0"
   vcolor: [black, black, black, black]

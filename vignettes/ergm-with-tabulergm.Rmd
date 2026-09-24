@@ -99,7 +99,7 @@ tabulergm_table(
   model,
   override = list(
     edges     = list(title = "Density", desc = "Baseline tie propensity."),
-    nodematch = list(citation = "doi:10.1146/annurev.soc.27.1.415")
+    nodematch = list(citation = "doi:10.1016/S0378-8733(01)00029-6")
   )
 )
 ```

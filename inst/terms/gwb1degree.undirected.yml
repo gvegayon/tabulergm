@@ -5,6 +5,8 @@ description: >-
   mode concentrate on a few highly active first-mode nodes or spread
   evenly across them.
 citation:
+  - key: wang2009
+    doi: 10.1016/j.socnet.2008.08.002
   - key: hunter2007
     doi: 10.1016/j.socnet.2006.08.005
 plot:

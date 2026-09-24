@@ -4,6 +4,8 @@ description: >-
   categorical attribute. Setting diff = TRUE adds one statistic per
   attribute value (differential homophily).
 citation:
+  - key: wasserman1996
+    doi: 10.1007/BF02294547
   - key: mcpherson2001
     doi: 10.1146/annurev.soc.27.1.415
 plot:

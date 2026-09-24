@@ -2,6 +2,11 @@ title: Attribute mixing
 description: >-
   Counts the ties for every pairing of attribute values, reproducing the
   full mixing matrix of a categorical attribute.
+citation:
+  - key: wasserman1996
+    doi: 10.1007/BF02294547
+  - key: morris1991
+    doi: 10.1016/0025-5564(91)90014-A
 plot:
   edgelist: "0->1"
   vcolor: [orange, "#008080"]

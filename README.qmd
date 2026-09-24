@@ -119,8 +119,8 @@ custom <- tabulergm_table(
 custom[, c("term", "title")]
 ```
 
-`triangle` picks up a `(frank1986)` marker because it carries a citation in
-the term dictionary. The marker attaches to the description when that column
+`edges` and `triangle` pick up `(holland1981)` and `(frank1986)` markers
+because they carry citations in the term dictionary. The marker attaches to the description when that column
 is shown and to the term otherwise, so a citation is never silently dropped.
 
 The same works for `math`, `figure`, and `citation`, and a single `override`
@@ -133,7 +133,7 @@ tabulergm_table(
   model,
   override = list(
     edges     = list(title = "Density", desc = "Baseline tie propensity."),
-    nodematch = list(citation = "doi:10.1146/annurev.soc.27.1.415")
+    nodematch = list(citation = "doi:10.1016/S0378-8733(01)00029-6")
   )
 )
 ```

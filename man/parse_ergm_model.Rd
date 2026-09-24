@@ -31,8 +31,8 @@ character vectors keyed by term name, e.g.
 \item{override.citation}{A named list keyed by term name whose elements
 are citation specifications in the same form the YAML \verb{citation:}
 field accepts: a bare key (\code{"hunter2007"}), a prefixed identifier
-(\code{"doi:10.1016/j.socnet.2006.08.002"}), a single entry list
-(\code{list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.002")}), or
+(\code{"doi:10.1016/j.socnet.2006.08.005"}), a single entry list
+(\code{list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.005")}), or
 a list of such entries.}
 }
 \value{

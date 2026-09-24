@@ -109,7 +109,7 @@ if (requireNamespace("network", quietly = TRUE) &&
   result <- tabulergm_table(fit)
   expect_inherits(result, "data.frame")
   expect_equal(names(result), c("term", "figure", "estimate", "se", "pvalue"))
-  expect_equal(result$term, "edges")
+  expect_equal(result$term, "edges (holland1981)")
   expect_true(is.numeric(result$estimate))
   expect_true(is.numeric(result$se))
   expect_true(is.character(result$pvalue))

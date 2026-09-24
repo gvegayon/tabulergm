@@ -403,7 +403,8 @@ expect_equal(unique(tab$title), c(
   "Geometrically weighted dyadwise shared partners",
   "k-stars", "Isolates", "Degree count"
 ))
-expect_true(all(c("gwidegree (hunter2007)", "dgwesp (hunter2007)",
+expect_true(all(c("gwidegree (hunter2007; robins2009)",
+                  "dgwesp (hunter2007; robins2009)",
                   "kstar (frank1986)") %in% tab$term))
 
 # Formula-only terms: bipartite degree, concurrency, and the directed
@@ -412,10 +413,27 @@ res <- parse_ergm_formula(
   y ~ gwb1degree(0.5, fixed = TRUE) + gwb2degree(0.5, fixed = TRUE) +
     concurrent
 )
-expect_equal(res$citation, c("hunter2007", "hunter2007", NA))
+expect_equal(res$citation, c("wang2009, hunter2007", "wang2009, hunter2007", NA))
 expect_true(grepl("D^{B_1}_i(y)", res$math[1], fixed = TRUE))
 expect_true(grepl("D^{B_2}_i(y)", res$math[2], fixed = TRUE))
 expect_true(all(file.exists(res$figure)))
+# Citations list the ERGM origin first and at most one theory reference
+# after it; preprints are cited by arXiv id
+res <- parse_ergm_formula(
+  y ~ edges + nodematch("a") + nodemix("a") + b1nodematch("a") + edgecov("d"),
+  directed = FALSE
+)
+expect_equal(res$citation, c(
+  "holland1981", "wasserman1996, mcpherson2001", "wasserman1996, morris1991",
+  "bomiriya2023", "wasserman1996"
+))
+md <- as.character(tabulergm_table(
+  y ~ nodematch("a") + b1nodematch("a"), directed = FALSE, format = "markdown"
+))
+expect_true(any(grepl("(wasserman1996; mcpherson2001)", md, fixed = TRUE)))
+expect_true(any(grepl("[arXiv:2312.05673](https://arxiv.org/abs/2312.05673)",
+  md, fixed = TRUE)))
+
 # `alias:` entries reuse another term's YAML: dgwesp/dgwdsp are gwesp/gwdsp
 aliased <- parse_ergm_formula(
   y ~ gwesp(0.5, fixed = TRUE) + dgwesp(0.5, fixed = TRUE) +

@@ -133,14 +133,14 @@ custom <- tabulergm_table(
 
 custom[, c("term", "title")]
 #>                   term     title
-#> 1                edges   Density
+#> 1  edges (holland1981)   Density
 #> 2 triangle (frank1986) Triangles
 ```
 
-`triangle` picks up a `(frank1986)` marker because it carries a citation
-in the term dictionary. The marker attaches to the description when that
-column is shown and to the term otherwise, so a citation is never
-silently dropped.
+`edges` and `triangle` pick up `(holland1981)` and `(frank1986)` markers
+because they carry citations in the term dictionary. The marker attaches
+to the description when that column is shown and to the term otherwise,
+so a citation is never silently dropped.
 
 The same works for `math`, `figure`, and `citation`, and a single
 `override` list can set several fields of several terms at once:
@@ -150,7 +150,7 @@ tabulergm_table(
   model,
   override = list(
     edges     = list(title = "Density", desc = "Baseline tie propensity."),
-    nodematch = list(citation = "doi:10.1146/annurev.soc.27.1.415")
+    nodematch = list(citation = "doi:10.1016/S0378-8733(01)00029-6")
   )
 )
 ```
@@ -170,9 +170,11 @@ tabulergm_table(
 
 | term | figure | math | description |
 |:---|:---|:---|:---|
-| gwesp | <img src="man/figures/README-gwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP_i(y)$ | Summarizes how many partners tied nodes share, weighting each additional shared partner geometrically less than the last. Provides a better-behaved measure of transitive closure than a raw triangle count; the decay parameter controls how fast the weights fall off. (hunter2007) |
+| gwesp | <img src="man/figures/README-gwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP_i(y)$ | Summarizes how many partners tied nodes share, weighting each additional shared partner geometrically less than the last. Provides a better-behaved measure of transitive closure than a raw triangle count; the decay parameter controls how fast the weights fall off. (snijders2006; hunter2007) |
 | triangle | <img src="man/figures/README-triangle.png" width="80" /> | $\sum_{i<j<k} y_{ij} y_{jk} y_{ik}$ | Counts the sets of three mutually connected nodes, the basic measure of local clustering in an undirected network. (frank1986) |
 
+*\[snijders2006\]
+[doi:10.1111/j.1467-9531.2006.00176.x](https://doi.org/10.1111/j.1467-9531.2006.00176.x)*\
 *\[hunter2007\]
 [doi:10.1016/j.socnet.2006.08.005](https://doi.org/10.1016/j.socnet.2006.08.005)*\
 *\[frank1986\]
@@ -218,7 +220,7 @@ data-quarto-table-cell-role="th">pvalue</th>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">Number of edges<br />
+<td style="text-align: left;">Number of edges (holland1981)<br />
 <span class="tabulergm-formula">$$\sum_{i\lt{}j} y_{ij}$$</span></td>
 <td class="tabulergm-representation" style="text-align: center;"><img
 src="man/figures/README-edges.png" style="width:40%;max-width:100%;"
@@ -241,7 +243,7 @@ alt="term figure" /></td>
 </tbody>
 </table>
 
-<p class="tabulergm-citations"><em>[frank1986] <a href="https://doi.org/10.1080/01621459.1986.10478342">doi:10.1080/01621459.1986.10478342</a></em></p>
+<p class="tabulergm-citations"><em>[holland1981] <a href="https://doi.org/10.1080/01621459.1981.10477598">doi:10.1080/01621459.1981.10477598</a></em><br><em>[frank1986] <a href="https://doi.org/10.1080/01621459.1986.10478342">doi:10.1080/01621459.1986.10478342</a></em></p>
 
 Styled Markdown uses an HTML table so multi-line name/formula cells
 render reliably in HTML-capable Markdown outputs. Use the plain style
@@ -320,43 +322,43 @@ tabulergm_table(dictionary_terms, format = "markdown")
 
 | term | figure | math | description |
 |:---|:---|:---|:---|
-| edges | <img src="man/figures/README-edges.png" width="80" /> | $\sum_{i<j} y_{ij}$ | Counts the ties present in the network. Acts as the baseline density term, playing the role an intercept plays in a regression model. |
+| edges | <img src="man/figures/README-edges.png" width="80" /> | $\sum_{i<j} y_{ij}$ | Counts the ties present in the network. Acts as the baseline density term, playing the role an intercept plays in a regression model. (holland1981) |
 | mutual | <img src="man/figures/README-mutual.png" width="80" /> | $\sum_{i<j} y_{ij} y_{ji}$ | Counts the dyads in which both directed ties are present, capturing the tendency for ties to be returned. (holland1981) |
 | triangle | <img src="man/figures/README-triangle.png" width="80" /> | $\sum_{i<j<k} y_{ij} y_{jk} y_{ik}$ | Counts the sets of three mutually connected nodes, the basic measure of local clustering in an undirected network. (frank1986) |
-| gwesp | <img src="man/figures/README-gwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP_i(y)$ | Summarizes how many partners tied nodes share, weighting each additional shared partner geometrically less than the last. Provides a better-behaved measure of transitive closure than a raw triangle count; the decay parameter controls how fast the weights fall off. (hunter2007) |
-| gwdsp | <img src="man/figures/README-gwdsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes shared partners over every dyad, tied or not, with geometrically decreasing weights. Commonly paired with gwesp to separate shared partnership from closure itself. (hunter2007) |
+| gwesp | <img src="man/figures/README-gwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP_i(y)$ | Summarizes how many partners tied nodes share, weighting each additional shared partner geometrically less than the last. Provides a better-behaved measure of transitive closure than a raw triangle count; the decay parameter controls how fast the weights fall off. (snijders2006; hunter2007) |
+| gwdsp | <img src="man/figures/README-gwdsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes shared partners over every dyad, tied or not, with geometrically decreasing weights. Commonly paired with gwesp to separate shared partnership from closure itself. (snijders2006; hunter2007) |
 | gwdegree | <img src="man/figures/README-gwdegree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D_i(y)$ | Summarizes the degree distribution with geometrically decreasing weights. Captures whether ties concentrate on a few high-degree nodes or spread evenly, and stabilizes models that would otherwise degenerate. (snijders2006; hunter2007) |
 | altkstar | <img src="man/figures/README-altkstar.png" width="80" /> | $\sum_{k=2}^{n-1} (-1)^k \frac{S_k(y)}{\lambda^{k-2}}$ | Alternating sum of the k-star counts, an equivalent parameterization of the geometrically weighted degree distribution used to model degree heterogeneity. (snijders2006; hunter2007) |
-| nodematch | <img src="man/figures/README-nodematch.png" width="80" /> | $\sum_{i<j} y_{ij} \mathbf{1}(x_i = x_j)$ | Counts the ties joining nodes that share the same value of a categorical attribute, the standard measure of homophily. Setting diff = TRUE adds one statistic per attribute value (differential homophily). (mcpherson2001) |
+| nodematch | <img src="man/figures/README-nodematch.png" width="80" /> | $\sum_{i<j} y_{ij} \mathbf{1}(x_i = x_j)$ | Counts the ties joining nodes that share the same value of a categorical attribute, the standard measure of homophily. Setting diff = TRUE adds one statistic per attribute value (differential homophily). (wasserman1996; mcpherson2001) |
 | nodefactor | <img src="man/figures/README-nodefactor.png" width="80" /> | $\sum_{i<j} y_{ij} \left[\mathbf{1}(x_i = k) + \mathbf{1}(x_j = k)\right]$ | Counts the tie endpoints belonging to each level of a categorical attribute, measuring how active nodes with that value are in forming ties. |
-| nodemix | <img src="man/figures/README-nodemix.png" width="80" /> | $\sum_{i<j} y_{ij} \mathbf{1}(\{x_i, x_j\} = \{k, l\})$ | Counts the ties for every pairing of attribute values, reproducing the full mixing matrix of a categorical attribute. |
+| nodemix | <img src="man/figures/README-nodemix.png" width="80" /> | $\sum_{i<j} y_{ij} \mathbf{1}(\{x_i, x_j\} = \{k, l\})$ | Counts the ties for every pairing of attribute values, reproducing the full mixing matrix of a categorical attribute. (wasserman1996; morris1991) |
 | nodecov | <img src="man/figures/README-nodecov.png" width="80" /> | $\sum_{i<j} y_{ij} (x_i + x_j)$ | Sums a quantitative attribute over both ends of each tie, measuring how strongly that attribute drives tie formation. |
 | absdiff | <img src="man/figures/README-absdiff.png" width="80" /> | $\sum_{i<j} y_{ij} \left\lvert{}x_i - x_j\right\rvert{}$ | Sums the absolute difference in a quantitative attribute across tied nodes. Negative estimates indicate homophily, since similar nodes contribute less. |
-| edgecov | <img src="man/figures/README-edgecov.png" width="80" /> | $\sum_{i<j} y_{ij} x_{ij}$ | Sums a fixed dyad-level covariate over the observed ties, letting an external matrix such as distance or a previously observed network predict tie formation. |
+| edgecov | <img src="man/figures/README-edgecov.png" width="80" /> | $\sum_{i<j} y_{ij} x_{ij}$ | Sums a fixed dyad-level covariate over the observed ties, letting an external matrix such as distance or a previously observed network predict tie formation. (wasserman1996) |
 | transitiveties | <img src="man/figures/README-transitiveties.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}\left(\exists k : y_{ik} y_{kj} = 1\right)$ | Counts the ties closed by at least one two-path. Unlike a triple count, a tie contributes once no matter how many shared partners it has. |
 | cyclicalties | <img src="man/figures/README-cyclicalties.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}\left(\exists k : y_{jk} y_{ki} = 1\right)$ | Counts the ties that take part in at least one cycle, capturing generalized exchange rather than hierarchy. |
 | nodeicov | <img src="man/figures/README-nodeicov.png" width="80" /> | $\sum_{i \neq j} y_{ij} x_j$ | Sums the receiving node’s attribute value over all ties, measuring how a quantitative attribute drives incoming ties (popularity). |
 | nodeocov | <img src="man/figures/README-nodeocov.png" width="80" /> | $\sum_{i \neq j} y_{ij} x_i$ | Sums the sending node’s attribute value over all ties, measuring how a quantitative attribute drives outgoing ties (activity). |
-| gwidegree | <img src="man/figures/README-gwidegree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{\mathrm{in}}_i(y)$ | Summarizes the in-degree distribution with geometrically decreasing weights. Captures whether incoming ties concentrate on a few popular nodes or spread evenly across receivers. (hunter2007) |
-| gwodegree | <img src="man/figures/README-gwodegree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{\mathrm{out}}_i(y)$ | Summarizes the out-degree distribution with geometrically decreasing weights. Captures whether outgoing ties concentrate on a few highly active nodes or spread evenly across senders. (hunter2007) |
+| gwidegree | <img src="man/figures/README-gwidegree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{\mathrm{in}}_i(y)$ | Summarizes the in-degree distribution with geometrically decreasing weights. Captures whether incoming ties concentrate on a few popular nodes or spread evenly across receivers. (hunter2007; robins2009) |
+| gwodegree | <img src="man/figures/README-gwodegree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-1} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{\mathrm{out}}_i(y)$ | Summarizes the out-degree distribution with geometrically decreasing weights. Captures whether outgoing ties concentrate on a few highly active nodes or spread evenly across senders. (hunter2007; robins2009) |
 | nodeifactor | <img src="man/figures/README-nodeicov.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}(x_j = k)$ | Counts the incoming ties received by nodes at each level of a categorical attribute, measuring how popular nodes with that value are as receivers. |
 | nodeofactor | <img src="man/figures/README-nodeocov.png" width="80" /> | $\sum_{i \neq j} y_{ij} \mathbf{1}(x_i = k)$ | Counts the outgoing ties sent by nodes at each level of a categorical attribute, measuring how active nodes with that value are as senders. |
 | kstar | <img src="man/figures/README-kstar.png" width="80" /> | $\sum_{i} \binom{\sum_{j \neq i} y_{ij}}{k}$ | Counts the sets of k ties that share a common node, a Markov dependence measure of degree heterogeneity. Pass several values of k to include one statistic per star size. (frank1986) |
-| istar | <img src="man/figures/README-istar.png" width="80" /> | $\sum_{j} \binom{\sum_{i \neq j} y_{ij}}{k}$ | Counts the sets of k incoming ties that share a common receiver, capturing the spread of in-degrees (popularity). Pass several values of k to include one statistic per star size. |
-| ostar | <img src="man/figures/README-ostar.png" width="80" /> | $\sum_{i} \binom{\sum_{j \neq i} y_{ij}}{k}$ | Counts the sets of k outgoing ties that share a common sender, capturing the spread of out-degrees (activity). Pass several values of k to include one statistic per star size. |
+| istar | <img src="man/figures/README-istar.png" width="80" /> | $\sum_{j} \binom{\sum_{i \neq j} y_{ij}}{k}$ | Counts the sets of k incoming ties that share a common receiver, capturing the spread of in-degrees (popularity). Pass several values of k to include one statistic per star size. (wasserman1996) |
+| ostar | <img src="man/figures/README-ostar.png" width="80" /> | $\sum_{i} \binom{\sum_{j \neq i} y_{ij}}{k}$ | Counts the sets of k outgoing ties that share a common sender, capturing the spread of out-degrees (activity). Pass several values of k to include one statistic per star size. (wasserman1996) |
 | isolates | <img src="man/figures/README-isolates.png" width="80" /> | $\sum_{i} \mathbf{1}\left(\sum_{j \neq i} y_{ij} = 0\right)$ | Counts the nodes with no ties, capturing an excess (or shortage) of isolated nodes relative to the rest of the degree distribution. |
 | degree | <img src="man/figures/README-degree.png" width="80" /> | $\sum_{i} \mathbf{1}\left(\sum_{j \neq i} y_{ij} = d\right)$ | Counts the nodes with exactly d ties. Pass several values of d to include one statistic per degree, e.g. to model low-degree nodes explicitly. |
 | concurrent | <img src="man/figures/README-gwdegree.png" width="80" /> | $\sum_{i} \mathbf{1}\left(\sum_{j \neq i} y_{ij} \geq 2\right)$ | Counts the nodes with two or more ties, the number of actors holding concurrent partnerships. Common in models of sexual networks and disease transmission. |
-| dgwesp | <img src="man/figures/README-dgwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP^{\mathrm{OTP}}_i(y)$ | Directed counterpart of the edgewise shared partner statistic, measuring transitive closure with geometrically decreasing weights. Outgoing two-paths are counted by default; the term’s type argument selects a different two-path orientation. (hunter2007) |
-| dgwdsp | <img src="man/figures/README-dgwdsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP^{\mathrm{OTP}}_i(y)$ | Directed counterpart of the dyadwise shared partner statistic, computed over every ordered dyad. Outgoing two-paths are counted by default; the term’s type argument selects a different two-path orientation. (hunter2007) |
-| gwb1dsp | <img src="man/figures/README-gwb1dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_2}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes how many second-mode nodes each pair of first-mode nodes has in common, weighting additional shared partners geometrically less. |
-| gwb2dsp | <img src="man/figures/README-gwb2dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes how many first-mode nodes each pair of second-mode nodes has in common, weighting additional shared partners geometrically less. |
-| gwb1degree | <img src="man/figures/README-gwb1degree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_2}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{B_1}_i(y)$ | Summarizes the degree distribution of first-mode nodes with geometrically decreasing weights. Captures whether ties to the second mode concentrate on a few highly active first-mode nodes or spread evenly across them. (hunter2007) |
-| gwb2degree | <img src="man/figures/README-gwb2degree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{B_2}_i(y)$ | Summarizes the degree distribution of second-mode nodes with geometrically decreasing weights. Captures whether ties from the first mode concentrate on a few popular second-mode nodes or spread evenly across them. (hunter2007) |
+| dgwesp | <img src="man/figures/README-dgwesp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] EP^{\mathrm{OTP}}_i(y)$ | Directed counterpart of the edgewise shared partner statistic, measuring transitive closure with geometrically decreasing weights. Outgoing two-paths are counted by default; the term’s type argument selects a different two-path orientation. (hunter2007; robins2009) |
+| dgwdsp | <img src="man/figures/README-dgwdsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n-2} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP^{\mathrm{OTP}}_i(y)$ | Directed counterpart of the dyadwise shared partner statistic, computed over every ordered dyad. Outgoing two-paths are counted by default; the term’s type argument selects a different two-path orientation. (hunter2007; robins2009) |
+| gwb1dsp | <img src="man/figures/README-gwb1dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_2}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes how many second-mode nodes each pair of first-mode nodes has in common, weighting additional shared partners geometrically less. (wang2009; hunter2007) |
+| gwb2dsp | <img src="man/figures/README-gwb2dsp.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] DP_i(y)$ | Summarizes how many first-mode nodes each pair of second-mode nodes has in common, weighting additional shared partners geometrically less. (wang2009; hunter2007) |
+| gwb1degree | <img src="man/figures/README-gwb1degree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_2}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{B_1}_i(y)$ | Summarizes the degree distribution of first-mode nodes with geometrically decreasing weights. Captures whether ties to the second mode concentrate on a few highly active first-mode nodes or spread evenly across them. (wang2009; hunter2007) |
+| gwb2degree | <img src="man/figures/README-gwb2degree.png" width="80" /> | $\exp{(\tau)} \sum_{i=1}^{n_{B_1}} \left[1 - \left(1 - \exp{(-\tau)}\right)^i\right] D^{B_2}_i(y)$ | Summarizes the degree distribution of second-mode nodes with geometrically decreasing weights. Captures whether ties from the first mode concentrate on a few popular second-mode nodes or spread evenly across them. (wang2009; hunter2007) |
 | b1factor | <img src="man/figures/README-b1factor.png" width="80" /> | $\sum_{i \in B_1} \sum_{j \in B_2} y_{ij} \mathbf{1}(x_i = k)$ | Counts the ties incident on first-mode nodes at each level of a categorical attribute, measuring how active those nodes are. |
 | b2factor | <img src="man/figures/README-b2factor.png" width="80" /> | $\sum_{i \in B_1} \sum_{j \in B_2} y_{ij} \mathbf{1}(x_j = k)$ | Counts the ties incident on second-mode nodes at each level of a categorical attribute, measuring how active those nodes are. |
-| b1nodematch | <img src="man/figures/README-b1nodematch.png" width="80" /> | $\sum_{k\in B_2} \sum_{i<j \in B_1} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Counts the pairs of first-mode nodes that share an attribute value and are both tied to the same second-mode node. The alpha and beta discount parameters temper the count when nodes share many partners. (bomiriya2014) |
-| b2nodematch | <img src="man/figures/README-b2nodematch.png" width="80" /> | $\sum_{k\in B_1} \sum_{i<j \in B_2} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Counts the pairs of second-mode nodes that share an attribute value and are both tied to the same first-mode node. The alpha and beta discount parameters temper the count when nodes share many partners. (bomiriya2014) |
+| b1nodematch | <img src="man/figures/README-b1nodematch.png" width="80" /> | $\sum_{k\in B_2} \sum_{i<j \in B_1} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Counts the pairs of first-mode nodes that share an attribute value and are both tied to the same second-mode node. The alpha and beta discount parameters temper the count when nodes share many partners. (bomiriya2023) |
+| b2nodematch | <img src="man/figures/README-b2nodematch.png" width="80" /> | $\sum_{k\in B_1} \sum_{i<j \in B_2} \mathbf{1}(x_i = x_j) y_{ik} y_{jk}$ | Counts the pairs of second-mode nodes that share an attribute value and are both tied to the same first-mode node. The alpha and beta discount parameters temper the count when nodes share many partners. (bomiriya2023) |
 | b1starmix | <img src="man/figures/README-b1starmix.png" width="80" /> | $\sum_{i \in B_1} \mathbf{1}(x_i = p) \sum_{j_1 < \cdots < j_k \in B_2} \prod_{l=1}^{k} y_{i j_l} \mathbf{1}(x_{j_l} = q)$ | Counts the k-stars centered on a first-mode node with one attribute value whose second-mode neighbors all share another, capturing mixing and degree together. |
 | b2starmix | <img src="man/figures/README-b2starmix.png" width="80" /> | $\sum_{j \in B_2} \mathbf{1}(x_j = p) \sum_{i_1 < \cdots < i_k \in B_1} \prod_{l=1}^{k} y_{i_l j} \mathbf{1}(x_{i_l} = q)$ | Counts the k-stars centered on a second-mode node with one attribute value whose first-mode neighbors all share another, capturing mixing and degree together. |
 
@@ -369,14 +371,21 @@ second mode.*
 [doi:10.1080/01621459.1981.10477598](https://doi.org/10.1080/01621459.1981.10477598)*\
 *\[frank1986\]
 [doi:10.1080/01621459.1986.10478342](https://doi.org/10.1080/01621459.1986.10478342)*\
-*\[hunter2007\]
-[doi:10.1016/j.socnet.2006.08.005](https://doi.org/10.1016/j.socnet.2006.08.005)*\
 *\[snijders2006\]
 [doi:10.1111/j.1467-9531.2006.00176.x](https://doi.org/10.1111/j.1467-9531.2006.00176.x)*\
+*\[hunter2007\]
+[doi:10.1016/j.socnet.2006.08.005](https://doi.org/10.1016/j.socnet.2006.08.005)*\
+*\[wasserman1996\]
+[doi:10.1007/BF02294547](https://doi.org/10.1007/BF02294547)*\
 *\[mcpherson2001\]
 [doi:10.1146/annurev.soc.27.1.415](https://doi.org/10.1146/annurev.soc.27.1.415)*\
-*\[bomiriya2014\]
-[doi:10.48550/arXiv.2312.05673](https://doi.org/10.48550/arXiv.2312.05673)*
+*\[morris1991\]
+[doi:10.1016/0025-5564(91)90014-A](https://doi.org/10.1016/0025-5564(91)90014-A)*\
+*\[robins2009\]
+[doi:10.1016/j.socnet.2008.10.006](https://doi.org/10.1016/j.socnet.2008.10.006)*\
+*\[wang2009\]
+[doi:10.1016/j.socnet.2008.08.002](https://doi.org/10.1016/j.socnet.2008.08.002)*\
+*\[bomiriya2023\] [arXiv:2312.05673](https://arxiv.org/abs/2312.05673)*
 
 ## Code of Conduct
 

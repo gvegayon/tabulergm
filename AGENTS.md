@@ -75,7 +75,10 @@ documented in `R/notation.R` (help topic `?"tabulergm-notation"`). In short:
   database, whose text is often too long or contains raw LaTeX.
 - **Citations**: add a `citation:` entry when a term has an identifiable
   source, with a `key` (`lastnameYEAR`) plus a `doi`, `arxiv`, `pmid`, or
-  `url`. **Resolve every identifier before committing it** (e.g.
+  `url`. List the paper that introduced the statistic in the ERGM/p*
+  framework first, optionally followed by one substantive reference
+  (e.g. `nodematch`: Wasserman & Pattison 1996, then McPherson et al.
+  2001); leave terms with no identifiable ERGM origin uncited. **Resolve every identifier before committing it** (e.g.
   `curl -sLH "Accept: application/x-bibtex" https://doi.org/<id>`); use the
   free-text `text:` field when no identifier can be verified rather than
   guessing one.

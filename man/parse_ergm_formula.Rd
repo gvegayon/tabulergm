@@ -38,8 +38,8 @@ character vectors keyed by term name, e.g.
 \item{override.citation}{A named list keyed by term name whose elements
 are citation specifications in the same form the YAML \verb{citation:}
 field accepts: a bare key (\code{"hunter2007"}), a prefixed identifier
-(\code{"doi:10.1016/j.socnet.2006.08.002"}), a single entry list
-(\code{list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.002")}), or
+(\code{"doi:10.1016/j.socnet.2006.08.005"}), a single entry list
+(\code{list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.005")}), or
 a list of such entries.}
 }
 \value{
@@ -81,10 +81,12 @@ parse_ergm_formula(~ edges + mutual, directed = TRUE)
 
 # Attach a citation to a term that has none in the term dictionary
 parse_ergm_formula(
-  ~ edges + kstar(2),
+  ~ edges + concurrent,
   directed = FALSE,
   override.citation = list(
-    kstar = list(key = "frank1986", doi = "10.1080/0022250X.1986.9990013")
+    concurrent = list(
+      key = "morris1997", doi = "10.1097/00002030-199705000-00012"
+    )
   )
 )
 }

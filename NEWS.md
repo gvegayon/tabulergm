@@ -1,3 +1,26 @@
+# tabulergm (development version)
+
+## User-facing changes
+
+* Audited term citations: each term now lists the paper that introduced it
+  as an ERGM/p* statistic first (e.g. Wasserman and Pattison 1996 for
+  `nodematch`), followed by at most one theory reference (#38).
+
+* Fixed incorrect citation identifiers for `b1nodematch`/`b2nodematch` and
+  in the `parse_ergm_model()`/`parse_ergm_formula()` documentation (#38).
+
+* `edges`, `nodemix`, `edgecov`, `istar`, `ostar`, `gwb1dsp`, and `gwb2dsp`
+  now carry citations; directed `triangle` and the bipartite and directed
+  geometrically weighted terms cite their directed or bipartite sources (#38).
+
+* Markdown figure files are named after the bare term, no longer picking up
+  citation markers such as `triangle-frank1986.png` (#38).
+
+## Internal changes
+
+* Tests now drive the exported API instead of internal helpers, cutting the
+  suite by about 500 lines with no loss of coverage (#38).
+
 # tabulergm 0.2.0
 
 ## User-facing changes

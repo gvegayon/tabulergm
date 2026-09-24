@@ -34,8 +34,8 @@
 #' @param override.citation A named list keyed by term name whose elements
 #'   are citation specifications in the same form the YAML `citation:`
 #'   field accepts: a bare key (`"hunter2007"`), a prefixed identifier
-#'   (`"doi:10.1016/j.socnet.2006.08.002"`), a single entry list
-#'   (`list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.002")`), or
+#'   (`"doi:10.1016/j.socnet.2006.08.005"`), a single entry list
+#'   (`list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.005")`), or
 #'   a list of such entries.
 #' @return A data frame with columns:
 #' \describe{
@@ -188,10 +188,12 @@ parse_ergm_model <- function(
 #'
 #' # Attach a citation to a term that has none in the term dictionary
 #' parse_ergm_formula(
-#'   ~ edges + kstar(2),
+#'   ~ edges + concurrent,
 #'   directed = FALSE,
 #'   override.citation = list(
-#'     kstar = list(key = "frank1986", doi = "10.1080/0022250X.1986.9990013")
+#'     concurrent = list(
+#'       key = "morris1997", doi = "10.1097/00002030-199705000-00012"
+#'     )
 #'   )
 #' )
 parse_ergm_formula <- function(

@@ -4,8 +4,8 @@ description: >-
   directed analogue of clustering. Equals the sum of the ttriple and
   ctriple statistics.
 citation:
-  - key: frank1986
-    doi: 10.1080/01621459.1986.10478342
+  - key: wasserman1996
+    doi: 10.1007/BF02294547
 plot:
   edgelist: "0->1->2, 0->2"
   vcolor: black

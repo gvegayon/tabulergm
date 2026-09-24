@@ -1,124 +1,56 @@
 # Tests for optional YAML title/description/citation metadata, the
 # override.* arguments, and citation markers/footnotes.
 
-# ---- Citation normalization -------------------------------------------------
+# ---- Citation specifications, as a user supplies them ----------------------
 
-# A bare key becomes an entry with no identifier
-cites <- tabulergm:::.normalize_citations("hunter2007")
-expect_equal(length(cites), 1L)
-expect_equal(cites[[1L]]$key, "hunter2007")
-expect_equal(length(cites[[1L]]$ids), 0L)
-
-# A prefixed identifier derives its key from the identifier
-cites <- tabulergm:::.normalize_citations("doi:10.1234/abcd")
-expect_equal(cites[[1L]]$key, "10.1234/abcd")
-expect_equal(cites[[1L]]$ids[[1L]]$label, "doi:10.1234/abcd")
-expect_equal(cites[[1L]]$ids[[1L]]$url, "https://doi.org/10.1234/abcd")
-
-# A single entry list is accepted without wrapping
-cites <- tabulergm:::.normalize_citations(list(key = "a2020", doi = "10.1/x"))
-expect_equal(length(cites), 1L)
-expect_equal(cites[[1L]]$key, "a2020")
-
-# A list of entries stays a list of entries
-cites <- tabulergm:::.normalize_citations(list(
-  list(key = "a2020", doi = "10.1/x"),
-  list(key = "b2021", arxiv = "1234.5678")
-))
-expect_equal(length(cites), 2L)
-expect_equal(cites[[2L]]$ids[[1L]]$label, "arXiv:1234.5678")
-expect_equal(cites[[2L]]$ids[[1L]]$url, "https://arxiv.org/abs/1234.5678")
-
-# PubMed and plain URLs resolve too
-cites <- tabulergm:::.normalize_citations(list(key = "c", pmid = "12345678"))
-expect_equal(cites[[1L]]$ids[[1L]]$label, "PMID:12345678")
-expect_equal(cites[[1L]]$ids[[1L]]$url,
-  "https://pubmed.ncbi.nlm.nih.gov/12345678/")
-
-cites <- tabulergm:::.normalize_citations("https://example.org/paper")
-expect_equal(cites[[1L]]$ids[[1L]]$url, "https://example.org/paper")
-
-# NULL and NA yield no citations
-expect_equal(length(tabulergm:::.normalize_citations(NULL)), 0L)
-expect_equal(length(tabulergm:::.normalize_citations(NA)), 0L)
-
-# A non-list, non-character value is rejected
-expect_error(tabulergm:::.normalize_citations(42))
-
-# The bibliography deduplicates by key, keeping first-seen order
-bib <- tabulergm:::.citation_bibliography(list(
-  tabulergm:::.normalize_citations("b2021"),
-  tabulergm:::.normalize_citations("a2020"),
-  tabulergm:::.normalize_citations("b2021")
-))
-expect_equal(length(bib), 2L)
-expect_equal(vapply(bib, `[[`, character(1), "key"), c("b2021", "a2020"))
-
-
-# ---- Citation footnote rendering --------------------------------------------
-
-entry <- tabulergm:::.normalize_citations(
-  list(key = "hunter2007", doi = "10.1016/j.socnet.2006.08.005")
+# Every accepted citation shape gets a marker next to its description and a
+# footnote line below the table: key + DOI, arXiv, a bare prefixed DOI, PubMed
+# with free text (which comes first), a bare key, and a plain URL. A key cited
+# by two terms is listed once, in first-seen order.
+cites <- list(
+  edges      = list(list(key = "a2020", doi = "10.1/x"),
+                    list(key = "b2021", arxiv = "1234.5678")),
+  triangle   = "doi:10.1234/abcd",
+  isolates   = list(key = "c", pmid = "12345678",
+                    text = "Author, A. (2020). Title."),
+  concurrent = "solo",
+  kstar      = "https://example.org/paper",
+  degree     = list(key = "a2020", doi = "10.1/x")
 )
+f <- ~ edges + triangle + isolates + concurrent + kstar(2) + degree(1)
+tbl <- tabulergm_table(f, directed = FALSE, override.citation = cites)
+expect_equal(sub(".* \\(", "(", tbl$description), c(
+  "(a2020; b2021)", "(10.1234/abcd)", "(c)", "(solo)",
+  "(https://example.org/paper)", "(a2020)"
+))
 
-md <- tabulergm:::.render_citation_notes(entry, "markdown")
-expect_equal(length(md), 1L)
+md <- unlist(strsplit(as.character(tabulergm_table(
+  f, directed = FALSE, override.citation = cites, format = "markdown"
+)), "\n"))
 # Brackets are escaped so Markdown does not read [key] as a reference link
-expect_true(grepl("\\[hunter2007\\]", md, fixed = TRUE))
-expect_true(grepl("(https://doi.org/10.1016/j.socnet.2006.08.005)", md,
-  fixed = TRUE))
+expect_equal(trimws(grep("^\\*\\\\\\[", md, value = TRUE)), c(
+  "*\\[a2020\\] [doi:10.1/x](https://doi.org/10.1/x)*",
+  "*\\[b2021\\] [arXiv:1234.5678](https://arxiv.org/abs/1234.5678)*",
+  "*\\[10.1234/abcd\\] [doi:10.1234/abcd](https://doi.org/10.1234/abcd)*",
+  paste0("*\\[c\\] Author, A. (2020). Title. ",
+         "[PMID:12345678](https://pubmed.ncbi.nlm.nih.gov/12345678/)*"),
+  "*\\[solo\\]*",
+  "*\\[https://example.org/paper\\] [https://example.org/paper](https://example.org/paper)*"
+))
 
-html <- tabulergm:::.render_citation_notes(entry, "html")
-expect_true(grepl('<a href="https://doi.org/', html, fixed = TRUE))
-
-tex <- tabulergm:::.render_citation_notes(entry, "latex")
-expect_true(grepl("[hunter2007] doi:10.1016/j.socnet.2006.08.005", tex,
-  fixed = TRUE))
-
-# Free text is included ahead of the identifier
-entry_text <- tabulergm:::.normalize_citations(
-  list(key = "k", text = "Author, A. (2020). Title.", doi = "10.1/x")
-)
-tex <- tabulergm:::.render_citation_notes(entry_text, "latex")
-expect_true(grepl("Author, A. (2020). Title.", tex, fixed = TRUE))
-
-# A key with no identifier still renders
-bare <- tabulergm:::.render_citation_notes(
-  tabulergm:::.normalize_citations("solo"), "latex"
-)
-expect_equal(bare, "[solo]")
-
-# An empty bibliography renders nothing
-expect_equal(length(tabulergm:::.render_citation_notes(list(), "markdown")), 0L)
-expect_equal(length(tabulergm:::.render_citation_notes(NULL, "markdown")), 0L)
+# NA removes a shipped citation; a value of the wrong type is rejected
+res <- parse_ergm_formula(~ triangle, directed = FALSE,
+  override.citation = list(triangle = NA))
+expect_true(is.na(res$citation))
+expect_error(parse_ergm_formula(~ edges, directed = FALSE,
+  override.citation = list(edges = 42)), "citation")
 
 
-# ---- YAML metadata reading --------------------------------------------------
+# ---- Shipped term dictionary ------------------------------------------------
 
-# Shipped terms carry a curated title and description
-data <- tabulergm:::.get_term_yml_data("edges", directed = FALSE)
-expect_false(is.na(data$title))
-expect_false(is.na(data$description))
-expect_equal(length(data$citation), 0L)
-
-# Terms with a known source carry a citation
-data <- tabulergm:::.get_term_yml_data("gwesp", directed = FALSE)
-expect_equal(length(data$citation), 1L)
-expect_equal(data$citation[[1L]]$key, "hunter2007")
-
-# Terms with two sources carry both, in file order
-data <- tabulergm:::.get_term_yml_data("gwdegree", directed = FALSE)
-expect_equal(vapply(data$citation, `[[`, character(1), "key"),
-  c("snijders2006", "hunter2007"))
-
-# Unknown terms yield empty metadata rather than an error
-data <- tabulergm:::.get_term_yml_data("nonexistent_term_xyz", directed = FALSE)
-expect_true(is.na(data$title))
-expect_true(is.na(data$description))
-expect_equal(length(data$citation), 0L)
-
-# Every shipped term file (aliases included) yields a curated title and
-# description
+# Every shipped term file (aliases included) resolves by name and
+# directedness, and yields a curated title, description, math, and a
+# rendered drawing
 for (f in list.files(system.file("terms", package = "tabulergm"))) {
   term <- sub("\\.(un)?directed\\.yml$", "", f)
   res <- parse_ergm_formula(stats::as.formula(paste("y ~", term)),
@@ -127,79 +59,60 @@ for (f in list.files(system.file("terms", package = "tabulergm"))) {
     info = sprintf("title present for %s", f))
   expect_true(!is.na(res$description) && nzchar(res$description),
     info = sprintf("description present for %s", f))
+  expect_false(is.na(res$math), info = sprintf("math present for %s", f))
+  expect_true(file.exists(res$figure),
+    info = sprintf("figure drawn for %s", f))
 }
 
-
-# ---- YAML wins over the ergm term database ----------------------------------
-
-res <- parse_ergm_formula(~ edges, directed = FALSE)
-yml <- tabulergm:::.get_term_yml_data("edges", directed = FALSE)
-expect_equal(res$title[1L], yml$title)
-expect_equal(res$description[1L], yml$description)
+# YAML wins over the ergm term database, offset() resolves to the wrapped
+# term, and a directed-only term is found without a directedness hint
+res <- parse_ergm_formula(y ~ edges + offset(edges) + mutual)
+expect_equal(res$title, c("Number of edges", "Number of edges",
+                          "Reciprocated ties"))
+expect_equal(res$math[2], res$math[1])
+expect_true(grepl("y_{ji}", res$math[3], fixed = TRUE))
 
 # Terms without a YAML file fall back to the ergm database, which supplies
-# a title and a (longer) description
+# a title and a (longer) description, but no math or citation
 res <- parse_ergm_formula(~ twopath, directed = FALSE)
 expect_false(is.na(res$title[1L]))
 expect_false(is.na(res$description[1L]))
+expect_true(is.na(res$math[1L]))
 expect_true(is.na(res$citation[1L]))
-
-
-# ---- Override normalization -------------------------------------------------
-
-ov <- tabulergm:::.normalize_overrides(
-  override.title = c(edges = "Density"),
-  override.desc  = c(edges = "Baseline.")
-)
-expect_equal(ov$edges$title, "Density")
-expect_equal(ov$edges$description, "Baseline.")
-
-# The bulk list accepts `desc` as an alias for `description`
-ov <- tabulergm:::.normalize_overrides(
-  override = list(edges = list(desc = "Baseline."))
-)
-expect_equal(ov$edges$description, "Baseline.")
-
-# Per-field arguments win over the bulk list
-ov <- tabulergm:::.normalize_overrides(
-  override = list(edges = list(title = "Bulk")),
-  override.title = c(edges = "Field")
-)
-expect_equal(ov$edges$title, "Field")
-
-# ... and merge with, rather than replace, the other bulk fields
-ov <- tabulergm:::.normalize_overrides(
-  override = list(edges = list(title = "Bulk", math = "x")),
-  override.title = c(edges = "Field")
-)
-expect_equal(ov$edges$title, "Field")
-expect_equal(ov$edges$math, "x")
-
-# Unnamed vectors, unknown fields, and bad shapes are rejected
-expect_error(tabulergm:::.normalize_overrides(override.title = "unnamed"))
-expect_error(tabulergm:::.normalize_overrides(
-  override = list(edges = list(bogus = "x"))))
-expect_error(tabulergm:::.normalize_overrides(override = list("unnamed")))
-expect_error(tabulergm:::.normalize_overrides(override = list(edges = "flat")))
-expect_error(tabulergm:::.normalize_overrides(
-  override = list(edges = list(title = c("two", "values")))))
-expect_error(tabulergm:::.normalize_overrides(
-  override = list(edges = list(title = NA_character_))))
 
 
 # ---- Overrides applied through the parsers ----------------------------------
 
+# Per-field arguments and the bulk `override` list combine: the bulk list
+# accepts `desc` for `description`, and a per-field argument wins over the
+# bulk value without discarding the bulk list's other fields
 res <- parse_ergm_formula(
-  ~ edges + triangle, directed = FALSE,
+  ~ edges + triangle + kstar(2), directed = FALSE,
+  override = list(edges = list(title = "Bulk", desc = "Baseline.",
+                               math = "n_e")),
   override.title = c(edges = "Density"),
-  override.desc  = c(edges = "Baseline propensity."),
-  override.math  = c(edges = "n_e")
+  override.desc  = c(triangle = "Closure.")
 )
-expect_equal(res$title[res$term == "edges"], "Density")
-expect_equal(res$description[res$term == "edges"], "Baseline propensity.")
-expect_equal(res$math[res$term == "edges"], "n_e")
+expect_equal(res$title[1], "Density")
+expect_equal(res$description[1:2], c("Baseline.", "Closure."))
+expect_equal(res$math[1], "n_e")
 # Other terms keep their dictionary values
-expect_equal(res$title[res$term == "triangle"], "Triangles")
+expect_equal(res$title[3], "k-stars")
+
+# Malformed overrides are rejected
+bad <- list(
+  list(override.title = "unnamed"),
+  list(override = list(edges = list(bogus = "x"))),
+  list(override = list("unnamed")),
+  list(override = list(edges = "flat")),
+  list(override = list(edges = list(title = c("two", "values")))),
+  list(override = list(edges = list(title = NA_character_)))
+)
+for (args in bad) {
+  expect_error(do.call(parse_ergm_formula,
+    c(list(~ edges, directed = FALSE), args)),
+    info = deparse(args))
+}
 
 # Citation overrides replace the dictionary citation
 res <- parse_ergm_formula(
@@ -208,13 +121,6 @@ res <- parse_ergm_formula(
 )
 expect_equal(res$citation[1L], "mine2026")
 expect_equal(attr(res, "tabulergm_citations")[[1L]]$key, "mine2026")
-
-# A citation can be added to a term that has none
-res <- parse_ergm_formula(
-  ~ edges, directed = FALSE,
-  override.citation = list(edges = "doi:10.1/y")
-)
-expect_equal(res$citation[1L], "10.1/y")
 
 # Overrides for absent terms warn rather than fail silently
 expect_warning(
@@ -263,11 +169,14 @@ if (requireNamespace("ergm", quietly = TRUE)) {
   )
   tbl <- tabulergm_table(fit)
   expect_false("description" %in% names(tbl))
-  expect_true(grepl("(mcpherson2001)", tbl$term[tbl$term != "edges"][1L],
-    fixed = TRUE))
+  expect_true(grepl("(wasserman1996; mcpherson2001)",
+    tbl$term[startsWith(tbl$term, "nodematch")][1L], fixed = TRUE))
 
   # The bibliography rides along on data.frame output for tabulergm_save()
-  expect_equal(length(attr(tbl, "tabulergm_citations")), 1L)
+  expect_equal(
+    vapply(attr(tbl, "tabulergm_citations"), `[[`, "", "key"),
+    c("holland1981", "wasserman1996", "mcpherson2001")
+  )
 
   # include_title places the title immediately after term
   tbl <- tabulergm_table(fit, include_title = TRUE)
@@ -281,12 +190,12 @@ expect_true(grepl("(snijders2006; hunter2007)", tbl$description[1L],
 
 # Only the citations actually used are listed
 md <- as.character(
-  tabulergm_table(~ edges, directed = FALSE, format = "markdown")
+  tabulergm_table(~ isolates, directed = FALSE, format = "markdown")
 )
 expect_false(any(grepl("frank1986", md, fixed = TRUE)))
 
 # Terms with no citation get no marker
-tbl <- tabulergm_table(~ edges, directed = FALSE)
+tbl <- tabulergm_table(~ concurrent, directed = FALSE)
 expect_false(grepl("(", tbl$description[1L], fixed = TRUE))
 
 # HTML output carries linked identifiers below the table

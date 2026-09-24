@@ -66,11 +66,22 @@ readers can pull the full reference into their own bibliography:
     doi: 10.1016/j.socnet.2006.08.005
 }
 
+Cite the paper that introduced the statistic in the ERGM/p* framework
+first (for example Wasserman and Pattison 1996 for \code{nodematch}); when two
+papers introduced a parameterization together, list both. After the
+origin, a term may carry at most one well-established substantive
+reference for the concept it measures (for example McPherson et al. 2001
+on homophily). A term with no identifiable ERGM origin stays uncited
+rather than borrowing a loosely related source.
+
 Accepted identifier fields are \code{doi}, \code{arxiv}, \code{pmid}, and \code{url}; an
 entry may also carry free-text \code{text}, which is the right choice when
 no stable identifier can be verified. \strong{Always resolve an
-identifier before committing it} (for a DOI, \verb{https://doi.org/<id>});
-an identifier that points at the wrong paper is worse than none.
+identifier before committing it} (for a DOI, \verb{https://doi.org/<id>})
+and check that its authors and year match the key; an identifier that
+points at the wrong paper is worse than none. Use the \code{arxiv} field (not
+an arXiv DOI) for preprints, and reuse the same key and identifier for a
+reference cited by several terms.
 
 \code{tabulergm_table()} renders a \code{(key)} marker next to the term's
 description and a matching \verb{[key] identifier} line below the table. Users

@@ -28,10 +28,6 @@ if (requireNamespace("knitr", quietly = TRUE)) {
     info = "latex export references copied figures")
   expect_true(grepl("$\\sum_{i<j} y_{ij}$", tex, fixed = TRUE),
     info = "latex export wraps math in inline math delimiters")
-  expect_equal(
-    tabulergm:::.escape_latex_text("a_b\\c"),
-    "a\\_b\\textbackslash{}c"
-  )
 
   # A data frame returned by tabulergm_table can also be exported.
   src <- tempfile(fileext = ".png")
@@ -40,14 +36,18 @@ if (requireNamespace("knitr", quietly = TRUE)) {
     term = "Custom Term",
     figure = src,
     math = "\\sum_i x_i",
+    description = "Uses a_b\\c.",
     stringsAsFactors = FALSE
   )
 
   out_dir_df <- tempfile("tabulergm-save-df-")
-  saved_df <- tabulergm_save(df, out_dir_df, format = "markdown")
+  saved_df <- tabulergm_save(df, out_dir_df, format = c("markdown", "latex"))
   expect_equal(saved_df$table$figure, "figures/custom-term.png")
   expect_true(file.exists(file.path(out_dir_df, "figures", "custom-term.png")))
-  expect_equal(names(saved_df$files), "markdown")
+  expect_equal(names(saved_df$files), c("markdown", "latex"))
+  # LaTeX special characters in text cells are escaped
+  tex_df <- paste(readLines(saved_df$files[["latex"]]), collapse = "\n")
+  expect_true(grepl("Uses a\\_b\\textbackslash{}c.", tex_df, fixed = TRUE))
 
   # Images can be written directly into the target directory when requested.
   out_dir_flat <- tempfile("tabulergm-save-flat-")

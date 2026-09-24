@@ -1,4 +1,4 @@
-# tabulergm (development version)
+# tabulergm 0.2.0
 
 ## User-facing changes
 
@@ -15,15 +15,6 @@
 
 * Markdown figure files are named after the bare term, no longer picking up
   citation markers such as `triangle-frank1986.png` (#38).
-
-## Internal changes
-
-* Tests now drive the exported API instead of internal helpers, cutting the
-  suite by about 500 lines with no loss of coverage (#38).
-
-# tabulergm 0.2.0
-
-## User-facing changes
 
 * Added 14 terms to the term dictionary: `gwidegree`, `gwodegree`,
   `gwb1degree`, `gwb2degree`, `nodeifactor`, `nodeofactor`, `kstar`,
@@ -88,6 +79,10 @@
 
 * The please-bump check now also verifies that `NEWS.md` matches
   `DESCRIPTION`.
+
+* Tests now drive the exported API instead of internal helpers, cutting the
+  suite by about 500 lines with no loss of coverage (#38).
+
 
 # tabulergm 0.1.0
 

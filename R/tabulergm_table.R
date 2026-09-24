@@ -252,13 +252,16 @@ tabulergm_table.formula <- function(
 #' @param figures_dir Optional figure asset directory for Markdown output.
 #' @param copy_figures Logical. Copy Markdown figures to `figures_dir` or the
 #'   active knitr figure path?
+#' @param terms Optional bare term names, one per row, used to name copied
+#'   figure files when the `term` column carries citation markers.
 #' @return A modified copy of `df`.
 #' @noRd
 .preprocess_columns <- function(
     df,
     format,
     figures_dir = NULL,
-    copy_figures = TRUE) {
+    copy_figures = TRUE,
+    terms = NULL) {
   if (format == "data.frame") return(df)
 
   figures_dir <- .validate_figures_dir(figures_dir)
@@ -288,7 +291,9 @@ tabulergm_table.formula <- function(
   # Figure column: convert file paths to <img> tags
   if ("figure" %in% names(df)) {
     if (format == "markdown" && isTRUE(copy_figures)) {
-      df <- .copy_markdown_figures(df, figures_dir = figures_dir)
+      df <- .copy_markdown_figures(df, figures_dir = figures_dir,
+        terms = terms
+      )
     }
 
     has_fig <- !is.na(df[["figure"]]) & nzchar(df[["figure"]])
@@ -426,9 +431,11 @@ tabulergm_table.formula <- function(
 #' @param df A data frame containing a `figure` column.
 #' @param figures_dir Optional user-specified output directory. When `NULL`,
 #'   the active knitr figure path is used during non-interactive rendering.
+#' @param terms Optional bare term names, one per row of `df`, used for the
+#'   copied file names instead of the displayed `term` column.
 #' @return A copy of `df` with `figure` paths rewritten when files are copied.
 #' @noRd
-.copy_markdown_figures <- function(df, figures_dir = NULL) {
+.copy_markdown_figures <- function(df, figures_dir = NULL, terms = NULL) {
   # Normalized here as well as at specification time: this is the funnel
   # every figure-copying route passes through, and an unnormalized Windows
   # path reaching .manual_markdown_figure_target() resolves against the
@@ -448,9 +455,12 @@ tabulergm_table.formula <- function(
   }
 
   unique_sources <- unique(figures[has_figure])
+  # File names come from the bare term names when given, so a citation
+  # marker appended to the displayed term never leaks into them
+  label_df <- if (is.null(terms)) df else data.frame(term = terms)
   destinations <- .build_markdown_figure_destinations(
     sources = unique_sources,
-    df = df,
+    df = label_df,
     figures = figures,
     target = target
   )
@@ -779,7 +789,9 @@ tabulergm_table.formula <- function(
 
   citation_notes <- .render_citation_notes(citations, format)
 
-  df <- .preprocess_columns(df, format, figures_dir = figures_dir)
+  df <- .preprocess_columns(df, format, figures_dir = figures_dir,
+    terms = display$terms
+  )
 
   knitr_format <- switch(format,
     html     = "html",

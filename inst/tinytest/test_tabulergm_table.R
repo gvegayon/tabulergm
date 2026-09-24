@@ -281,6 +281,18 @@ if (requireNamespace("network", quietly = TRUE) &&
       ), info = "manual figures_dir rewrites markdown figure path")
     })
 
+    # Copied figures are named after the bare term, even when the term
+    # column carries a citation marker (no description column shown)
+    local({
+      out_dir <- tempfile("tabulergm-cited-figures-")
+      md <- as.character(tabulergm_table(
+        ~ edges + triangle, directed = FALSE, include_description = FALSE,
+        format = "markdown", figures_dir = out_dir
+      ))
+      expect_true(any(grepl("triangle (frank1986)", md, fixed = TRUE)))
+      expect_equal(sort(list.files(out_dir)), c("edges.png", "triangle.png"))
+    })
+
     # An invalid figures_dir is reported when the table is built (#35), not
     # deferred until something renders Markdown.
     expect_error(

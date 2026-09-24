@@ -13,6 +13,9 @@
   now carry citations; directed `triangle` and the bipartite and directed
   geometrically weighted terms cite their directed or bipartite sources (#38).
 
+* Markdown figure files are named after the bare term, no longer picking up
+  citation markers such as `triangle-frank1986.png` (#38).
+
 # tabulergm 0.2.0
 
 ## User-facing changes
